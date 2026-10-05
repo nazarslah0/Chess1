@@ -135,10 +135,10 @@ class _SourceLogo extends StatelessWidget {
       child: Image.asset(
         asset,
         fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => Image.asset(
+        errorBuilder: (_, _, _) => Image.asset(
           fallbackPiece,
           fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => const Icon(
+          errorBuilder: (_, _, _) => const Icon(
             Icons.sports_esports_rounded,
             color: Colors.white,
           ),
