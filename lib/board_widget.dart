@@ -99,9 +99,6 @@ class _BoardWidgetState extends State<BoardWidget> {
 
     final fenParts = fen.split(' ');
 
-    final boardFen =
-        fenParts.isNotEmpty ? fenParts.first : '';
-
     final board = _boardForFen(fen);
 
     final flipped = state.flipped;
@@ -227,7 +224,7 @@ class _BoardWidgetState extends State<BoardWidget> {
                                   : 7 - row;
 
                           final square =
-                              files[fileIndex] +
+                              BoardWidget.files[fileIndex] +
                                   (rankIndex + 1)
                                       .toString();
 
@@ -367,7 +364,7 @@ class _BoardWidgetState extends State<BoardWidget> {
                                                 ),
                                                 onDragStarted:
                                                     () =>
-                                                        onTap(
+                                                        widget.onTap(
                                                   square,
                                                 ),
                                                 child:
@@ -428,7 +425,7 @@ class _BoardWidgetState extends State<BoardWidget> {
                                       bottom: 1,
                                       right: 3,
                                       child: Text(
-                                        files[fileIndex],
+                                        BoardWidget.files[fileIndex],
                                         style:
                                             TextStyle(
                                           fontSize: 9,
