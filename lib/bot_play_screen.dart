@@ -503,14 +503,18 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('العب ضد روبوت')),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            children: [
-              if (!_started) _buildSetup() else _buildGame(),
-            ],
-          ),
-        ),
+        // شاشة المباراة ثابتة (بدون تمرير) حتى لا يتحرك أي شيء عند كل
+        // نقلة؛ شاشة الإعداد وحدها قابلة للتمرير.
+        child: _started
+            ? _buildGame()
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    _buildSetup(),
+                  ],
+                ),
+              ),
       ),
     );
   }
@@ -587,7 +591,67 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
     );
   }
 
-  Widget _buildGame() {
+  static const double _barHeight = 44;
+  static const double _gap = 6;
+
+  Widget _playerBar(String color) {
+    final isUser = color == _userColor;
+    final active = _result == null && _turn == color;
+    final white = color == 'w';
+
+    Widget trailing = const SizedBox.shrink();
+
+    if (!isUser && _thinking) {
+      trailing = const CircularProgressIndicator(strokeWidth: 2);
+    } else if (active) {
+      trailing = Icon(
+        Icons.circle,
+        size: 12,
+        color: Theme.of(context).colorScheme.primary,
+      );
+    }
+
+    return SizedBox(
+      height: _barHeight,
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: white ? Colors.white : const Color(0xFF222222),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey.shade500),
+            ),
+            child: Icon(
+              isUser ? Icons.person_rounded : _level.icon,
+              size: 17,
+              color: white ? Colors.black87 : Colors.white,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isUser ? 'أنت' : '$_botLabel (${_level.rating})',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 18,
+            height: 18,
+            child: Center(child: trailing),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statusLine() {
     final myTurn = _result == null && !_thinking && _turn == _userColor;
 
     final status = _result != null
@@ -596,81 +660,200 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
             ? '${_level.name} يفكّر...'
             : (myTurn ? 'دورك' : 'دور الروبوت'));
 
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                status,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-            Text(
-              '${_level.name} (${_level.rating})',
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
-          ],
+    final showNotice = _notice != null && _result == null;
+
+    return SizedBox(
+      height: 28,
+      child: Center(
+        child: Text(
+          showNotice ? _notice! : status,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: showNotice ? 12 : 15,
+            color: showNotice ? Colors.orange : null,
+          ),
         ),
-        const SizedBox(height: 8),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: ListenableBuilder(
-            listenable: AppSettings.instance,
-            builder: (context, _) => BoardWidget(
-              state: _state,
-              boardTheme: AppSettings.instance.boardTheme,
-              pieceTheme: AppSettings.instance.pieceTheme,
-              onTap: _onTap,
-              targets: _input.targets,
+      ),
+    );
+  }
+
+  Widget _movesStrip() {
+    final h = _state.history;
+
+    return SizedBox(
+      height: 32,
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          // reverse: آخر نقلة تبقى ظاهرة دائمًا.
+          reverse: true,
+          physics: const ClampingScrollPhysics(),
+          child: Row(
+            children: [
+              for (var i = 0; i < h.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Center(
+                    child: Text(
+                      h[i].color == 'w'
+                          ? '${(i ~/ 2) + 1}. ${h[i].san}'
+                          : (i == 0
+                              ? '${(i ~/ 2) + 1}... ${h[i].san}'
+                              : h[i].san),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: i == h.length - 1
+                            ? FontWeight.w800
+                            : FontWeight.w500,
+                        color: i == h.length - 1
+                            ? null
+                            : Colors.grey.shade600,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _actionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback? onTap,
+  }) {
+    final enabled = onTap != null;
+
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Opacity(
+          opacity: enabled ? 1 : 0.35,
+          child: SizedBox(
+            height: 52,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 22),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  maxLines: 1,
+                  style: const TextStyle(fontSize: 11),
+                ),
+              ],
             ),
           ),
         ),
-        if (_notice != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            _notice!,
-            style: const TextStyle(color: Colors.orange, fontSize: 12),
+      ),
+    );
+  }
+
+  /// أزرار ثابتة العدد والمكان: تُعطَّل بدل أن تظهر وتختفي، فلا
+  /// يتغير تخطيط الشاشة بين نقلة وأخرى.
+  Widget _actionBar() {
+    return SizedBox(
+      height: 52,
+      child: Row(
+        children: [
+          _actionButton(
+            icon: Icons.flag_outlined,
+            label: 'استسلام',
+            onTap: (_result != null || _thinking) ? null : _resign,
+          ),
+          _actionButton(
+            icon: Icons.flip_rounded,
+            label: 'قلب الرقعة',
+            onTap: _state.flipBoard,
+          ),
+          _actionButton(
+            icon: Icons.query_stats_rounded,
+            label: 'تحليل',
+            onTap: (_thinking || _state.history.isEmpty)
+                ? null
+                : _openAnalysis,
+          ),
+          _actionButton(
+            icon: Icons.refresh_rounded,
+            label: 'مباراة جديدة',
+            onTap: _thinking
+                ? null
+                : () => setState(() {
+                      _started = false;
+                      _result = null;
+                      _resultText = null;
+                      _notice = null;
+                    }),
           ),
         ],
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          alignment: WrapAlignment.center,
-          children: [
-            if (_result == null)
-              OutlinedButton(
-                onPressed: _thinking ? null : _resign,
-                child: const Text('استسلام'),
-              ),
-            OutlinedButton(
-              onPressed: _state.flipBoard,
-              child: const Text('قلب الرقعة'),
+      ),
+    );
+  }
+
+  Widget _buildGame() {
+    final bottomColor = _state.flipped ? 'b' : 'w';
+    final topColor = bottomColor == 'w' ? 'b' : 'w';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+      child: Column(
+        children: [
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, c) {
+                // الرقعة مربعة وبحجم ثابت يحدده عرض/ارتفاع المساحة؛
+                // شريطا اللاعبين فوقها وتحتها بنفس العرض.
+                final side = math.max(
+                  0.0,
+                  math.min(
+                    c.maxWidth,
+                    c.maxHeight - 2 * (_barHeight + _gap),
+                  ),
+                );
+
+                return Center(
+                  child: SizedBox(
+                    width: side,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _playerBar(topColor),
+                        const SizedBox(height: _gap),
+                        SizedBox(
+                          width: side,
+                          height: side,
+                          child: ListenableBuilder(
+                            listenable: AppSettings.instance,
+                            builder: (context, _) => BoardWidget(
+                              state: _state,
+                              boardTheme: AppSettings.instance.boardTheme,
+                              pieceTheme: AppSettings.instance.pieceTheme,
+                              onTap: _onTap,
+                              targets: _input.targets,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: _gap),
+                        _playerBar(bottomColor),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
-            if (_state.history.isNotEmpty)
-              FilledButton.icon(
-                onPressed: _thinking ? null : _openAnalysis,
-                icon: const Icon(Icons.query_stats_rounded),
-                label: const Text('تحليل المباراة'),
-              ),
-            FilledButton.tonal(
-              onPressed: _thinking
-                  ? null
-                  : () => setState(() {
-                        _started = false;
-                        _result = null;
-                        _resultText = null;
-                        _notice = null;
-                      }),
-              child: const Text('مباراة جديدة'),
-            ),
-          ],
-        ),
-      ],
+          ),
+          _statusLine(),
+          _movesStrip(),
+          const SizedBox(height: 4),
+          _actionBar(),
+        ],
+      ),
     );
   }
 }

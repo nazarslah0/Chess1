@@ -15,6 +15,10 @@ class BoardTheme {
   final Color target;
   final Color border;
 
+  /// صورة رقعة حقيقية كاملة (8×8) من الأصول. إن وُجدت تُرسم خلف
+  /// المربعات بدل الألوان المسطحة.
+  final String? imageAsset;
+
   const BoardTheme({
     required this.name,
     required this.light,
@@ -24,6 +28,7 @@ class BoardTheme {
     required this.selected,
     required this.target,
     required this.border,
+    this.imageAsset,
   });
 }
 
@@ -145,6 +150,61 @@ const List<BoardTheme> boardThemes = [
     target: Color(0x552563EB),
     border: Color(0xFF23303A),
   ),
+  BoardTheme(
+    name: 'رقعة حقيقية — خشب',
+    light: Color(0xFFF0D9B5),
+    dark: Color(0xFFB58863),
+    lastMove: Color(0x66FFE066),
+    checkColor: Color(0xFFDC2626),
+    selected: Color(0x66FFE066),
+    target: Color(0x88222222),
+    border: Color(0xFF3A2E22),
+    imageAsset: 'assets/chessground/boards/wood.jpg',
+  ),
+  BoardTheme(
+    name: 'رقعة حقيقية — خشب داكن',
+    light: Color(0xFFF0D9B5),
+    dark: Color(0xFFB58863),
+    lastMove: Color(0x66FFE066),
+    checkColor: Color(0xFFDC2626),
+    selected: Color(0x66FFE066),
+    target: Color(0x88222222),
+    border: Color(0xFF3A2E22),
+    imageAsset: 'assets/chessground/boards/wood4.jpg',
+  ),
+  BoardTheme(
+    name: 'رقعة حقيقية — خشب فاتح',
+    light: Color(0xFFF0D9B5),
+    dark: Color(0xFFB58863),
+    lastMove: Color(0x66FFE066),
+    checkColor: Color(0xFFDC2626),
+    selected: Color(0x66FFE066),
+    target: Color(0x88222222),
+    border: Color(0xFF5A3A22),
+    imageAsset: 'assets/chessground/boards/maple2.jpg',
+  ),
+  BoardTheme(
+    name: 'رقعة حقيقية — رخام',
+    light: Color(0xFFF0D9B5),
+    dark: Color(0xFFB58863),
+    lastMove: Color(0x66FFE066),
+    checkColor: Color(0xFFDC2626),
+    selected: Color(0x66FFE066),
+    target: Color(0x88222222),
+    border: Color(0xFF2B3A4A),
+    imageAsset: 'assets/chessground/boards/blue-marble.jpg',
+  ),
+  BoardTheme(
+    name: 'رقعة حقيقية — جلد',
+    light: Color(0xFFF0D9B5),
+    dark: Color(0xFFB58863),
+    lastMove: Color(0x66FFE066),
+    checkColor: Color(0xFFDC2626),
+    selected: Color(0x66FFE066),
+    target: Color(0x88222222),
+    border: Color(0xFF4A3A10),
+    imageAsset: 'assets/chessground/boards/leather.jpg',
+  ),
 ];
 
 /// مظهر تحليل المباريات القريب من واجهة Chess.com الظاهرة في الطلب.
@@ -224,6 +284,14 @@ const List<PieceTheme> pieceThemes = [
     whiteStroke: Color(0xFF4B5563),
     blackFill: Color(0xFFB8860B),
     blackStroke: Color(0xFFFFF3CD),
+  ),
+  PieceTheme(
+    name: 'قطع ألفا (المجموعة المرفقة)',
+    whiteFill: Color(0xFFF9F9F9),
+    whiteStroke: Color(0xFF111111),
+    blackFill: Color(0xFF111111),
+    blackStroke: Color(0xFFF9F9F9),
+    assetFolder: 'alpha',
   ),
 ];
 

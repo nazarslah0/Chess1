@@ -79,7 +79,78 @@ class BoardWidget extends StatefulWidget {
   State<BoardWidget> createState() => _BoardWidgetState();
 }
 
+/// خلفية رقعة حقيقية (صورة 8×8). بدون صورة تُرجع [child] كما هو.
+class _RealBoardBackdrop extends StatelessWidget {
+  final String? imageAsset;
+  final Widget child;
+
+  const _RealBoardBackdrop({
+    required this.imageAsset,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final asset = imageAsset;
+
+    if (asset == null) return child;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage(asset),
+          fit: BoxFit.fill,
+          filterQuality: FilterQuality.medium,
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
 class _BoardWidgetState extends State<BoardWidget> {
+  String? _precachedKey;
+
+  /// تحميل صور القطع والرقعة مسبقًا حتى لا تُرسم فارغة لحظة النقلة
+  /// (وهذا كان يظهر كاهتزاز/وميض عند كل حركة).
+  void _precacheAssets() {
+    final folder = widget.pieceTheme.assetFolder;
+    final board = widget.boardTheme.imageAsset;
+    final key = '${folder ?? '-'}|${board ?? '-'}';
+
+    if (_precachedKey == key) return;
+
+    _precachedKey = key;
+
+    if (folder != null) {
+      for (final c in const ['w', 'b']) {
+        for (final t in const ['K', 'Q', 'R', 'B', 'N', 'P']) {
+          precacheImage(
+            AssetImage(widget.pieceTheme.assetPath(c, t)),
+            context,
+            onError: (e, st) {},
+          );
+        }
+      }
+    }
+
+    if (board != null) {
+      precacheImage(AssetImage(board), context, onError: (e, st) {});
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _precacheAssets();
+  }
+
+  @override
+  void didUpdateWidget(covariant BoardWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _precacheAssets();
+  }
+
   String? _cachedFen;
   Map<String, String> _cachedBoard = const <String, String>{};
 
@@ -198,7 +269,9 @@ class _BoardWidgetState extends State<BoardWidget> {
                     child: ClipRRect(
                       borderRadius:
                           BorderRadius.circular(4),
-                      child: GridView.builder(
+                      child: _RealBoardBackdrop(
+                        imageAsset: widget.boardTheme.imageAsset,
+                        child: GridView.builder(
                         padding: EdgeInsets.zero,
                         physics:
                             const NeverScrollableScrollPhysics(),
@@ -228,10 +301,11 @@ class _BoardWidgetState extends State<BoardWidget> {
                                   (rankIndex + 1)
                                       .toString();
 
+                          // a1 مربع داكن: مجموع (عمود + صف) زوجي = داكن.
                           final isDark =
                               (fileIndex +
                                       rankIndex) %
-                                  2 !=
+                                  2 ==
                               0;
 
                           final piece =
@@ -264,6 +338,10 @@ class _BoardWidgetState extends State<BoardWidget> {
                                         'play',
                             onAcceptWithDetails:
                                 (details) {
+                              // إسقاط القطعة على مربعها نفسه = لمسة عادية بحركة
+                              // إصبع بسيطة؛ لا نعيد الضغط حتى لا يُلغى التحديد.
+                              if (details.data == square) return;
+
                               widget.onTap(square);
                             },
                             builder: (
@@ -277,9 +355,13 @@ class _BoardWidgetState extends State<BoardWidget> {
                             onTap: () =>
                                 widget.onTap(square),
                             child: Container(
-                              color: isDark
-                                  ? widget.boardTheme.dark
-                                  : widget.boardTheme.light,
+                              color: widget.boardTheme
+                                          .imageAsset !=
+                                      null
+                                  ? null
+                                  : (isDark
+                                      ? widget.boardTheme.dark
+                                      : widget.boardTheme.light),
                               child: Stack(
                                 fit: StackFit.expand,
                                 children: [
@@ -363,10 +445,14 @@ class _BoardWidgetState extends State<BoardWidget> {
                                                   ),
                                                 ),
                                                 onDragStarted:
-                                                    () =>
-                                                        widget.onTap(
-                                                  square,
-                                                ),
+                                                    () {
+                                                  // لا نلغي التحديد إن كانت
+                                                  // القطعة محددة أصلًا.
+                                                  if (state.selectedSquare !=
+                                                      square) {
+                                                    widget.onTap(square);
+                                                  }
+                                                },
                                                 child:
                                                     _buildPiece(
                                                   piece,
@@ -446,6 +532,7 @@ class _BoardWidgetState extends State<BoardWidget> {
                             },
                           );
                         },
+                      ),
                       ),
                     ),
                   ),
@@ -546,6 +633,8 @@ class _BoardWidgetState extends State<BoardWidget> {
           type,
         ),
         fit: BoxFit.contain,
+        gaplessPlayback: true,
+        filterQuality: FilterQuality.medium,
         errorBuilder:
             (context, error, stackTrace) {
           return CustomPaint(

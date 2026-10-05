@@ -2,23 +2,16 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 
-/// أصوات Chess2 الجديدة.
-/// الملفات القديمة WAV أزيلت واستُبدلت بالكامل بالأصوات MP3 التي
-/// زوّدنا بها المستخدم.
+/// أصوات الشطرنج (MP3).
+///
+/// تستخدم [AudioPool] المخصصة للمؤثرات القصيرة: تُحمَّل الأصوات مرة
+/// واحدة وتُشغَّل فورًا عند كل نقلة بدون stop/seek/resume (التي كانت
+/// تتأخر أو تفشل في تشغيل الصوت ثانيةً على بعض الأجهزة) ويمكن تداخل
+/// صوتين (نقلة + كش) دون قطع أحدهما الآخر.
 class SoundService {
   SoundService() {
     _init();
   }
-
-  final Map<String, AudioPlayer> _players = {
-    'move': AudioPlayer(playerId: 'chess2_move'),
-    'capture': AudioPlayer(playerId: 'chess2_take'),
-    'check': AudioPlayer(playerId: 'chess2_snap'),
-    'checkmate': AudioPlayer(playerId: 'chess2_snap_mate'),
-    'castle': AudioPlayer(playerId: 'chess2_swap'),
-    'promotion': AudioPlayer(playerId: 'chess2_swap_promotion'),
-    'game_over': AudioPlayer(playerId: 'chess2_rewind'),
-  };
 
   static const Map<String, String> _files = {
     'move': 'sounds/move.mp3',
@@ -30,40 +23,53 @@ class SoundService {
     'game_over': 'sounds/rewind.mp3',
   };
 
+  final Map<String, AudioPool> _pools = <String, AudioPool>{};
+
   bool enabled = true;
+  bool _disposed = false;
   Future<void>? _ready;
 
   Future<void> _init() {
-    _ready ??= _preparePlayers();
+    _ready ??= _preparePools();
     return _ready!;
   }
 
-  Future<void> _preparePlayers() async {
-    for (final entry in _players.entries) {
+  Future<void> _preparePools() async {
+    // ملفات متكررة (check/checkmate، castle/promotion) تشارك Pool واحدة.
+    final byPath = <String, AudioPool>{};
+
+    for (final entry in _files.entries) {
+      if (_disposed) return;
+
       try {
-        final player = entry.value;
-        await player.setReleaseMode(ReleaseMode.stop);
-        await player.setSource(AssetSource(_files[entry.key]!));
+        var pool = byPath[entry.value];
+
+        pool ??= await AudioPool.createFromAsset(
+          path: entry.value,
+          maxPlayers: 3,
+        );
+
+        byPath[entry.value] = pool;
+        _pools[entry.key] = pool;
       } catch (_) {
         // يبقى التطبيق يعمل حتى إذا تعذر تحميل مؤثر صوتي.
       }
     }
   }
 
-  /// يبدأ الصوت فورًا بعد تجهيز المصدر. لا نستخدم await في مسار
-  /// النقلة نفسها حتى لا يتأخر تحديث الرقعة بسبب الصوت.
+  /// لا نستخدم await في مسار النقلة حتى لا يتأخر تحديث الرقعة.
   void _playNow(String kind) {
-    if (!enabled) return;
-
-    final player = _players[kind];
-    if (player == null) return;
+    if (!enabled || _disposed) return;
 
     () async {
       try {
-        await _ready;
-        await player.stop();
-        await player.seek(Duration.zero);
-        unawaited(player.resume());
+        await _init();
+
+        final pool = _pools[kind] ?? _pools['move'];
+
+        if (pool == null || _disposed) return;
+
+        unawaited(pool.start());
       } catch (_) {}
     }();
   }
@@ -77,7 +83,7 @@ class SoundService {
   void playGameOver() => _playNow('game_over');
 
   void playKind(String kind) {
-    if (_players.containsKey(kind)) {
+    if (_files.containsKey(kind)) {
       _playNow(kind);
     } else {
       _playNow('move');
@@ -85,8 +91,14 @@ class SoundService {
   }
 
   void dispose() {
-    for (final player in _players.values) {
-      player.dispose();
+    _disposed = true;
+
+    final unique = _pools.values.toSet();
+
+    _pools.clear();
+
+    for (final pool in unique) {
+      unawaited(pool.dispose());
     }
   }
 }
