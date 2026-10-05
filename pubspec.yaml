@@ -38,6 +38,9 @@ flutter:
     # Source logos (optional: chesscom.png, lichess.png)
     - assets/logos/
 
+    # Lichess puzzles (brilliant / checkmate) - built by tool/build_puzzles.py
+    - assets/puzzles/
+
     # Chess boards
     - assets/chessground/boards/
 
