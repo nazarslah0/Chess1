@@ -199,9 +199,9 @@ void main() {
       expect(brilliant(gap: null), isFalse);
     });
 
-    test('فكرة تكتيكية بلا تضحية تتطلب فجوة كبيرة جدًا', () {
+    test('فكرة تكتيكية بلا تضحية ليست Brilliant', () {
       expect(brilliant(sacrifice: false, tactical: true, gap: 120), isFalse);
-      expect(brilliant(sacrifice: false, tactical: true, gap: 200), isTrue);
+      expect(brilliant(sacrifice: false, tactical: true, gap: 200), isFalse);
     });
 
     test('البيدق والملك لا يكونان Brilliant', () {
