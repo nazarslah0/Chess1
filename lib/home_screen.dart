@@ -126,23 +126,19 @@ class _MenuButton extends StatelessWidget {
   final String label;
   final String subtitle;
   final VoidCallback onTap;
-  final bool comingSoon;
 
   const _MenuButton({
     required this.icon,
     required this.label,
     required this.subtitle,
     required this.onTap,
-    this.comingSoon = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return Opacity(
-      opacity: comingSoon ? 0.6 : 1,
-      child: Material(
+    return Material(
       color: scheme.primary.withValues(alpha: 0.06),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
@@ -181,29 +177,6 @@ class _MenuButton extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (comingSoon) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: scheme.primary
-                                  .withValues(alpha: 0.15),
-                              borderRadius:
-                                  BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              'قريبًا',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: scheme.primary,
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -222,7 +195,6 @@ class _MenuButton extends StatelessWidget {
           ),
         ),
       ),
-    ),
     );
   }
 }
