@@ -31,6 +31,7 @@ flutter:
     - assets/pieces/flat/
     - assets/pieces/wood/
     - assets/pieces/Chesscom/
+    - assets/pieces/alpha/
 
     # Maia weights (lc0 .pb.gz) - see assets/maia/README.txt
     - assets/maia/
