@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'main.dart' show PositionAnalyzerScreen;
 import 'bot_play_screen.dart';
+import 'lichess_puzzles.dart' show PuzzleCategory;
+import 'lichess_puzzles_screen.dart';
 import 'my_games_screen.dart';
 import 'puzzles_screen.dart';
 import 'settings_screen.dart';
@@ -16,14 +18,6 @@ class HomeScreen extends StatelessWidget {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => screen),
     );
-  }
-
-  void _showSoon(BuildContext context) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(content: Text('قريبًا — نعمل عليها لاحقًا')),
-      );
   }
 
   @override
@@ -91,16 +85,24 @@ class HomeScreen extends StatelessWidget {
                     icon: Icons.auto_awesome_rounded,
                     label: 'ألغاز بريليانت',
                     subtitle: 'اعثر على النقلة البريليانت',
-                    comingSoon: true,
-                    onTap: () => _showSoon(context),
+                    onTap: () => _open(
+                      context,
+                      const LichessPuzzlesScreen(
+                        category: PuzzleCategory.brilliant,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 14),
                   _MenuButton(
                     icon: Icons.flag_rounded,
                     label: 'ألغاز جيك ميت',
                     subtitle: 'أنهِ المباراة بكش مات',
-                    comingSoon: true,
-                    onTap: () => _showSoon(context),
+                    onTap: () => _open(
+                      context,
+                      const LichessPuzzlesScreen(
+                        category: PuzzleCategory.mate,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 14),
                   _MenuButton(
