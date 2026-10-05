@@ -1,0 +1,49 @@
+name: chess_analyzer
+description: "Chess position analyzer with a real Stockfish 19 engine."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.9.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.9
+  chess: ^0.8.1
+  audioplayers: ^6.1.0
+  http: ^1.2.2
+  shared_preferences: ^2.5.3
+  path_provider: ^2.1.5
+  lc0: ^0.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    # Chess pieces
+    - assets/pieces/classic/
+    - assets/pieces/flat/
+    - assets/pieces/wood/
+    - assets/pieces/Chesscom/
+
+    # Maia weights (lc0 .pb.gz) - see assets/maia/README.txt
+    - assets/maia/
+
+    # Source logos (optional: chesscom.png, lichess.png)
+    - assets/logos/
+
+    # Chess boards
+    - assets/chessground/boards/
+
+    # New chess sounds only
+    - assets/sounds/move.mp3
+    - assets/sounds/take.mp3
+    - assets/sounds/snap.mp3
+    - assets/sounds/swap.mp3
+    - assets/sounds/rewind.mp3
