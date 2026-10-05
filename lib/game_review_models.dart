@@ -257,12 +257,14 @@ MoveQuality classifyMove({
     return MoveQuality.miss;
   }
 
-  final wpBefore = winPercentWhite(cpBeforeWhite);
-  final wpAfter = winPercentWhite(cpAfterWhite);
+  final winLoss = expectedPointLoss(
+        beforeWhiteCp: cpBeforeWhite,
+        afterWhiteCp: cpAfterWhite,
+        color: color,
+      ) *
+      100.0;
 
-  final winLoss = color == 'w'
-      ? wpBefore - wpAfter
-      : wpAfter - wpBefore;
+  final wpBefore = winPercentWhite(cpBeforeWhite);
 
   if (wasBestMove || winLoss <= 0) {
     return MoveQuality.best;
@@ -335,6 +337,24 @@ MoveQuality applyTablebaseClassification({
 
 /// يحوّل تقييمًا بمنظور الأبيض (سنتيبون) إلى احتمال فوز الأبيض
 /// (0-100).
+/// Expected Points (0..1) from the mover's perspective.
+/// This is the normalized result expectation used by the move classifier.
+double expectedPointsFromCp(int cpWhite, {String perspective = 'w'}) {
+  final wp = winPercentWhite(cpWhite) / 100.0;
+  return perspective == 'w' ? wp : 1.0 - wp;
+}
+
+/// Expected Points loss for one move, measured from the player who moved.
+double expectedPointLoss({
+  required int beforeWhiteCp,
+  required int afterWhiteCp,
+  required String color,
+}) {
+  final before = expectedPointsFromCp(beforeWhiteCp, perspective: color);
+  final after = expectedPointsFromCp(afterWhiteCp, perspective: color);
+  return (before - after).clamp(0.0, 1.0).toDouble();
+}
+
 double winPercentWhite(int cpWhite) {
   if (cpWhite >= 100000) return 100.0;
   if (cpWhite <= -100000) return 0.0;
@@ -564,13 +584,25 @@ bool isBrilliantCandidate({
     return false;
   }
 
-  // وضعية محسومة أصلًا (فوز مضمون تقريبًا أو خسارة): لا قيمة
-  // لـ"رائعة" فيها.
-  if (cpBeforeMover.abs() >= 600) {
+  // وضعية محسومة أصلًا: لا نمنح Brilliant لمجرد وجود نقلة جميلة
+  // في وضعية فائزة/خاسرة أصلًا. نستخدم Win% بدل حد CP ثابت.
+  final moverWinBefore = cpBeforeMover >= 100000
+      ? 100.0
+      : cpBeforeMover <= -100000
+          ? 0.0
+          : winPercentWhite(cpBeforeMover);
+
+  if (moverWinBefore < 8.0 || moverWinBefore > 92.0) {
     return false;
   }
 
   if (!positionHoldsAfter) {
+    return false;
+  }
+
+  // Brilliant هنا يجب أن تكون تضحية حقيقية مؤكدة. لا نستخدم
+  // "فكرة تكتيكية بلا تضحية" كبديل، لتقليل False Positives.
+  if (!isSacrifice) {
     return false;
   }
 
@@ -579,21 +611,9 @@ bool isBrilliantCandidate({
     return false;
   }
 
-  if (isSacrifice) {
-    // يجب أن تكون هذه النقلة أفضل بوضوح من البديل التالي — أي أنها
-    // لم تكن مجرد واحدة من عدة خيارات متكافئة، بل الحل الوحيد
-    // القوي فعلًا في هذه الوضعية.
-    return secondBestGapCp >= 80 &&
-        movingPieceType != 'P';
-  }
+  // يجب أن تكون أفضل بوضوح من البديل التالي.
+  return secondBestGapCp >= 80 && movingPieceType != 'P';
 
-  // بدون تضحية: تُقبل فقط فكرة تكتيكية واضحة بفارق كبير جدًا عن
-  // البديل التالي.
-  if (isTacticalIdea) {
-    return secondBestGapCp >= 150 && movingPieceType != 'P';
-  }
-
-  return false;
 }
 
 

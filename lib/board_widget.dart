@@ -31,7 +31,7 @@ class BoardBadge {
   });
 }
 
-class BoardWidget extends StatelessWidget {
+class BoardWidget extends StatefulWidget {
   final GameState state;
   final BoardTheme boardTheme;
   final PieceTheme pieceTheme;
@@ -76,7 +76,25 @@ class BoardWidget extends StatelessWidget {
   static const String files = 'abcdefgh';
 
   @override
+  State<BoardWidget> createState() => _BoardWidgetState();
+}
+
+class _BoardWidgetState extends State<BoardWidget> {
+  String? _cachedFen;
+  Map<String, String> _cachedBoard = const <String, String>{};
+
+  Map<String, String> _boardForFen(String fen) {
+    final boardFen = fen.split(' ').isNotEmpty ? fen.split(' ').first : '';
+    if (_cachedFen != boardFen) {
+      _cachedFen = boardFen;
+      _cachedBoard = GameState.parseBoard(boardFen);
+    }
+    return _cachedBoard;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final state = widget.state;
     final fen = state.currentFen;
 
     final fenParts = fen.split(' ');
@@ -84,19 +102,19 @@ class BoardWidget extends StatelessWidget {
     final boardFen =
         fenParts.isNotEmpty ? fenParts.first : '';
 
-    final board = GameState.parseBoard(boardFen);
+    final board = _boardForFen(fen);
 
     final flipped = state.flipped;
 
-    final effectiveArrows = arrows.isNotEmpty
-        ? arrows
-        : (_validSquare(arrowFrom) &&
-                _validSquare(arrowTo) &&
-                arrowFrom != arrowTo)
+    final effectiveArrows = widget.arrows.isNotEmpty
+        ? widget.arrows
+        : (_validSquare(widget.arrowFrom) &&
+                _validSquare(widget.arrowTo) &&
+                widget.arrowFrom != widget.arrowTo)
             ? [
                 BoardArrow(
-                  from: arrowFrom!,
-                  to: arrowTo!,
+                  from: widget.arrowFrom!,
+                  to: widget.arrowTo!,
                 ),
               ]
             : const <BoardArrow>[];
@@ -144,8 +162,9 @@ class BoardWidget extends StatelessWidget {
       return board[square] == '${turn}K';
     }
 
-    return AspectRatio(
-      aspectRatio: 1,
+    return RepaintBoundary(
+      child: AspectRatio(
+        aspectRatio: 1,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final size = math.min(
@@ -173,7 +192,7 @@ class BoardWidget extends StatelessWidget {
                   Container(
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: boardTheme.border,
+                        color: widget.boardTheme.border,
                         width: 2,
                       ),
                       borderRadius:
@@ -232,7 +251,7 @@ class BoardWidget extends StatelessWidget {
                                   state.selectedSquare;
 
                           final isTarget =
-                              targets.contains(square);
+                              widget.targets.contains(square);
 
                           final isCheck =
                               isKingInCheck(square);
@@ -243,12 +262,12 @@ class BoardWidget extends StatelessWidget {
                           return DragTarget<String>(
                             onWillAcceptWithDetails:
                                 (details) =>
-                                    interactive &&
+                                    widget.interactive &&
                                     state.mode ==
                                         'play',
                             onAcceptWithDetails:
                                 (details) {
-                              onTap(square);
+                              widget.onTap(square);
                             },
                             builder: (
                               context,
@@ -259,11 +278,11 @@ class BoardWidget extends StatelessWidget {
                             behavior:
                                 HitTestBehavior.opaque,
                             onTap: () =>
-                                onTap(square),
+                                widget.onTap(square),
                             child: Container(
                               color: isDark
-                                  ? boardTheme.dark
-                                  : boardTheme.light,
+                                  ? widget.boardTheme.dark
+                                  : widget.boardTheme.light,
                               child: Stack(
                                 fit: StackFit.expand,
                                 children: [
@@ -271,7 +290,7 @@ class BoardWidget extends StatelessWidget {
                                   if (isLastMove)
                                     Positioned.fill(
                                       child: Container(
-                                        color: boardTheme
+                                        color: widget.boardTheme
                                             .lastMove,
                                       ),
                                     ),
@@ -280,7 +299,7 @@ class BoardWidget extends StatelessWidget {
                                   if (isSelected)
                                     Positioned.fill(
                                       child: Container(
-                                        color: boardTheme
+                                        color: widget.boardTheme
                                             .selected,
                                       ),
                                     ),
@@ -293,7 +312,7 @@ class BoardWidget extends StatelessWidget {
                                             BoxDecoration(
                                           border:
                                               Border.all(
-                                            color: boardTheme
+                                            color: widget.boardTheme
                                                 .checkColor,
                                             width: 3,
                                           ),
@@ -314,7 +333,7 @@ class BoardWidget extends StatelessWidget {
                                         padding:
                                             const EdgeInsets
                                                 .all(3),
-                                        child: interactive &&
+                                        child: widget.interactive &&
                                                 state
                                                         .mode ==
                                                     'play'
@@ -372,7 +391,7 @@ class BoardWidget extends StatelessWidget {
                                             0.18,
                                         decoration:
                                             BoxDecoration(
-                                          color: boardTheme
+                                          color: widget.boardTheme
                                               .target,
                                           shape:
                                               BoxShape.circle,
@@ -382,7 +401,7 @@ class BoardWidget extends StatelessWidget {
 
                                   // أرقام الصفوف
                                   if (col == 0 &&
-                                      showCoordinates)
+                                      widget.showCoordinates)
                                     Positioned(
                                       top: 2,
                                       left: 3,
@@ -394,7 +413,7 @@ class BoardWidget extends StatelessWidget {
                                           fontWeight:
                                               FontWeight
                                                   .bold,
-                                          color: boardTheme
+                                          color: widget.boardTheme
                                               .border
                                               .withValues(alpha: 
                                                   0.75),
@@ -404,7 +423,7 @@ class BoardWidget extends StatelessWidget {
 
                                   // أسماء الأعمدة
                                   if (row == 7 &&
-                                      showCoordinates)
+                                      widget.showCoordinates)
                                     Positioned(
                                       bottom: 1,
                                       right: 3,
@@ -416,7 +435,7 @@ class BoardWidget extends StatelessWidget {
                                           fontWeight:
                                               FontWeight
                                                   .bold,
-                                          color: boardTheme
+                                          color: widget.boardTheme
                                               .border
                                               .withValues(alpha: 
                                                   0.75),
@@ -459,7 +478,7 @@ class BoardWidget extends StatelessWidget {
                   // علامات جودة النقلة (الزاوية العلوية اليمنى للقطعة)
                   // ==================================================
 
-                  for (final badge in badges)
+                  for (final badge in widget.badges)
                     if (_validSquare(badge.square))
                       _badgePositioned(
                         badge: badge,
@@ -473,6 +492,7 @@ class BoardWidget extends StatelessWidget {
             ),
           );
         },
+      ),
       ),
     );
   }
@@ -522,9 +542,9 @@ class BoardWidget extends StatelessWidget {
     final color = piece.substring(0, 1);
     final type = piece.substring(1, 2);
 
-    if (pieceTheme.assetFolder != null) {
+    if (widget.pieceTheme.assetFolder != null) {
       return Image.asset(
-        pieceTheme.assetPath(
+        widget.pieceTheme.assetPath(
           color,
           type,
         ),
@@ -535,7 +555,7 @@ class BoardWidget extends StatelessWidget {
             painter: PiecePainter(
               type,
               color,
-              pieceTheme,
+              widget.pieceTheme,
             ),
           );
         },
@@ -546,7 +566,7 @@ class BoardWidget extends StatelessWidget {
       painter: PiecePainter(
         type,
         color,
-        pieceTheme,
+        widget.pieceTheme,
       ),
     );
   }

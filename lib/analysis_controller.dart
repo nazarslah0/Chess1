@@ -362,7 +362,22 @@ class GameAnalysisController extends ChangeNotifier {
   /// النقلة الوحيدة القوية فعلًا؟) ولاختيار "أفضل نقلة في
   /// المباراة" بمعيار حقيقي بدل تخمين. التكلفة الإضافية
   /// محدودة (نفس البحث، سطر PV إضافي) وليست تحليلًا مضاعفًا.
-  Future<_Eval> _evaluatePosition(String fen, {int? ply}) {
+  Future<_Eval> _evaluatePosition(String fen, {int? ply}) =>
+      _evaluatePositionWithSettings(
+        fen,
+        depth: depth,
+        multiPv: 2,
+        ply: ply,
+      );
+
+  /// تحليل مستقل قابل للضبط. يُستخدم للتحليل العادي وللتأكيد العميق
+  /// للمرشحين لـBrilliant دون تغيير إعدادات المباراة الأساسية.
+  Future<_Eval> _evaluatePositionWithSettings(
+    String fen, {
+    required int depth,
+    required int multiPv,
+    int? ply,
+  }) {
     final completer = Completer<_Eval>();
 
     double lastPawns = 0;
@@ -375,7 +390,6 @@ class GameAnalysisController extends ChangeNotifier {
     _engine.onBestMove = null;
 
     _engine.onInfoFor = (request, multipv, line) {
-      // حماية إضافية: نتيجة تخص وضعية أخرى لا تُستخدم أبدًا.
       if (request.fen.trim() != fen.trim()) return;
 
       if (multipv == 1) {
@@ -412,7 +426,7 @@ class GameAnalysisController extends ChangeNotifier {
     _engine.analyze(
       fen,
       depth: depth,
-      multiPv: 2,
+      multiPv: multiPv,
       ply: ply,
     );
 
@@ -861,7 +875,7 @@ class GameAnalysisController extends ChangeNotifier {
       _moveGapCp[i] = gapCp;
 
       if (quality == MoveQuality.best) {
-        final upgraded = _tryUpgradeToBrilliant(
+        final upgraded = await _tryUpgradeToBrilliant(
           plyIndex: i,
           ply: p,
           baseQuality: quality,
@@ -961,14 +975,14 @@ class GameAnalysisController extends ChangeNotifier {
   ///
   /// إن لم يتوفر PV كافٍ (أو انتهى في منتصف تبادل) نعود للفحص
   /// القديم: الخصم يستطيع أخذ القطعة فورًا بربح مادي ظاهري.
-  MoveQuality? _tryUpgradeToBrilliant({
+  Future<MoveQuality?> _tryUpgradeToBrilliant({
     required int plyIndex,
     required PgnPly ply,
     required MoveQuality baseQuality,
     required int cpBeforeMover,
     required int cpAfterMover,
     required int? secondBestGapCp,
-  }) {
+  }) async {
     try {
       final boardBefore = GameState.parseBoard(
         ply.fenBefore.split(' ').first,
@@ -976,18 +990,18 @@ class GameAnalysisController extends ChangeNotifier {
 
       final movingPiece = boardBefore[ply.from];
 
-      if (movingPiece == null ||
-          movingPiece.length != 2) {
+      if (movingPiece == null || movingPiece.length != 2) {
         return null;
       }
 
       final movingType = movingPiece[1];
 
-      if (movingType == 'P' ||
-          movingType == 'K') {
+      if (movingType == 'P' || movingType == 'K') {
         return null;
       }
 
+      // مرحلة أولى رخيصة: ابحث عن تضحية/فكرة تكتيكية واضحة من التحليل
+      // الأساسي. لا نشغّل العمق العالي إلا إذا أصبحت النقلة مرشحًا حقيقيًا.
       final pvAfter = plyIndex + 1 < _pvUci.length
           ? _pvUci[plyIndex + 1]
           : const <String>[];
@@ -1003,11 +1017,9 @@ class GameAnalysisController extends ChangeNotifier {
             )
           : null;
 
-      bool genuineSacrifice;
+      bool genuineSacrifice = false;
 
       if (sim != null && sim.quiet) {
-        // تضحية حقيقية: خسارة مادة فعلية (>= 2 نقطة) في نهاية الخط،
-        // مع بقاء التقييم جيدًا (ليست وضعية خاسرة).
         genuineSacrifice =
             sim.deficit >= 2 && cpAfterMover >= -50;
       } else {
@@ -1015,8 +1027,6 @@ class GameAnalysisController extends ChangeNotifier {
             _legacySacrificeCheck(ply, boardBefore, movingType);
       }
 
-      // فكرة تكتيكية بدون تضحية: نقلة هادئة (ليست أخذًا) يربح بها
-      // اللاعب مادة بالقوة في خط المحرك.
       final tacticalIdea = !genuineSacrifice &&
           !ply.isCapture &&
           sim != null &&
@@ -1027,17 +1037,87 @@ class GameAnalysisController extends ChangeNotifier {
         return null;
       }
 
-      // استرداد بديهي: أخذ مباشر على نفس المربع الذي أُخذ للتو.
+      // استرداد بديهي: لا نمنحه Brilliant حتى لو كان أفضل محركيًا.
       final obviousRecapture = ply.isCapture &&
           plyIndex > 0 &&
           _plies[plyIndex - 1].isCapture &&
           _plies[plyIndex - 1].to == ply.to;
 
+      if (obviousRecapture) return null;
+
+      // تأكيد عميق مستقل. هذا الجزء لا يعمل إلا للمرشحين الحقيقيين.
+      final deepDepth = math.max(depth + 8, 22);
+      final deep = await _evaluatePositionWithSettings(
+        ply.fenBefore,
+        depth: deepDepth,
+        multiPv: 3,
+        ply: plyIndex,
+      );
+
+      final playedUci = plyUci(plyIndex);
+      if (deep.bestUci.isEmpty ||
+          !isSameUciMove(deep.bestUci, playedUci)) {
+        return null;
+      }
+
+      final deepBestCp = cpFromWhitePerspective(
+        deep.pawns,
+        deep.label,
+      );
+      final deepSecond = deep.secondBestCpWhite;
+      final deepSign = ply.color == 'w' ? 1 : -1;
+      final deepGap = deepSecond == null
+          ? null
+          : (deepBestCp * deepSign) - (deepSecond * deepSign);
+
+      if (deepGap == null || deepGap < 60) {
+        return null;
+      }
+
+      // نؤكد الوضع بعد النقلة أيضًا بعمق مرتفع، لأن تقييم العمق الأساسي
+      // قد يبدو جيدًا بينما يكشف البحث الأعمق دفاعًا يفنّد التضحية.
+      final deepAfter = await _evaluatePositionWithSettings(
+        ply.fenAfter,
+        depth: deepDepth,
+        multiPv: 1,
+        ply: plyIndex + 1,
+      );
+      final deepAfterCpWhite = cpFromWhitePerspective(
+        deepAfter.pawns,
+        deepAfter.label,
+      );
+      final deepAfterCpMover = deepAfterCpWhite * deepSign;
+
+      if (deepAfterCpMover < -50) {
+        return null;
+      }
+
+      // إعادة فحص التعويض باستخدام PV العميق بعد النقلة إن توفر.
+      final confirmedPv = deepAfter.pv.isNotEmpty
+          ? deepAfter.pv
+          : pvAfter;
+      if (confirmedPv.length >= 3) {
+        final deepSim = simulatePvMaterial(
+          fenBefore: ply.fenBefore,
+          from: ply.from,
+          to: ply.to,
+          promotion: ply.promotion,
+          moverColor: ply.color,
+          pvAfterUci: confirmedPv,
+        );
+
+        if (genuineSacrifice &&
+            deepSim != null &&
+            deepSim.quiet &&
+            deepSim.deficit < 2) {
+          return null;
+        }
+      }
+
       final beforeGame = ch.Chess();
       beforeGame.load(ply.fenBefore);
 
       var legalCount = 0;
-
       try {
         legalCount = beforeGame.moves().length;
       } catch (_) {
@@ -1050,10 +1130,10 @@ class GameAnalysisController extends ChangeNotifier {
         cpBeforeMover: cpBeforeMover,
         onlyLegalMove: legalCount <= 1,
         movingPieceType: movingType,
-        secondBestGapCp: secondBestGapCp,
-        isObviousRecapture: obviousRecapture,
+        secondBestGapCp: deepGap,
+        isObviousRecapture: false,
         isTacticalIdea: tacticalIdea,
-        positionHoldsAfter: cpAfterMover >= -50,
+        positionHoldsAfter: deepAfterCpMover >= -50,
       );
 
       return brilliant ? MoveQuality.brilliant : null;
@@ -1232,6 +1312,19 @@ class GameAnalysisController extends ChangeNotifier {
           evaluationLossCp: lossAt(i),
           evaluationBeforeWhiteCp: beforeWhite,
           evaluationAfterWhiteCp: afterWhite,
+          expectedPointsBefore: expectedPointsFromCp(
+            beforeWhite,
+            perspective: p.color,
+          ),
+          expectedPointsAfter: expectedPointsFromCp(
+            afterWhite,
+            perspective: p.color,
+          ),
+          expectedPointsLoss: expectedPointLoss(
+            beforeWhiteCp: beforeWhite,
+            afterWhiteCp: afterWhite,
+            color: p.color,
+          ),
           bestMoveSan: bestSan,
           bestMoveUci: bestUci,
           principalVariationUci:

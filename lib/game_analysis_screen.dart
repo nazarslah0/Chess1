@@ -105,6 +105,8 @@ class _GameAnalysisScreenState
   }
 
   final GameState _boardState = GameState();
+  // مفتاح ثابت يمنع Flutter من تبديل عنصر الرقعة عند تحديثات التحليل.
+  final GlobalKey _analysisBoardKey = GlobalKey();
 
   late final TabController _tabController =
       TabController(length: 5, vsync: this);
@@ -1534,6 +1536,7 @@ class _GameAnalysisScreenState
         }
       },
       child: BoardWidget(
+        key: _analysisBoardKey,
         state: _boardState,
         boardTheme: AppSettings.instance.boardTheme,
         pieceTheme: AppSettings.instance.pieceTheme,

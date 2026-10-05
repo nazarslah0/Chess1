@@ -5,7 +5,7 @@ import 'lichess_data_service.dart' show BookMoveInfo;
 /// قواعد التصنيف أو تخطيط البيانات المحفوظة، فلا تُخلط النتائج
 /// القديمة بالجديدة: مفتاح الكاش يتضمنه، وأي ملف محفوظ بإصدار آخر
 /// يُتجاهل.
-const int kAnalysisVersion = 2;
+const int kAnalysisVersion = 3;
 
 /// نسخة المحرك المسجَّلة مع التحليل.
 const String kEngineVersion = 'stockfish19';
@@ -108,6 +108,11 @@ class MoveAnalysisResult {
   final int evaluationBeforeWhiteCp;
   final int evaluationAfterWhiteCp;
 
+  /// Expected Points من منظور اللاعب الذي نفّذ النقلة.
+  final double expectedPointsBefore;
+  final double expectedPointsAfter;
+  final double expectedPointsLoss;
+
   final String bestMoveSan;
   final String bestMoveUci;
 
@@ -186,6 +191,9 @@ class MoveAnalysisResult {
     this.tablebaseVerdict,
     this.evaluationBeforeWhiteCp = 0,
     this.evaluationAfterWhiteCp = 0,
+    this.expectedPointsBefore = 0.0,
+    this.expectedPointsAfter = 0.0,
+    this.expectedPointsLoss = 0.0,
     this.bestMoveGapCp,
     this.tablebaseWdlBeforeWhite,
     this.tablebaseWdlAfterWhite,
@@ -214,6 +222,9 @@ class MoveAnalysisResult {
         evaluationLossCp: evaluationLossCp,
         evaluationBeforeWhiteCp: evaluationBeforeWhiteCp,
         evaluationAfterWhiteCp: evaluationAfterWhiteCp,
+        expectedPointsBefore: expectedPointsBefore,
+        expectedPointsAfter: expectedPointsAfter,
+        expectedPointsLoss: expectedPointsLoss,
         bestMoveSan: bestMoveSan,
         bestMoveUci: bestMoveUci,
         principalVariationUci: principalVariationUci,
@@ -266,6 +277,9 @@ class MoveAnalysisResult {
         'loss': evaluationLossCp,
         'ebw': evaluationBeforeWhiteCp,
         'eaw': evaluationAfterWhiteCp,
+        'epb': expectedPointsBefore,
+        'epa': expectedPointsAfter,
+        'epl': expectedPointsLoss,
         'bsan': bestMoveSan,
         'buci': bestMoveUci,
         'pv': principalVariationUci,
@@ -307,6 +321,9 @@ class MoveAnalysisResult {
       evaluationLossCp: _asInt(m['loss']) ?? 0,
       evaluationBeforeWhiteCp: _asInt(m['ebw']) ?? 0,
       evaluationAfterWhiteCp: _asInt(m['eaw']) ?? 0,
+      expectedPointsBefore: _asDouble(m['epb']) ?? 0.0,
+      expectedPointsAfter: _asDouble(m['epa']) ?? 0.0,
+      expectedPointsLoss: _asDouble(m['epl']) ?? 0.0,
       bestMoveSan: m['bsan']?.toString() ?? '',
       bestMoveUci: m['buci']?.toString() ?? '',
       principalVariationUci:
