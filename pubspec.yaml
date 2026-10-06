@@ -48,6 +48,9 @@ flutter:
     # Chess boards
     - assets/chessground/boards/
 
+    # Play vs bot premium hero
+    - assets/bot/
+
     # New chess sounds only
     - assets/sounds/move.mp3
     - assets/sounds/take.mp3
