@@ -451,7 +451,7 @@ class _GameAnalysisScreenState
 
     _boardState.loadFen(_fens[clamped]);
 
-    this._scrollStripToCurrent();
+    _scrollStripToCurrent();
   }
 
   /// ينتقل إلى النقلة رقم [index] ويحوّل التبويب إلى "نظرة
@@ -588,8 +588,8 @@ class _GameAnalysisScreenState
           backgroundColor: _bg,
           body: SafeArea(
             child: _analyzing
-                ? this._buildAnalyzingView()
-                : this._buildSummaryView(),
+                ? _buildAnalyzingView()
+                : _buildSummaryView(),
           ),
         ),
       );
@@ -616,20 +616,20 @@ class _GameAnalysisScreenState
 
               return Column(
                 children: [
-                  this._buildTopBar(),
-                  this._buildMoveStrip(),
-                  if (_showEval) this._buildEvalStrip(),
-                  this._buildPlayerBar(topColor),
+                  _buildTopBar(),
+                  _buildMoveStrip(),
+                  if (_showEval) _buildEvalStrip(),
+                  _buildPlayerBar(topColor),
                   Center(
                     child: SizedBox(
                       width: side,
                       height: side,
-                      child: this._buildBoard(),
+                      child: _buildBoard(),
                     ),
                   ),
-                  this._buildPlayerBar(bottomColor),
-                  Expanded(child: this._buildInfoPanel()),
-                  this._buildBottomBar(),
+                  _buildPlayerBar(bottomColor),
+                  Expanded(child: _buildInfoPanel()),
+                  _buildBottomBar(),
                 ],
               );
             },

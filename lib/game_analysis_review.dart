@@ -286,7 +286,7 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
     final active = toMove == color;
 
     final acc = _qualities.isNotEmpty
-        ? this._accuracyBySide[color]
+        ? _accuracyBySide[color]
         : null;
 
     final title = (elo != null && elo.isNotEmpty && elo != '?')
@@ -439,7 +439,7 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
               ),
             ),
           if (!_analyzing && _plies.isNotEmpty)
-            this._buildCurrentMoveInfo(),
+            _buildCurrentMoveInfo(),
         ],
       ),
     );
@@ -664,11 +664,11 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
                       child: TabBarView(
                         controller: _tabController,
                         children: [
-                          this._buildSummaryTab(),
-                          this._buildReportTab(),
-                          this._buildMovesTab(),
-                          this._buildMistakesTab(),
-                          this._buildCriticalMomentsTab(),
+                          _buildSummaryTab(),
+                          _buildReportTab(),
+                          _buildMovesTab(),
+                          _buildMistakesTab(),
+                          _buildCriticalMomentsTab(),
                         ],
                       ),
                     ),

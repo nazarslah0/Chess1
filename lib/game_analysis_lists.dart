@@ -149,7 +149,7 @@ extension _AnalysisListTabs on _GameAnalysisScreenState {
       );
     }
 
-    final counts = this._qualityCounts;
+    final counts = _qualityCounts;
 
     final flagged = <int>[];
 
@@ -261,7 +261,7 @@ extension _AnalysisListTabs on _GameAnalysisScreenState {
       );
     }
 
-    final moments = this._criticalMoments;
+    final moments = _criticalMoments;
 
     if (moments.isEmpty) {
       return const Center(

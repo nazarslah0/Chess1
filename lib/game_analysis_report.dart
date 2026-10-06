@@ -207,8 +207,8 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
   }
 
   Widget _buildAccuracySummary() {
-    final acc = this._accuracyBySide;
-    final acpl = this._acplBySide;
+    final acc = _accuracyBySide;
+    final acpl = _acplBySide;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -286,7 +286,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
   }
 
   Widget _buildPhaseSummary() {
-    final byPhase = this._accuracyByPhase;
+    final byPhase = _accuracyByPhase;
 
     Widget row(String label, String key) {
       final w = byPhase[key]!['w']!;
@@ -367,7 +367,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
       var moveCount = 0;
       var errorCount = 0;
       final phaseIdx = <int>[];
-      final accData = this._accData;
+      final accData = _accData;
 
       for (var i = 0; i < _qualities.length; i++) {
         if (_phaseOf(i) != phase) continue;
@@ -416,13 +416,13 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
       );
     }
 
-    final acc = this._accuracyBySide;
-    final acplBySide = this._acplBySide;
-    final countsBySide = this._qualityCountsBySide;
-    final bestEngineIdx = this._bestEngineMoveIndex;
-    final brilliantIdx = this._brilliantMoveIndex;
-    final worstIdx = this._worstMoveIndex;
-    final missed = this._missedOpportunityIndices;
+    final acc = _accuracyBySide;
+    final acplBySide = _acplBySide;
+    final countsBySide = _qualityCountsBySide;
+    final bestEngineIdx = _bestEngineMoveIndex;
+    final brilliantIdx = _brilliantMoveIndex;
+    final worstIdx = _worstMoveIndex;
+    final missed = _missedOpportunityIndices;
     final opening = _headers['Opening'];
     final eco = _headers['ECO'];
 
@@ -469,7 +469,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
         // --------------------------------------------------
         // ملخص المباراة
         // --------------------------------------------------
-        if (this._gameSummaryText.isNotEmpty) ...[
+        if (_gameSummaryText.isNotEmpty) ...[
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(14),
@@ -492,7 +492,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(this._gameSummaryText),
+                Text(_gameSummaryText),
               ],
             ),
           ),
@@ -608,7 +608,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        if (this._criticalMoments.isEmpty)
+        if (_criticalMoments.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(
               vertical: 8,
@@ -616,8 +616,8 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
             child: Text('لا توجد أخطاء بارزة تُذكر.'),
           )
         else
-          for (final m in this._criticalMoments.take(5))
-            this._mistakeTile(m.plyIndex),
+          for (final m in _criticalMoments.take(5))
+            _mistakeTile(m.plyIndex),
         const SizedBox(height: 16),
 
         // --------------------------------------------------
@@ -639,7 +639,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
             ),
           )
         else
-          for (final i in missed) this._mistakeTile(i),
+          for (final i in missed) _mistakeTile(i),
         const SizedBox(height: 16),
 
         // --------------------------------------------------

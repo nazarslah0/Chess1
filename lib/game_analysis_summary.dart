@@ -51,7 +51,7 @@ extension _AnalysisStageViews on _GameAnalysisScreenState {
             SizedBox(
               width: side,
               height: side,
-              child: this._buildBoard(),
+              child: _buildBoard(),
             ),
             const SizedBox(height: 24),
             Padding(
@@ -88,8 +88,8 @@ extension _AnalysisStageViews on _GameAnalysisScreenState {
   /// صفحة الإحصائيات بعد انتهاء التحليل (على طراز chess.com):
   /// رسم التقييم، الدقة، وعدد النقلات من كل تصنيف لكل لاعب.
   Widget _buildSummaryView() {
-    final acc = this._accuracyBySide;
-    final counts = this._qualityCountsBySide;
+    final acc = _accuracyBySide;
+    final counts = _qualityCountsBySide;
 
     final accW = acc['w'] ?? 0;
     final accB = acc['b'] ?? 0;
