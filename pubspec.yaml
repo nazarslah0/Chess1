@@ -39,6 +39,9 @@ flutter:
     # Source logos (optional: chesscom.png, lichess.png)
     - assets/logos/
 
+    # شاشة «حلل مباراة»: الخلفية وأيقونات المصادر
+    - assets/analyze/
+
     # Lichess puzzles (brilliant / checkmate) - built by tool/build_puzzles.py
     - assets/puzzles/
 
