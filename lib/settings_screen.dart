@@ -110,6 +110,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   },
                 ),
                 const Divider(height: 32),
+                _SmartTrainingSettings(settings: _s),
+                const Divider(height: 32),
                 const Text(
                   'Maia',
                   style: TextStyle(fontWeight: FontWeight.bold),
@@ -168,6 +170,106 @@ class _SettingsScreenState extends State<SettingsScreen> {
           },
         ),
       ),
+    );
+  }
+}
+
+
+class _SmartTrainingSettings extends StatelessWidget {
+  final AppSettings settings;
+
+  const _SmartTrainingSettings({required this.settings});
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: const Color(0x332E8BFF),
+              ),
+              child: const Icon(Icons.school_rounded, color: Color(0xFF62A8FF)),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('التدريب الذكي أثناء المباراة',
+                      style: TextStyle(fontWeight: FontWeight.w800)),
+                  SizedBox(height: 3),
+                  Text('مدرب تفاعلي يعتمد على Stockfish دون كشف الحل مباشرة',
+                      style: TextStyle(fontSize: 12)),
+                ],
+              ),
+            ),
+            Switch(
+              value: settings.smartTraining,
+              onChanged: settings.setSmartTraining,
+            ),
+          ],
+        ),
+        if (settings.smartTraining) ...[
+          const SizedBox(height: 10),
+          _switch('Feedback بعد النقلة', settings.trainingFeedback, settings.setTrainingFeedback),
+          _switch('إظهار سهم التلميح', settings.showHintArrow, settings.setShowHintArrow),
+          _switch('السماح بتجربة أفضل نقلة', settings.allowBestMove, settings.setAllowBestMove),
+          _switch('تحليل تلقائي', settings.autoAnalysis, settings.setAutoAnalysis),
+          _switch('صوت التدريب', settings.trainingSound, settings.setTrainingSound),
+          _switch('اهتزاز خفيف', settings.trainingHaptic, settings.setTrainingHaptic),
+          const SizedBox(height: 8),
+          Text('تأخير ظهور التغذية الراجعة', style: TextStyle(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final ms in const [1000, 2000, 3000])
+                ChoiceChip(
+                  label: Text('${ms ~/ 1000} ثانية'),
+                  selected: settings.feedbackDelayMs == ms,
+                  onSelected: (_) => settings.setFeedbackDelayMs(ms),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text('الحد الأدنى لفقدان التقييم', style: TextStyle(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final cp in const [20, 50, 80, 100])
+                ChoiceChip(
+                  label: Text('$cp cp'),
+                  selected: settings.minEvalLossCp == cp,
+                  onSelected: (_) => settings.setMinEvalLossCp(cp),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'لن يظهر اقتراح تدريبي بسبب فروقات صغيرة مثل +0.42 مقابل +0.48.',
+            style: TextStyle(fontSize: 11, color: muted),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _switch(String title, bool value, ValueChanged<bool> onChanged) {
+    return SwitchListTile.adaptive(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      title: Text(title, style: const TextStyle(fontSize: 14)),
+      value: value,
+      onChanged: onChanged,
     );
   }
 }

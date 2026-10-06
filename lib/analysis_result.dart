@@ -5,7 +5,7 @@ import 'lichess_data_service.dart' show BookMoveInfo;
 /// قواعد التصنيف أو تخطيط البيانات المحفوظة، فلا تُخلط النتائج
 /// القديمة بالجديدة: مفتاح الكاش يتضمنه، وأي ملف محفوظ بإصدار آخر
 /// يُتجاهل.
-const int kAnalysisVersion = 3;
+const int kAnalysisVersion = 4;
 
 /// نسخة المحرك المسجَّلة مع التحليل.
 const String kEngineVersion = 'stockfish19';
@@ -144,6 +144,15 @@ class MoveAnalysisResult {
   /// gain، أو null.
   final String? tablebaseVerdict;
 
+  /// بيانات التدريب الذكي أثناء المباراة. تبقى اختيارية حتى لا تنكسر
+  /// التحليلات القديمة المحفوظة.
+  final String? playedMove;
+  final bool hintShown;
+  final int hintLevel;
+  final bool solutionShown;
+  final bool bestMoveTried;
+  final bool trainingCompleted;
+
   /// الفارق بين أفضل نقلة وثاني أفضل (قرن، منظور اللاعب).
   final int? bestMoveGapCp;
 
@@ -189,6 +198,12 @@ class MoveAnalysisResult {
     this.criticalScore = 0,
     this.criticalKind,
     this.tablebaseVerdict,
+    this.playedMove,
+    this.hintShown = false,
+    this.hintLevel = 0,
+    this.solutionShown = false,
+    this.bestMoveTried = false,
+    this.trainingCompleted = false,
     this.evaluationBeforeWhiteCp = 0,
     this.evaluationAfterWhiteCp = 0,
     this.expectedPointsBefore = 0.0,
@@ -208,6 +223,11 @@ class MoveAnalysisResult {
     bool? isCritical,
     double? criticalScore,
     String? criticalKind,
+    bool? hintShown,
+    int? hintLevel,
+    bool? solutionShown,
+    bool? bestMoveTried,
+    bool? trainingCompleted,
   }) =>
       MoveAnalysisResult(
         ply: ply,
@@ -242,6 +262,12 @@ class MoveAnalysisResult {
         criticalScore: criticalScore ?? this.criticalScore,
         criticalKind: criticalKind ?? this.criticalKind,
         tablebaseVerdict: tablebaseVerdict,
+        playedMove: playedMove,
+        hintShown: hintShown ?? this.hintShown,
+        hintLevel: hintLevel ?? this.hintLevel,
+        solutionShown: solutionShown ?? this.solutionShown,
+        bestMoveTried: bestMoveTried ?? this.bestMoveTried,
+        trainingCompleted: trainingCompleted ?? this.trainingCompleted,
         bestMoveGapCp: bestMoveGapCp,
         tablebaseWdlBeforeWhite: tablebaseWdlBeforeWhite,
         tablebaseWdlAfterWhite: tablebaseWdlAfterWhite,
@@ -293,6 +319,12 @@ class MoveAnalysisResult {
         'cs': criticalScore,
         'ck': criticalKind,
         'tbv': tablebaseVerdict,
+        'tm': playedMove,
+        'th': hintShown,
+        'thl': hintLevel,
+        'ts': solutionShown,
+        'tbt': bestMoveTried,
+        'tc': trainingCompleted,
         'gap': bestMoveGapCp,
         'tbb': tablebaseWdlBeforeWhite,
         'tba': tablebaseWdlAfterWhite,
@@ -342,6 +374,12 @@ class MoveAnalysisResult {
       criticalScore: _asDouble(m['cs']) ?? 0,
       criticalKind: m['ck']?.toString(),
       tablebaseVerdict: m['tbv']?.toString(),
+      playedMove: m['tm']?.toString(),
+      hintShown: m['th'] == true,
+      hintLevel: _asInt(m['thl']) ?? 0,
+      solutionShown: m['ts'] == true,
+      bestMoveTried: m['tbt'] == true,
+      trainingCompleted: m['tc'] == true,
       bestMoveGapCp: _asInt(m['gap']),
       tablebaseWdlBeforeWhite: _asInt(m['tbb']),
       tablebaseWdlAfterWhite: _asInt(m['tba']),
