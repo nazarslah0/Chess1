@@ -45,11 +45,11 @@ flutter:
     # Lichess puzzles (brilliant / checkmate) - built by tool/build_puzzles.py
     - assets/puzzles/
 
+    # صورة الروبوت في شاشة «العب ضد روبوت»
+    - assets/robot/
+
     # Chess boards
     - assets/chessground/boards/
-
-    # Play vs bot premium hero
-    - assets/bot/
 
     # New chess sounds only
     - assets/sounds/move.mp3
