@@ -100,64 +100,68 @@ class BotSetupView extends StatelessWidget {
       children: [
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 520),
+                constraints: const BoxConstraints(maxWidth: 560),
                 child: Column(
                   children: [
-                    _Header(onBack: onBack),
-                    const SizedBox(height: 10),
-                    const _Hero(),
-                    const SizedBox(height: 12),
-                    _SectionCard(
-                      icon: Icons.signal_cellular_alt_rounded,
-                      title: 'مستوى الصعوبة',
-                      subtitle: 'اختر قوة خصمك',
-                      child: _LevelRow(
-                        levels: levels,
-                        selected: selectedLevel,
-                        onTap: onLevel,
+                    // الصورة بعرض الشاشة كاملًا والعنوان فوقها.
+                    _HeroHeader(onBack: onBack),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
+                      child: Column(
+                        children: [
+                          _SectionCard(
+                            icon: Icons.signal_cellular_alt_rounded,
+                            title: 'مستوى الصعوبة',
+                            subtitle: 'اختر قوة خصمك',
+                            child: _LevelRow(
+                              levels: levels,
+                              selected: selectedLevel,
+                              onTap: onLevel,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _SectionCard(
+                            icon: Icons.person_rounded,
+                            title: 'العب بالقطع',
+                            subtitle: 'اختر لون قطعك',
+                            child: _ColorRow(
+                              value: colorChoice,
+                              onTap: onColor,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _SectionCard(
+                            icon: Icons.schedule_rounded,
+                            title: 'وقت التفكير',
+                            subtitle: 'الوقت لكل نقلة',
+                            child: _TimeRow(
+                              value: timeSeconds,
+                              onTap: onTime,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _SectionCard(
+                            icon: Icons.palette_rounded,
+                            title: 'شكل الرقعة',
+                            subtitle: 'اختر شكل رقعة الشطرنج',
+                            child: const _BoardThemeRow(),
+                          ),
+                          if (notice != null) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              notice!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: BotPalette.red,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    _SectionCard(
-                      icon: Icons.person_rounded,
-                      title: 'العب بالقطع',
-                      subtitle: 'اختر لون قطعك',
-                      child: _ColorRow(
-                        value: colorChoice,
-                        onTap: onColor,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _SectionCard(
-                      icon: Icons.schedule_rounded,
-                      title: 'وقت التفكير',
-                      subtitle: 'الوقت لكل نقلة',
-                      child: _TimeRow(
-                        value: timeSeconds,
-                        onTap: onTime,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _SectionCard(
-                      icon: Icons.palette_rounded,
-                      title: 'شكل الرقعة',
-                      subtitle: 'اختر شكل رقعة الشطرنج',
-                      child: const _BoardThemeRow(),
-                    ),
-                    if (notice != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        notice!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: BotPalette.red,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -175,179 +179,205 @@ class BotSetupView extends StatelessWidget {
 }
 
 // ----------------------------------------------------------------
-// الرأس والبطل
+// الصورة + العنوان فوقها (كما في التصميم)
 // ----------------------------------------------------------------
 
-class _Header extends StatelessWidget {
+class _HeroHeader extends StatelessWidget {
   final VoidCallback onBack;
 
-  const _Header({required this.onBack});
+  const _HeroHeader({required this.onBack});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 76,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Material(
-              color: BotPalette.card,
-              shape: const CircleBorder(
-                side: BorderSide(color: BotPalette.cardBorder),
-              ),
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: onBack,
-                child: const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: Icon(
-                    Icons.arrow_back_rounded,
-                    color: BotPalette.text,
-                    size: 22,
-                  ),
-                ),
-              ),
-            ),
+    final topPad = MediaQuery.of(context).padding.top;
+
+    return LayoutBuilder(
+      builder: (context, c) {
+        final w = c.maxWidth;
+        final h = w / 1.5;
+
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(
+            bottom: Radius.circular(30),
           ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.smart_toy_rounded,
-                    color: BotPalette.blue,
-                    size: 30,
-                  ),
-                  const SizedBox(width: 8),
-                  RichText(
-                    text: const TextSpan(
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        color: BotPalette.text,
+          child: SizedBox(
+            width: w,
+            height: h,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  'assets/robot/robot_hero.jpg',
+                  fit: BoxFit.cover,
+                  alignment: const Alignment(-0.45, 0),
+                  errorBuilder: (_, _, _) => const ColoredBox(
+                    color: BotPalette.card,
+                    child: Center(
+                      child: Icon(
+                        Icons.smart_toy_rounded,
+                        size: 72,
+                        color: BotPalette.blue,
                       ),
-                      children: [
-                        TextSpan(text: 'العب ضد '),
-                        TextSpan(
-                          text: 'روبوت',
-                          style: TextStyle(color: BotPalette.gold),
-                        ),
+                    ),
+                  ),
+                ),
+                // تعتيم خفيف أعلى الصورة لوضوح العنوان وأسفلها للدمج.
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      stops: [0.0, 0.32, 0.75, 1.0],
+                      colors: [
+                        Color(0xB30A1226),
+                        Color(0x000A1226),
+                        Color(0x000A1226),
+                        Color(0x990A1226),
                       ],
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'اختر المستوى والإعدادات وابدأ اللعبة',
-                style: TextStyle(color: BotPalette.muted, fontSize: 13),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Hero extends StatelessWidget {
-  const _Hero();
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: AspectRatio(
-        aspectRatio: 1.45,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.asset(
-              'assets/robot/robot_hero.jpg',
-              fit: BoxFit.cover,
-              alignment: Alignment.centerLeft,
-              errorBuilder: (_, _, _) => const ColoredBox(
-                color: BotPalette.card,
-                child: Center(
-                  child: Icon(
-                    Icons.smart_toy_rounded,
-                    size: 72,
-                    color: BotPalette.blue,
+                ),
+                // العنوان والعنوان الفرعي فوق الصورة.
+                Positioned(
+                  top: topPad + 10,
+                  left: 0,
+                  right: 0,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.smart_toy_rounded,
+                            color: BotPalette.blue,
+                            size: w * 0.085,
+                          ),
+                          SizedBox(width: w * 0.02),
+                          RichText(
+                            text: TextSpan(
+                              style: TextStyle(
+                                fontSize: w * 0.085,
+                                fontWeight: FontWeight.w800,
+                                color: BotPalette.text,
+                                shadows: const [
+                                  Shadow(
+                                    color: Color(0xAA000000),
+                                    blurRadius: 10,
+                                  ),
+                                ],
+                              ),
+                              children: const [
+                                TextSpan(text: 'العب ضد '),
+                                TextSpan(
+                                  text: 'روبوت',
+                                  style: TextStyle(color: BotPalette.gold),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: w * 0.012),
+                      Text(
+                        'اختر المستوى والإعدادات وابدأ اللعبة',
+                        style: TextStyle(
+                          color: const Color(0xFFC9D2E8),
+                          fontSize: w * 0.04,
+                          shadows: const [
+                            Shadow(
+                              color: Color(0xAA000000),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ),
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0x00000000), Color(0x660A1226)],
-                ),
-              ),
-            ),
-            Positioned(
-              top: 14,
-              right: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xCC101B35),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: BotPalette.cardBorder),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.psychology_rounded,
-                      color: BotPalette.blue,
-                      size: 40,
+                // زر الرجوع (أعلى اليسار كما في التصميم).
+                Positioned(
+                  top: topPad + 10,
+                  left: 14,
+                  child: Material(
+                    color: const Color(0xCC111B33),
+                    shape: const CircleBorder(
+                      side: BorderSide(color: BotPalette.cardBorder),
                     ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: onBack,
+                      child: Padding(
+                        padding: EdgeInsets.all(w * 0.028),
+                        child: Icon(
+                          Icons.arrow_back_rounded,
+                          color: BotPalette.text,
+                          size: w * 0.06,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                // فقاعة «محرك قوي / Stockfish».
+                Positioned(
+                  top: h * 0.36,
+                  right: 14,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: w * 0.035,
+                      vertical: w * 0.025,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xCC111B33),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: BotPalette.cardBorder),
+                    ),
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Text(
-                          'محرك قوي',
-                          style: TextStyle(
-                            color: BotPalette.text,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
+                      children: [
+                        Icon(
+                          Icons.psychology_rounded,
+                          color: BotPalette.blue,
+                          size: w * 0.11,
                         ),
-                        Text(
-                          'Stockfish',
-                          style: TextStyle(
-                            color: BotPalette.muted,
-                            fontSize: 13,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'أداء احترافي وتحليل دقيق',
-                          style: TextStyle(
-                            color: BotPalette.muted,
-                            fontSize: 11,
-                          ),
+                        SizedBox(width: w * 0.025),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'محرك قوي',
+                              style: TextStyle(
+                                color: BotPalette.text,
+                                fontSize: w * 0.045,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            Text(
+                              'Stockfish',
+                              style: TextStyle(
+                                color: BotPalette.muted,
+                                fontSize: w * 0.036,
+                              ),
+                            ),
+                            Text(
+                              'أداء احترافي وتحليل دقيق',
+                              style: TextStyle(
+                                color: BotPalette.muted,
+                                fontSize: w * 0.03,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

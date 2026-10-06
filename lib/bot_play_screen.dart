@@ -219,7 +219,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
 
   BotLevel _level = botLevels[1];
   String _colorChoice = 'w'; // w / b / r
-  int _timeSeconds = 0; // 0 = بدون وقت
+  int _timeSeconds = 60; // ثوانٍ لكل نقلة (0 = بدون وقت)
 
   bool _started = false;
   bool _starting = false;
@@ -1264,8 +1264,10 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
             ),
           ),
           child: SafeArea(
-            // شاشة المباراة ثابتة (بدون تمرير) حتى لا يتحرك أي شيء عند
-            // كل نقلة؛ شاشة الإعداد وحدها قابلة للتمرير.
+            // شاشة الإعداد: الصورة تمتد حتى أعلى الشاشة (بدون SafeArea
+            // علوي). شاشة المباراة ثابتة (بدون تمرير) حتى لا يتحرك أي
+            // شيء عند كل نقلة.
+            top: _started,
             child: _started ? _buildGame() : _buildSetup(),
           ),
         ),

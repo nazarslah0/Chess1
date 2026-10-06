@@ -45,7 +45,9 @@ class AnalyzeGameScreen extends StatelessWidget {
 
             final cardW = w * 0.2895;
             final gap = w * 0.0245;
-            final cardsTop = bgH * 0.549;
+            // كل المحتوى (العنوان والبطاقات) مرفوع قليلًا للأعلى.
+            final up = bgH * 0.035;
+            final cardsTop = bgH * 0.549 - up;
             final cardH = cardW * 1.877;
 
             final contentH = math.max(h, cardsTop + cardH + 24);
@@ -70,14 +72,14 @@ class AnalyzeGameScreen extends StatelessWidget {
                       children: [
                         // العنوان.
                         Positioned(
-                          top: bgH * 0.414 - w * 0.075,
+                          top: bgH * 0.414 - w * 0.075 - up,
                           left: 0,
                           right: 0,
                           child: _title(w),
                         ),
                         // العنوان الفرعي.
                         Positioned(
-                          top: bgH * 0.475 - w * 0.03,
+                          top: bgH * 0.475 - w * 0.03 - up,
                           left: 0,
                           right: 0,
                           child: Text(
@@ -91,7 +93,7 @@ class AnalyzeGameScreen extends StatelessWidget {
                         ),
                         // الفاصل مع التاج.
                         Positioned(
-                          top: bgH * 0.512 - w * 0.02,
+                          top: bgH * 0.512 - w * 0.02 - up,
                           left: 0,
                           right: 0,
                           child: _divider(w),
@@ -108,7 +110,7 @@ class AnalyzeGameScreen extends StatelessWidget {
                                 width: cardW,
                                 icon: _chessComIcon,
                                 title: 'chess.com',
-                                subtitle: 'استيراد من موقع chess.com',
+                                subtitle: 'استيراد من موقع\nchess.com',
                                 accent: const Color(0xFF63C13F),
                                 border: const Color(0x8C4FB02E),
                                 colors: const [
@@ -125,7 +127,7 @@ class AnalyzeGameScreen extends StatelessWidget {
                                 width: cardW,
                                 icon: _lichessIcon,
                                 title: 'Lichess',
-                                subtitle: 'استيراد من موقع Lichess',
+                                subtitle: 'استيراد من موقع\nLichess',
                                 accent: const Color(0xFFE5A93B),
                                 border: const Color(0x66E0A33A),
                                 colors: const [
@@ -142,7 +144,7 @@ class AnalyzeGameScreen extends StatelessWidget {
                                 width: cardW,
                                 icon: _pgnIcon,
                                 title: 'لصق PGN',
-                                subtitle: 'الصق نص PGN مباشرة',
+                                subtitle: 'الصق نص\nPGN مباشرة',
                                 accent: const Color(0xFF3D6BFF),
                                 border: const Color(0x803F5BFF),
                                 colors: const [
@@ -288,8 +290,8 @@ class _SourceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final h = width * 1.877;
     final radius = BorderRadius.circular(width * 0.15);
-    final titleSize = width * 0.115;
-    final subSize = width * 0.063;
+    final titleSize = width * 0.135;
+    final subSize = width * 0.095;
     final ring = width * 0.277;
 
     return SizedBox(
@@ -355,18 +357,20 @@ class _SourceCard extends StatelessWidget {
                     ),
                   ),
                   Positioned(
-                    top: h * 0.607 - subSize * 0.7,
-                    left: width * 0.06,
-                    right: width * 0.06,
-                    child: Text(
-                      subtitle,
-                      textAlign: TextAlign.center,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: const Color(0xFF9EA3B3),
-                        fontSize: subSize,
-                        height: 1.45,
+                    top: h * 0.60 - subSize * 0.7,
+                    left: width * 0.04,
+                    right: width * 0.04,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        subtitle,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        style: TextStyle(
+                          color: const Color(0xFFC3C8D6),
+                          fontSize: subSize,
+                          height: 1.4,
+                        ),
                       ),
                     ),
                   ),
