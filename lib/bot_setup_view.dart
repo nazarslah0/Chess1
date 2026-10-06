@@ -270,7 +270,7 @@ class _Hero extends StatelessWidget {
               'assets/robot/robot_hero.jpg',
               fit: BoxFit.cover,
               alignment: Alignment.centerLeft,
-              errorBuilder: (_, __, ___) => const ColoredBox(
+              errorBuilder: (_, _, _) => const ColoredBox(
                 color: BotPalette.card,
                 child: Center(
                   child: Icon(
@@ -671,7 +671,7 @@ class _BoardThemeRow extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (context, i) {
               final idx = items[i].$2;
               final selected = idx == current;
@@ -747,7 +747,7 @@ class _BoardSwatch extends StatelessWidget {
       return Image.asset(
         asset,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _checker(),
+        errorBuilder: (_, _, _) => _checker(),
       );
     }
 

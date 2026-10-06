@@ -28,7 +28,7 @@ class FloatingSwitcher extends StatelessWidget {
       ),
       layoutBuilder: (current, previous) => Stack(
         alignment: Alignment.topCenter,
-        children: [...previous, if (current != null) current],
+        children: [...previous, ?current],
       ),
       child: child ?? const SizedBox.shrink(key: ValueKey<String>('none')),
     );
