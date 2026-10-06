@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'analysis_result.dart';
@@ -173,14 +174,9 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
   String _trainingBestUci = '';
   List<String> _trainingPv = const <String>[];
   String _trainingBeforeFen = '';
-  int _trainingEvalBeforeCp = 0;
-  int _trainingEvalAfterCp = 0;
-  int _trainingLossCp = 0;
-  MoveQuality? _trainingQuality;
   bool _trainingHintShown = false;
   int _trainingHintLevel = 0;
   bool _trainingSolutionShown = false;
-  bool _trainingBestMoveTried = false;
   int _trainingToken = 0;
   final List<MoveAnalysisResult> _trainingResults = <MoveAnalysisResult>[];
 
@@ -318,7 +314,6 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
     _trainingHintShown = false;
     _trainingHintLevel = 0;
     _trainingSolutionShown = false;
-    _trainingQuality = null;
   }
 
   void _trainingFeedbackSound(String kind) {
@@ -461,10 +456,6 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
       _trainingBestUci = bestUci;
       _trainingPv = pv;
       _trainingBeforeFen = fenBefore;
-      _trainingEvalBeforeCp = beforeCp;
-      _trainingEvalAfterCp = afterCp;
-      _trainingLossCp = effectiveLoss;
-      _trainingQuality = quality;
     });
 
     if (same || effectiveLoss < threshold) {
@@ -594,7 +585,6 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
 
   Future<void> _openTrainingVariation() async {
     if (_trainingBeforeFen.isEmpty || _trainingBestUci.isEmpty) return;
-    _trainingBestMoveTried = false;
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -609,7 +599,6 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
     if (result == true) {
       _updateLastTraining(bestMoveTried: true, trainingCompleted: true);
       setState(() {
-        _trainingBestMoveTried = true;
         _trainingMessage = '✨ أحسنت! جربت النقلة الأفضل.';
         _trainingDetail = 'هذه تجربة تدريبية فقط؛ المباراة الأصلية لم تتغير.';
         _trainingColor = const Color(0xFF62D394);
@@ -1583,7 +1572,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
         ),
       ),
       child: Container(
-        key: ValueKey('${_trainingMessage ?? ''}|${_trainingHintLevel}|$_trainingAnalyzing'),
+        key: ValueKey('${_trainingMessage ?? ''}|$_trainingHintLevel|$_trainingAnalyzing'),
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(14, 11, 14, 11),
         decoration: BoxDecoration(
@@ -1778,90 +1767,6 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
           const SizedBox(height: 4),
           _actionBar(),
         ],
-      ),
-    );
-  }
-}
-
-class _BotCard extends StatelessWidget {
-  final BotLevel level;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _BotCard({
-    required this.level,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: level.color.withValues(alpha: selected ? 0.18 : 0.06),
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 12,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: selected ? level.color : Colors.transparent,
-              width: 2,
-            ),
-          ),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: level.color.withValues(alpha: 0.25),
-                child: Icon(level.icon, color: level.color),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          level.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          level.rating,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: level.color,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      level.description,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (selected)
-                Icon(Icons.check_circle_rounded, color: level.color),
-            ],
-          ),
-        ),
       ),
     );
   }
