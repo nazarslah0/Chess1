@@ -267,8 +267,8 @@ class _CoachHomeScreenState extends State<CoachHomeScreen> {
               ),
               subtitle: Text(
                 ar
-                    ? 'الإيقاف (الافتراضي): جمل شطرنج جاهزة بلا إنترنت'
-                    : 'Off (default): ready-made chess sentences, offline',
+                    ? 'يستخدم Stockfish للحساب وGroq/النموذج لشرح النقلة مثل مدرب حقيقي'
+                    : 'Stockfish calculates; the selected model explains the move like a real coach',
               ),
               value: _settings.coachUseModel,
               onChanged: _settings.setCoachUseModel,
@@ -282,8 +282,8 @@ class _CoachHomeScreenState extends State<CoachHomeScreen> {
               ),
               subtitle: Text(
                 ar
-                    ? 'افتراضيًا: النقلات الصعبة فقط (أسرع وأخف)'
-                    : 'Default: hard moves only (faster, lighter)',
+                    ? 'يشرح كل نقلة بعد أن يحسم Stockfish تقييمها'
+                    : 'Explain every move after Stockfish determines its result',
               ),
               value: _settings.coachExplainAll,
               onChanged: _settings.setCoachExplainAll,

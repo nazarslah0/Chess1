@@ -50,6 +50,7 @@ Return ONLY one JSON object, no markdown, no extra text:
         'supplied data.\n'
         '- Do not calculate a different best move.\n'
         '- Do not decide legality, winner, mate or classification.\n'
+        '- FEN is provided only as board context. Do not derive a new best move from it.\n'
         '- ${_styleFor(level)}\n'
         '- response_language = ${lang.name}. Write every text field in '
         '${_langName(lang)}. Keep chess move notation as given.\n'
@@ -70,8 +71,10 @@ Return ONLY one JSON object, no markdown, no extra text:
         .convert(input.toJson(revealBest: revealBest));
 
     final b = StringBuffer()
-      ..writeln('Engine result (evaluations are in pawns from the point '
-          'of view of the player who moved; positive = good for them):')
+      ..writeln('Stockfish engine result. FEN is provided as board context; '
+          'all move claims must come only from the supplied move/PV fields.')
+      ..writeln('Evaluations are in pawns from the point '
+          'of view of the player who moved; positive = good for them:')
       ..writeln(data)
       ..writeln();
 

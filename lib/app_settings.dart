@@ -88,8 +88,8 @@ class AppSettings extends ChangeNotifier {
 
   String _coachLevel = 'intermediate';
   String _coachLang = 'ar';
-  bool _coachUseModel = false;
-  bool _coachExplainAll = false;
+  bool _coachUseModel = true;
+  bool _coachExplainAll = true;
 
   String get coachBackend => _coachBackend;
   String get coachApiProvider => _coachApiProvider;
@@ -153,8 +153,8 @@ class AppSettings extends ChangeNotifier {
 
       _coachLevel = p.getString(_kCoachLevel) ?? 'intermediate';
       _coachLang = p.getString(_kCoachLang) ?? 'ar';
-      _coachUseModel = p.getBool(_kCoachModel) ?? false;
-      _coachExplainAll = p.getBool(_kCoachAll) ?? false;
+      _coachUseModel = p.getBool(_kCoachModel) ?? true;
+      _coachExplainAll = p.getBool(_kCoachAll) ?? true;
 
       _trOn = p.getBool(_kTrOn) ?? true;
       _trFeedback = p.getBool(_kTrFeedback) ?? true;

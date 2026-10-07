@@ -114,6 +114,8 @@ String _qualityKey(MoveQuality q) => q.name.toUpperCase();
 class CoachMoveInput {
   final int moveNumber;
   final String side; // white / black
+  final String fenBefore;
+  final String fenAfter;
   final String san;
   final MoveQuality quality;
   final double evalBefore;
@@ -128,6 +130,8 @@ class CoachMoveInput {
   const CoachMoveInput({
     required this.moveNumber,
     required this.side,
+    this.fenBefore = '',
+    this.fenAfter = '',
     required this.san,
     required this.quality,
     required this.evalBefore,
@@ -151,6 +155,8 @@ class CoachMoveInput {
     return CoachMoveInput(
       moveNumber: r.moveNumber,
       side: r.side == 'w' ? 'white' : 'black',
+      fenBefore: r.fenBefore,
+      fenAfter: r.fenAfter,
       san: r.san,
       quality: r.classification,
       evalBefore: r.evaluationBeforeCp / 100.0,
@@ -167,6 +173,8 @@ class CoachMoveInput {
   /// بصيغة المثال في المواصفات.
   Map<String, dynamic> toJson({bool revealBest = true}) => {
         'move': san,
+        'fenBefore': fenBefore,
+        'fenAfter': fenAfter,
         'classification': _qualityKey(quality),
         'evaluationBefore': double.parse(evalBefore.toStringAsFixed(2)),
         'evaluationAfter': double.parse(evalAfter.toStringAsFixed(2)),
@@ -175,6 +183,8 @@ class CoachMoveInput {
         if (revealBest) 'principalVariation': principalVariation,
         'gamePhase': phase,
         'side': side,
+        'critical': isCritical,
+
         if (tablebaseVerdict != null) 'tablebase': tablebaseVerdict,
       };
 

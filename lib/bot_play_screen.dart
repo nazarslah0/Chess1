@@ -151,6 +151,7 @@ class _Coach {
   final bool soft;
   final bool reviewOnly;
   final MoveQuality firstQuality;
+  final bool informational;
 
   /// مستوى التلميح المعروض حاليًا: 1 رسالة، 2 سهم، 3 نقلة + PV.
   int level = 1;
@@ -179,6 +180,7 @@ class _Coach {
     required this.soft,
     required this.reviewOnly,
     required this.firstQuality,
+    this.informational = false,
   });
 
   bool get canRetry => !reviewOnly && !retrying;
@@ -885,6 +887,43 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
     );
 
     if (!stronger) {
+      // في وضع «المدرب» مع شرح كل النقلات: لا نستخدم الـLLM ليقرر
+      // جودة النقلة؛ Stockfish حسم ذلك مسبقًا. نعرض فقط شرحًا لغويًا
+      // للنتيجة ثم نتابع المباراة.
+      final explainEveryMove =
+          widget.coachMode && _settings.coachUseModel && _settings.coachExplainAll;
+
+      if (explainEveryMove) {
+        final coach = _Coach(
+          ply: um.ply,
+          fenBefore: um.fenBefore,
+          bestUci: bestOk ? j.bestUci! : um.uci,
+          bestSan: bestOk ? pvToSan(um.fenBefore, [j.bestUci!]) : um.san,
+          pvSan: j.pv.isEmpty ? '' : pvToSan(um.fenBefore, j.pv),
+          judgement: j,
+          soft: false,
+          reviewOnly: false,
+          firstQuality: firstQuality,
+          informational: true,
+        );
+
+        coach.result = result;
+        coach.explanation = _quickExplanation(result, reveal: true);
+
+        setState(() => _coach = coach);
+        unawaited(_loadExplanation(coach, deep: false));
+
+        if (_settings.trainingFeedback) {
+          if (j.kind == CoachKind.best) {
+            _cue('best');
+          } else if (j.kind == CoachKind.excellent) {
+            _cue('best');
+          }
+        }
+
+        return true;
+      }
+
       setState(() => _coach = null);
 
       if (_settings.trainingFeedback) {
@@ -1734,6 +1773,37 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
 
     final canArrow = _settings.trainingHintArrow;
     final canSolution = _settings.trainingAllowBestMove;
+
+    // شرح عادي لكل نقلة في وضع المدرب. لا توجد هنا تلميحات أو
+    // إجبار على إعادة النقلة؛ الهدف أن يشرح النموذج ما حدث بعد أن
+    // حسم Stockfish التقييم.
+    if (c.informational) {
+      final r = c.result;
+      final q = r?.classification;
+      final title = q == MoveQuality.brilliant
+          ? '✨ نقلة Brilliant'
+          : (q == MoveQuality.best || c.judgement.playedWasBest
+              ? '🟢 نقلة ممتازة'
+              : '🎓 شرح النقلة');
+
+      final body = _withExplanation(
+        c,
+        '${r?.san ?? ''} · ${c.judgement.phase}',
+      );
+
+      return CoachCard(
+        key: ValueKey<String>('card-info-${c.ply}'),
+        title: title,
+        body: body,
+        detail: c.pvSan.isEmpty ? null : c.pvSan,
+        accent: q == MoveQuality.blunder || q == MoveQuality.mistake
+            ? BotPalette.red
+            : BotPalette.blue,
+        actions: [
+          CoachAction('متابعة المباراة', _continueGame, primary: true),
+        ],
+      );
+    }
 
     // تجربة أفضل نقلة على رقعة منفصلة.
     if (_variation != null && _variationPlayed) {
