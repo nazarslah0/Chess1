@@ -197,11 +197,14 @@ class RemoteCoachModel implements LocalCoachModel {
 
       final json = jsonDecode(body);
 
-      final content = json is Map &&
-              json['choices'] is List &&
-              (json['choices'] as List).isNotEmpty
-          ? ((json['choices'] as List).first as Map)['message']?['content']
-          : null;
+      Object? content;
+      if (json is Map &&
+          json['choices'] is List &&
+          (json['choices'] as List).isNotEmpty) {
+        final first = (json['choices'] as List).first;
+        final message = first is Map ? first['message'] : null;
+        content = message is Map ? message['content'] : null;
+      }
 
       if (content == null) throw const FormatException('Empty API reply');
 
