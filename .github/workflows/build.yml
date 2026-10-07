@@ -86,6 +86,38 @@ jobs:
           rm -f test/widget_test.dart
 
       # =========================================================
+      # Local AI Coach (llama.cpp): minSdk 26 + largeHeap
+      # =========================================================
+      - name: Configure Android for Local AI Coach
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          for name in ("android/app/build.gradle.kts",
+                       "android/app/build.gradle"):
+              p = Path(name)
+              if not p.exists():
+                  continue
+              t = p.read_text()
+              t = re.sub(r"minSdk\s*=\s*flutter\.minSdkVersion",
+                         "minSdk = 26", t)
+              t = re.sub(r"minSdkVersion\s+flutter\.minSdkVersion",
+                         "minSdkVersion 26", t)
+              p.write_text(t)
+              print("minSdk patched in", name)
+
+          m = Path("android/app/src/main/AndroidManifest.xml")
+          t = m.read_text()
+          if "android:largeHeap" not in t:
+              t = t.replace("<application",
+                            '<application android:largeHeap="true"', 1)
+          m.write_text(t)
+          print("largeHeap set")
+          PY
+
+      # =========================================================
       # Configure Android native library packaging
       # =========================================================
       - name: Configure Android native library packaging
