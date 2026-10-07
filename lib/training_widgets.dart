@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app_settings.dart';
 import 'bot_setup_view.dart' show BotPalette;
+import 'coach_models.dart';
 import 'training_coach.dart';
 
 /// يظهر/يختفي بحركة بسيطة: Fade + Slide Up (وFade Out عند الإخفاء).
@@ -91,28 +92,38 @@ class CoachCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            body,
-            style: const TextStyle(
-              color: BotPalette.muted,
-              fontSize: 13,
-              height: 1.35,
-            ),
-          ),
-          if (detail != null) ...[
-            const SizedBox(height: 6),
-            Directionality(
-              textDirection: TextDirection.ltr,
-              child: Text(
-                detail!,
-                style: const TextStyle(
-                  color: BotPalette.gold,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 150),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    body,
+                    style: const TextStyle(
+                      color: BotPalette.muted,
+                      fontSize: 13,
+                      height: 1.35,
+                    ),
+                  ),
+                  if (detail != null) ...[
+                    const SizedBox(height: 6),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
+                        detail!,
+                        style: const TextStyle(
+                          color: BotPalette.gold,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
-          ],
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -202,7 +213,10 @@ class CoachPill extends StatelessWidget {
 class TrainingSummaryCard extends StatelessWidget {
   final TrainingSummary summary;
 
-  const TrainingSummaryCard({super.key, required this.summary});
+  /// ملاحظة المدرب عن المباراة (قالب أو نموذج محلي).
+  final CoachExplanation? note;
+
+  const TrainingSummaryCard({super.key, required this.summary, this.note});
 
   Widget _line(String label, int value, Color color) {
     return Padding(
@@ -272,6 +286,17 @@ class TrainingSummaryCard extends StatelessWidget {
                 color: BotPalette.text,
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+          if (note != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              '🎓 ${note!.summary}\n${note!.lesson}',
+              style: const TextStyle(
+                color: BotPalette.muted,
+                fontSize: 12,
+                height: 1.35,
               ),
             ),
           ],

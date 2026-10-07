@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app_ui.dart';
 import 'bot_play_screen.dart';
+import 'coach_home_screen.dart';
 import 'lichess_puzzles.dart' show PuzzleCategory;
 import 'lichess_puzzles_screen.dart';
 import 'my_games_screen.dart';
@@ -83,6 +84,10 @@ class HomeScreen extends StatelessWidget {
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 28),
+              _CoachCard(
+                onTap: () => pushScreen(context, const CoachHomeScreen()),
+              ),
+              const SizedBox(height: 20),
               for (var i = 0; i < entries.length; i++) ...[
                 if (i > 0) const SizedBox(height: 14),
                 _MenuButton(
@@ -92,6 +97,55 @@ class HomeScreen extends StatelessWidget {
                   onTap: () => pushScreen(context, entries[i].builder()),
                 ),
               ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// بطاقة «AI COACH» في الشاشة الرئيسية (بنفس هوية التطبيق).
+class _CoachCard extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _CoachCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: scheme.primary.withValues(alpha: 0.10),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            children: [
+              const Text('🎓', style: TextStyle(fontSize: 34)),
+              const SizedBox(height: 4),
+              Text(
+                'AI COACH',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
+                  color: scheme.primary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'تعلم من كل نقلة\nوالعب بشكل أفضل',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              FilledButton(
+                onPressed: onTap,
+                child: const Text('ابدأ التدريب'),
+              ),
             ],
           ),
         ),

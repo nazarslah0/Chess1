@@ -67,6 +67,29 @@ class AppSettings extends ChangeNotifier {
   bool get trainingSound => _trSound;
   bool get trainingHaptic => _trHaptic;
 
+  // ---- المدرب المحلي (Local AI Chess Coach) ----
+  static const String _kCoachLevel = 'chess2_coach_level';
+  static const String _kCoachLang = 'chess2_coach_lang';
+  static const String _kCoachModel = 'chess2_coach_use_model';
+  static const String _kCoachAll = 'chess2_coach_explain_all';
+
+  String _coachLevel = 'intermediate';
+  String _coachLang = 'ar';
+  bool _coachUseModel = true;
+  bool _coachExplainAll = false;
+
+  /// beginner / intermediate / advanced / expert.
+  String get coachLevelName => _coachLevel;
+
+  /// ar / en.
+  String get coachLangName => _coachLang;
+
+  /// استخدام النموذج اللغوي المحلي (إن كان مثبّتًا)؛ وإلا قوالب فقط.
+  bool get coachUseModel => _coachUseModel;
+
+  /// شرح كل النقلات بالنموذج (افتراضيًا: النقلات الصعبة فقط).
+  bool get coachExplainAll => _coachExplainAll;
+
   int _boardIdx = 0;
   int _pieceIdx = 0;
   int _maiaBucket = 1500;
@@ -96,6 +119,11 @@ class AppSettings extends ChangeNotifier {
       _pieceIdx = (pc >= 0 && pc < allPieceThemes.length) ? pc : 0;
       _maiaBucket = p.getInt(_kMaia) ?? 1500;
       _playerName = p.getString(_kName) ?? '';
+
+      _coachLevel = p.getString(_kCoachLevel) ?? 'intermediate';
+      _coachLang = p.getString(_kCoachLang) ?? 'ar';
+      _coachUseModel = p.getBool(_kCoachModel) ?? true;
+      _coachExplainAll = p.getBool(_kCoachAll) ?? false;
 
       _trOn = p.getBool(_kTrOn) ?? true;
       _trFeedback = p.getBool(_kTrFeedback) ?? true;
@@ -166,6 +194,38 @@ class AppSettings extends ChangeNotifier {
     try {
       (await SharedPreferences.getInstance()).setInt(key, v);
     } catch (_) {}
+  }
+
+  Future<void> setCoachLevel(String name) async {
+    _coachLevel = name;
+    notifyListeners();
+
+    try {
+      (await SharedPreferences.getInstance())
+          .setString(_kCoachLevel, name);
+    } catch (_) {}
+  }
+
+  Future<void> setCoachLang(String name) async {
+    _coachLang = name == 'en' ? 'en' : 'ar';
+    notifyListeners();
+
+    try {
+      (await SharedPreferences.getInstance())
+          .setString(_kCoachLang, _coachLang);
+    } catch (_) {}
+  }
+
+  Future<void> setCoachUseModel(bool v) async {
+    _coachUseModel = v;
+    notifyListeners();
+    await _saveBool(_kCoachModel, v);
+  }
+
+  Future<void> setCoachExplainAll(bool v) async {
+    _coachExplainAll = v;
+    notifyListeners();
+    await _saveBool(_kCoachAll, v);
   }
 
   Future<void> setSmartTraining(bool v) async {
