@@ -16,6 +16,8 @@ dependencies:
   shared_preferences: ^2.5.3
   path_provider: ^2.1.5
   lc0: ^0.1.0
+  # المدرب المحلي: llama.cpp (GGUF) على أندرويد — بدون API خارجي.
+  llama_flutter_android: ^0.2.6
 
 dev_dependencies:
   flutter_test:
