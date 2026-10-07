@@ -6,6 +6,7 @@ import 'analysis_result.dart';
 import 'app_settings.dart';
 import 'coach_llm.dart';
 import 'coach_models.dart';
+import 'coach_remote.dart';
 import 'coach_prompts.dart';
 import 'coach_session.dart';
 import 'coach_templates.dart';
@@ -45,7 +46,8 @@ class LocalCoachService extends ChangeNotifier {
   /// بعد هذه المدة بلا استخدام يُحرَّر النموذج من الذاكرة.
   static const Duration idleUnload = Duration(minutes: 3);
 
-  LocalCoachModel _model = LlamaCppCoachModel();
+  final LocalCoachModel _local = LlamaCppCoachModel();
+  late LocalCoachModel _model = _local;
 
   CoachStatus status = CoachStatus.unknown;
   String? lastError;
@@ -78,8 +80,52 @@ class LocalCoachService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// يختار النموذج حسب الإعداد: API مجاني (بدون تخزين) أو ملف محلي.
+  void _syncBackend() {
+    final remote = AppSettings.instance.coachBackend == 'remote';
+
+    if (remote && _model is! RemoteCoachModel) {
+      _idle?.cancel();
+
+      unawaited(_model.unload());
+
+      _model = RemoteCoachModel(AppSettings.instance);
+      status = CoachStatus.unknown;
+    } else if (!remote && _model is RemoteCoachModel) {
+      _model = _local;
+      status = CoachStatus.unknown;
+    }
+  }
+
+  /// يتحقق من اتصال الـAPI/النموذج. يعيد null عند النجاح أو رسالة خطأ.
+  Future<String?> testConnection() async {
+    _syncBackend();
+
+    status = CoachStatus.unknown;
+
+    await initialize();
+
+    if (status == CoachStatus.notInstalled) return 'notConfigured';
+
+    try {
+      final r = await _model.generate(
+        system: 'Reply with the single word: ok',
+        user: 'ping',
+        maxTokens: 8,
+        temperature: 0,
+        timeout: const Duration(seconds: 25),
+      );
+
+      return r.trim().isEmpty ? 'Empty reply' : null;
+    } catch (e) {
+      return '$e';
+    }
+  }
+
   /// يفحص وجود النموذج فقط (لا يحمّله): App/Coach start → Check Model.
   Future<void> initialize() async {
+    _syncBackend();
+
     if (status == CoachStatus.downloading || status == CoachStatus.loading) {
       return;
     }
@@ -140,7 +186,12 @@ class LocalCoachService extends ChangeNotifier {
 
   /// تحميل كسول: يُستدعى عند الحاجة فقط. لا يرمي أبدًا.
   Future<bool> ensureLoaded() async {
-    if (status == CoachStatus.unknown) await initialize();
+    _syncBackend();
+
+    if (status == CoachStatus.unknown ||
+        (status == CoachStatus.notInstalled && _model is RemoteCoachModel)) {
+      await initialize();
+    }
 
     if (_model.isLoaded) {
       if (status != CoachStatus.ready) _set(CoachStatus.ready);

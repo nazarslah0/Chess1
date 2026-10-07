@@ -4,6 +4,7 @@ import 'app_settings.dart';
 import 'app_ui.dart';
 import 'bot_play_screen.dart';
 import 'coach_models.dart';
+import 'coach_remote.dart';
 import 'coach_session.dart';
 import 'lichess_puzzles.dart' show PuzzleCategory;
 import 'lichess_puzzles_screen.dart';
@@ -64,6 +65,65 @@ class _CoachHomeScreenState extends State<CoachHomeScreen> {
             ? 'تعذّر تحميل النموذج — يعمل المدرب بالقوالب'
             : 'Could not load the model — templates are used';
     }
+  }
+
+  Widget _backendCard(bool ar) {
+    final remote = _settings.coachBackend == 'remote';
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              ar ? 'مصدر الذكاء الاصطناعي' : 'AI source',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              children: [
+                ChoiceChip(
+                  label: Text(
+                    ar ? 'API مجاني (بدون تخزين)' : 'Free API (no storage)',
+                  ),
+                  selected: remote,
+                  onSelected: (_) async {
+                    await _settings.setCoachBackend('remote');
+                    await _coach.initialize();
+                  },
+                ),
+                ChoiceChip(
+                  label: Text(
+                    ar ? 'نموذج على الجهاز (~1.1 GB)' : 'On-device (~1.1 GB)',
+                  ),
+                  selected: !remote,
+                  onSelected: (_) async {
+                    await _settings.setCoachBackend('local');
+                    await _coach.initialize();
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              remote
+                  ? (ar
+                      ? 'يُرسل للمزوّد تحليل Stockfish للنقلة فقط (النقلة، '
+                          'التقييم، أفضل نقلة، المرحلة). إن تعذّر الاتصال '
+                          'يشرح المدرب بالقوالب.'
+                      : 'Only the Stockfish analysis of the move is sent to '
+                          'the provider. If it fails, templates are used.')
+                  : (ar
+                      ? 'يعمل بالكامل داخل الهاتف بلا إنترنت بعد التنزيل.'
+                      : 'Runs fully on-device, offline after the download.'),
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _modelCard(bool ar) {
@@ -202,13 +262,13 @@ class _CoachHomeScreenState extends State<CoachHomeScreen> {
               contentPadding: EdgeInsets.zero,
               title: Text(
                 ar
-                    ? 'استخدام النموذج اللغوي المحلي'
-                    : 'Use the local language model',
+                    ? 'تفعيل الذكاء الاصطناعي (اختياري)'
+                    : 'Enable AI explanations (optional)',
               ),
               subtitle: Text(
                 ar
-                    ? 'عند الإيقاف يشرح المدرب بالقوالب فقط'
-                    : 'When off, the coach uses templates only',
+                    ? 'الإيقاف (الافتراضي): جمل شطرنج جاهزة بلا إنترنت'
+                    : 'Off (default): ready-made chess sentences, offline',
               ),
               value: _settings.coachUseModel,
               onChanged: _settings.setCoachUseModel,
@@ -301,9 +361,18 @@ class _CoachHomeScreenState extends State<CoachHomeScreen> {
             child: ListView(
               padding: const EdgeInsets.all(14),
               children: [
-                _modelCard(ar),
-                const SizedBox(height: 10),
                 _settingsCard(ar),
+                const SizedBox(height: 10),
+                // الذكاء الاصطناعي اختياري: الافتراضي جمل جاهزة بدون
+                // إنترنت ولا تخزين ولا مفتاح.
+                if (_settings.coachUseModel) ...[
+                  _backendCard(ar),
+                  const SizedBox(height: 10),
+                  if (_settings.coachBackend == 'remote')
+                    _ApiCard(ar: ar)
+                  else
+                    _modelCard(ar),
+                ],
                 const SizedBox(height: 10),
                 _insightCard(ar),
                 const SizedBox(height: 10),
@@ -338,4 +407,210 @@ class _Entry {
   final Widget Function() builder;
 
   const _Entry(this.icon, this.label, this.builder);
+}
+
+/// إعدادات الـAPI المجاني (مزوّد متوافق مع OpenAI).
+class _ApiCard extends StatefulWidget {
+  final bool ar;
+
+  const _ApiCard({required this.ar});
+
+  @override
+  State<_ApiCard> createState() => _ApiCardState();
+}
+
+class _ApiCardState extends State<_ApiCard> {
+  final AppSettings _s = AppSettings.instance;
+  final LocalCoachService _coach = LocalCoachService.instance;
+
+  late final TextEditingController _key =
+      TextEditingController(text: _s.coachApiKey);
+  late final TextEditingController _model =
+      TextEditingController(text: _s.coachApiModel);
+  late final TextEditingController _base =
+      TextEditingController(text: _s.coachApiBaseUrl);
+
+  bool _testing = false;
+  String? _result;
+
+  @override
+  void dispose() {
+    _key.dispose();
+    _model.dispose();
+    _base.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    await _s.setCoachApiKey(_key.text);
+    await _s.setCoachApiModel(_model.text);
+    await _s.setCoachApiBaseUrl(_base.text);
+    await _coach.initialize();
+  }
+
+  Future<void> _test() async {
+    setState(() {
+      _testing = true;
+      _result = null;
+    });
+
+    await _save();
+
+    final err = await _coach.testConnection();
+
+    if (!mounted) return;
+
+    setState(() {
+      _testing = false;
+      _result = err == null
+          ? (widget.ar ? '✅ الاتصال يعمل' : '✅ Connected')
+          : (err == 'notConfigured'
+              ? (widget.ar ? 'أدخل مفتاح API أولًا' : 'Enter an API key first')
+              : '❌ $err');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ar = widget.ar;
+    final preset = coachApiPreset(_s.coachApiProvider);
+
+    final ready = _coach.status == CoachStatus.ready;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              ready
+                  ? (ar ? '🎓 المدرب جاهز' : '🎓 Coach ready')
+                  : (ar
+                      ? 'أدخل مفتاح API لتفعيل المدرب (القوالب تعمل الآن)'
+                      : 'Enter an API key to enable the coach '
+                          '(templates work meanwhile)'),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final p in kCoachApiPresets)
+                  ChoiceChip(
+                    label: Text(p.label),
+                    selected: p.id == preset.id,
+                    onSelected: (_) async {
+                      // مفتاح مزوّد لا يُرسل لمزوّد آخر.
+                      await _s.setCoachApiProvider(p.id);
+                      await _s.setCoachApiKey('');
+
+                      _key.clear();
+                      _model.clear();
+                      _base.clear();
+
+                      await _coach.initialize();
+
+                      if (mounted) setState(() => _result = null);
+                    },
+                  ),
+              ],
+            ),
+            if (preset.keyUrl.isNotEmpty && preset.requiresKey)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: SelectableText(
+                  ar
+                      ? 'مفتاح مجاني من: ${preset.keyUrl}'
+                      : 'Free key at: ${preset.keyUrl}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+            const SizedBox(height: 8),
+            if (preset.requiresKey || preset.id == 'custom')
+              TextField(
+                controller: _key,
+                obscureText: true,
+                autocorrect: false,
+                enableSuggestions: false,
+                decoration: InputDecoration(
+                  labelText: ar ? 'مفتاح API' : 'API key',
+                  border: const OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _model,
+              autocorrect: false,
+              decoration: InputDecoration(
+                labelText: ar ? 'النموذج' : 'Model',
+                hintText: preset.defaultModel,
+                border: const OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+            if (preset.id == 'custom') ...[
+              const SizedBox(height: 8),
+              TextField(
+                controller: _base,
+                autocorrect: false,
+                decoration: InputDecoration(
+                  labelText: ar ? 'عنوان API (Base URL)' : 'Base URL',
+                  hintText: 'https://.../v1',
+                  border: const OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              children: [
+                FilledButton(
+                  onPressed: _testing ? null : _test,
+                  child: Text(
+                    _testing
+                        ? (ar ? 'جارٍ الاختبار...' : 'Testing...')
+                        : (ar ? 'حفظ واختبار الاتصال' : 'Save & test'),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    _key.clear();
+
+                    await _save();
+
+                    if (mounted) setState(() => _result = null);
+                  },
+                  child: Text(ar ? 'مسح المفتاح' : 'Clear key'),
+                ),
+              ],
+            ),
+            if (_result != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  _result!,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+            const SizedBox(height: 4),
+            Text(
+              ar
+                  ? 'المفتاح يُحفظ على جهازك فقط ويُرسل للمزوّد المختار وحده.'
+                  : 'The key is stored on this device only and sent only to '
+                      'the chosen provider.',
+              style: const TextStyle(fontSize: 11),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

@@ -73,10 +73,35 @@ class AppSettings extends ChangeNotifier {
   static const String _kCoachModel = 'chess2_coach_use_model';
   static const String _kCoachAll = 'chess2_coach_explain_all';
 
+  static const String _kCoachBackend = 'chess2_coach_backend';
+  static const String _kCoachApiProvider = 'chess2_coach_api_provider';
+  static const String _kCoachApiKey = 'chess2_coach_api_key';
+  static const String _kCoachApiModel = 'chess2_coach_api_model';
+  static const String _kCoachApiBase = 'chess2_coach_api_base';
+
+  /// remote = API مجاني (لا تخزين)، local = ملف نموذج على الجهاز.
+  String _coachBackend = 'remote';
+  String _coachApiProvider = 'groq';
+  String _coachApiKey = '';
+  String _coachApiModel = '';
+  String _coachApiBase = '';
+
   String _coachLevel = 'intermediate';
   String _coachLang = 'ar';
-  bool _coachUseModel = true;
+  bool _coachUseModel = false;
   bool _coachExplainAll = false;
+
+  String get coachBackend => _coachBackend;
+  String get coachApiProvider => _coachApiProvider;
+
+  /// مفتاح API (محفوظ على الجهاز فقط، ويُرسل للمزوّد وحده).
+  String get coachApiKey => _coachApiKey;
+
+  /// فارغ = النموذج الافتراضي للمزوّد.
+  String get coachApiModel => _coachApiModel;
+
+  /// فارغ = العنوان الافتراضي للمزوّد (للمزوّد المخصّص يلزم عنوان).
+  String get coachApiBaseUrl => _coachApiBase;
 
   /// beginner / intermediate / advanced / expert.
   String get coachLevelName => _coachLevel;
@@ -120,9 +145,15 @@ class AppSettings extends ChangeNotifier {
       _maiaBucket = p.getInt(_kMaia) ?? 1500;
       _playerName = p.getString(_kName) ?? '';
 
+      _coachBackend = p.getString(_kCoachBackend) ?? 'remote';
+      _coachApiProvider = p.getString(_kCoachApiProvider) ?? 'groq';
+      _coachApiKey = p.getString(_kCoachApiKey) ?? '';
+      _coachApiModel = p.getString(_kCoachApiModel) ?? '';
+      _coachApiBase = p.getString(_kCoachApiBase) ?? '';
+
       _coachLevel = p.getString(_kCoachLevel) ?? 'intermediate';
       _coachLang = p.getString(_kCoachLang) ?? 'ar';
-      _coachUseModel = p.getBool(_kCoachModel) ?? true;
+      _coachUseModel = p.getBool(_kCoachModel) ?? false;
       _coachExplainAll = p.getBool(_kCoachAll) ?? false;
 
       _trOn = p.getBool(_kTrOn) ?? true;
@@ -194,6 +225,47 @@ class AppSettings extends ChangeNotifier {
     try {
       (await SharedPreferences.getInstance()).setInt(key, v);
     } catch (_) {}
+  }
+
+  Future<void> _saveString(String key, String v) async {
+    try {
+      (await SharedPreferences.getInstance()).setString(key, v);
+    } catch (_) {}
+  }
+
+  Future<void> setCoachBackend(String v) async {
+    _coachBackend = v == 'local' ? 'local' : 'remote';
+    notifyListeners();
+    await _saveString(_kCoachBackend, _coachBackend);
+  }
+
+  Future<void> setCoachApiProvider(String v) async {
+    _coachApiProvider = v;
+    // نموذج/عنوان المزوّد السابق لا يصلحان للجديد.
+    _coachApiModel = '';
+    _coachApiBase = '';
+    notifyListeners();
+    await _saveString(_kCoachApiProvider, v);
+    await _saveString(_kCoachApiModel, '');
+    await _saveString(_kCoachApiBase, '');
+  }
+
+  Future<void> setCoachApiKey(String v) async {
+    _coachApiKey = v.trim();
+    notifyListeners();
+    await _saveString(_kCoachApiKey, _coachApiKey);
+  }
+
+  Future<void> setCoachApiModel(String v) async {
+    _coachApiModel = v.trim();
+    notifyListeners();
+    await _saveString(_kCoachApiModel, _coachApiModel);
+  }
+
+  Future<void> setCoachApiBaseUrl(String v) async {
+    _coachApiBase = v.trim();
+    notifyListeners();
+    await _saveString(_kCoachApiBase, _coachApiBase);
   }
 
   Future<void> setCoachLevel(String name) async {
