@@ -194,7 +194,8 @@ class _HeroHeader extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, c) {
         final w = c.maxWidth;
-        final h = w / 1.5;
+        final imgTop = w * 0.13;
+        final h = w / 1.5 + imgTop;
 
         return ClipRRect(
           borderRadius: const BorderRadius.vertical(
@@ -206,17 +207,25 @@ class _HeroHeader extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.asset(
-                  'assets/robot/robot_hero.jpg',
-                  fit: BoxFit.cover,
-                  alignment: const Alignment(-0.45, 0),
-                  errorBuilder: (_, _, _) => const ColoredBox(
-                    color: BotPalette.card,
-                    child: Center(
-                      child: Icon(
-                        Icons.smart_toy_rounded,
-                        size: 72,
-                        color: BotPalette.blue,
+                const ColoredBox(color: BotPalette.bg),
+                // الصورة تحت العنوان.
+                Positioned(
+                  top: imgTop,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Image.asset(
+                    'assets/robot/robot_hero.jpg',
+                    fit: BoxFit.cover,
+                    alignment: const Alignment(-0.45, 0),
+                    errorBuilder: (_, _, _) => const ColoredBox(
+                      color: BotPalette.card,
+                      child: Center(
+                        child: Icon(
+                          Icons.smart_toy_rounded,
+                          size: 72,
+                          color: BotPalette.blue,
+                        ),
                       ),
                     ),
                   ),
@@ -227,9 +236,10 @@ class _HeroHeader extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      stops: [0.0, 0.32, 0.75, 1.0],
+                      stops: [0.0, 0.17, 0.30, 0.78, 1.0],
                       colors: [
-                        Color(0xB30A1226),
+                        Color(0xFF0A1226),
+                        Color(0xFF0A1226),
                         Color(0x000A1226),
                         Color(0x000A1226),
                         Color(0x990A1226),
@@ -251,13 +261,13 @@ class _HeroHeader extends StatelessWidget {
                           Icon(
                             Icons.smart_toy_rounded,
                             color: BotPalette.blue,
-                            size: w * 0.085,
+                            size: w * 0.065,
                           ),
-                          SizedBox(width: w * 0.02),
+                          SizedBox(width: w * 0.018),
                           RichText(
                             text: TextSpan(
                               style: TextStyle(
-                                fontSize: w * 0.085,
+                                fontSize: w * 0.065,
                                 fontWeight: FontWeight.w800,
                                 color: BotPalette.text,
                                 shadows: const [
@@ -278,12 +288,12 @@ class _HeroHeader extends StatelessWidget {
                           ),
                         ],
                       ),
-                      SizedBox(height: w * 0.012),
+                      SizedBox(height: w * 0.002),
                       Text(
                         'اختر المستوى والإعدادات وابدأ اللعبة',
                         style: TextStyle(
                           color: const Color(0xFFC9D2E8),
-                          fontSize: w * 0.04,
+                          fontSize: w * 0.036,
                           shadows: const [
                             Shadow(
                               color: Color(0xAA000000),
@@ -320,12 +330,12 @@ class _HeroHeader extends StatelessWidget {
                 ),
                 // فقاعة «محرك قوي / Stockfish».
                 Positioned(
-                  top: h * 0.36,
+                  top: imgTop + (h - imgTop) * 0.34,
                   right: 14,
                   child: Container(
                     padding: EdgeInsets.symmetric(
-                      horizontal: w * 0.035,
-                      vertical: w * 0.025,
+                      horizontal: w * 0.028,
+                      vertical: w * 0.02,
                     ),
                     decoration: BoxDecoration(
                       color: const Color(0xCC111B33),
@@ -338,9 +348,9 @@ class _HeroHeader extends StatelessWidget {
                         Icon(
                           Icons.psychology_rounded,
                           color: BotPalette.blue,
-                          size: w * 0.11,
+                          size: w * 0.085,
                         ),
-                        SizedBox(width: w * 0.025),
+                        SizedBox(width: w * 0.02),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
@@ -349,7 +359,7 @@ class _HeroHeader extends StatelessWidget {
                               'محرك قوي',
                               style: TextStyle(
                                 color: BotPalette.text,
-                                fontSize: w * 0.045,
+                                fontSize: w * 0.037,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -357,14 +367,14 @@ class _HeroHeader extends StatelessWidget {
                               'Stockfish',
                               style: TextStyle(
                                 color: BotPalette.muted,
-                                fontSize: w * 0.036,
+                                fontSize: w * 0.03,
                               ),
                             ),
                             Text(
                               'أداء احترافي وتحليل دقيق',
                               style: TextStyle(
                                 color: BotPalette.muted,
-                                fontSize: w * 0.03,
+                                fontSize: w * 0.024,
                               ),
                             ),
                           ],
@@ -431,7 +441,7 @@ class _SectionCard extends StatelessWidget {
                       subtitle,
                       style: const TextStyle(
                         color: BotPalette.muted,
-                        fontSize: 12,
+                        fontSize: 10.5,
                       ),
                     ),
                   ],
@@ -569,10 +579,10 @@ class _ColorRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // الترتيب كما في التصميم (من اليمين): عشوائي، أبيض، أسود.
-    const items = <(String, String, IconData)>[
-      ('r', 'عشوائي', Icons.casino_rounded),
-      ('w', 'أبيض', Icons.circle_outlined),
-      ('b', 'أسود', Icons.circle),
+    const items = <(String, String, String?)>[
+      ('r', 'عشوائي', null),
+      ('w', 'أبيض', 'assets/robot/pawn_white.png'),
+      ('b', 'أسود', 'assets/robot/pawn_black.png'),
     ];
 
     return Row(
@@ -587,13 +597,22 @@ class _ColorRow extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    items[i].$3,
-                    color: items[i].$1 == 'b'
-                        ? const Color(0xFFB8C2D9)
-                        : BotPalette.text,
-                    size: 24,
-                  ),
+                  items[i].$3 == null
+                      ? const Icon(
+                          Icons.casino_rounded,
+                          color: BotPalette.muted,
+                          size: 26,
+                        )
+                      : Image.asset(
+                          items[i].$3!,
+                          height: 30,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, _, _) => const Icon(
+                            Icons.circle,
+                            size: 24,
+                            color: BotPalette.text,
+                          ),
+                        ),
                   const SizedBox(height: 4),
                   Text(
                     items[i].$2,
@@ -833,12 +852,13 @@ class _BottomBar extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
           child: SizedBox(
-            height: 74,
+            height: 84,
             child: Row(
               children: [
                 // «تحليل أثناء اللعب» = التدريب الذكي أثناء المباراة.
                 SizedBox(
-                  width: 92,
+                  width: 76,
+                  height: 66,
                   child: ListenableBuilder(
                     listenable: AppSettings.instance,
                     builder: (context, _) {
@@ -848,7 +868,7 @@ class _BottomBar extends StatelessWidget {
                         onTap: () =>
                             AppSettings.instance.setSmartTraining(!on),
                         icon: Icons.bar_chart_rounded,
-                        label: 'تحليل أثناء اللعب',
+                        label: 'مع مدرب',
                         trailing: Switch(
                           value: on,
                           onChanged: AppSettings.instance.setSmartTraining,
@@ -913,14 +933,14 @@ class _BottomBar extends StatelessWidget {
                                     Icon(
                                       Icons.play_arrow_rounded,
                                       color: Color(0xFF1B1405),
-                                      size: 34,
+                                      size: 40,
                                     ),
                                     SizedBox(width: 6),
                                     Text(
                                       'ابدأ اللعبة',
                                       style: TextStyle(
                                         color: Color(0xFF1B1405),
-                                        fontSize: 22,
+                                        fontSize: 26,
                                         fontWeight: FontWeight.w900,
                                       ),
                                     ),
@@ -933,7 +953,8 @@ class _BottomBar extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 SizedBox(
-                  width: 82,
+                  width: 68,
+                  height: 66,
                   child: _MiniTile(
                     onTap: onAdvanced,
                     icon: Icons.settings_rounded,
@@ -967,7 +988,7 @@ class _MiniTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         decoration: BoxDecoration(
           color: BotPalette.card,
           borderRadius: BorderRadius.circular(18),
@@ -976,7 +997,7 @@ class _MiniTile extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: BotPalette.blue, size: 24),
+            Icon(icon, color: BotPalette.blue, size: 20),
             const SizedBox(height: 2),
             Text(
               label,
@@ -990,7 +1011,7 @@ class _MiniTile extends StatelessWidget {
             ),
             if (trailing != null)
               SizedBox(
-                height: 24,
+                height: 20,
                 child: FittedBox(child: trailing),
               ),
           ],
