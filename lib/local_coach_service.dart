@@ -310,7 +310,7 @@ class LocalCoachService extends ChangeNotifier {
   }
 
   Future<CoachExplanation> explainPosition(
-    PositionAnalysis analysis, {
+    CoachPositionInput analysis, {
     CoachLevel? level,
     CoachLang? lang,
   }) async {

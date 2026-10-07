@@ -42,7 +42,7 @@ class CoachModelSpec {
 /// النموذج الافتراضي: Qwen2.5-1.5B-Instruct (Q4_K_M).
 /// - ترخيص Apache-2.0، ويدعم العربية والإنجليزية ضمن لغاته.
 /// - حجم ≈ 1.1 GB، ويعمل على ARM64 بذاكرة ≈ 1.5–2 GB أثناء الاستخدام.
-/// - يستخدم قالب ChatML وبدون وضع تفكير (لا <think>).
+/// - يستخدم قالب ChatML وبدون وضع تفكير (لا `<think>`).
 const CoachModelSpec kDefaultCoachModel = CoachModelSpec(
   id: 'qwen2.5-1.5b-instruct-q4_k_m',
   displayName: 'Qwen2.5 1.5B Instruct (Q4_K_M)',

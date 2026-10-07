@@ -94,7 +94,7 @@ class CoachTemplateEngine {
   // ---------------- الوضعية ----------------
 
   static CoachExplanation explainPosition(
-    PositionAnalysis p, {
+    CoachPositionInput p, {
     required CoachLevel level,
     required CoachLang lang,
   }) {

@@ -123,7 +123,7 @@ Return ONLY one JSON object, no markdown, no extra text:
   }
 
   static String position(
-    PositionAnalysis p, {
+    CoachPositionInput p, {
     required CoachLevel level,
     required CoachLang lang,
   }) {
@@ -172,7 +172,7 @@ Return ONLY one JSON object, no markdown, no extra text:
   // قراءة الناتج + الحواجز
   // ------------------------------------------------------------
 
-  /// يستخرج أول JSON من ناتج النموذج (يتجاهل ``` و <think>).
+  /// يستخرج أول JSON من ناتج النموذج (يتجاهل الأسوار البرمجية ووسم think).
   static Map<String, dynamic>? extractJson(String raw) {
     var t = raw.replaceAll(RegExp(r'<think>[\s\S]*?</think>'), '');
 

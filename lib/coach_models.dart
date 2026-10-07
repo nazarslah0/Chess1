@@ -187,7 +187,7 @@ class CoachMoveInput {
 }
 
 /// تحليل وضعية (للمدرب: «تحليل وضعية»).
-class PositionAnalysis {
+class CoachPositionInput {
   final String fen;
   final String sideToMove; // white / black
   final double evalPawns; // منظور الأبيض
@@ -195,7 +195,7 @@ class PositionAnalysis {
   final List<String> principalVariation; // SAN
   final String phase;
 
-  const PositionAnalysis({
+  const CoachPositionInput({
     required this.fen,
     required this.sideToMove,
     required this.evalPawns,
