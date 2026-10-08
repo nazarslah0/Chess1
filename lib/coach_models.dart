@@ -3,11 +3,11 @@ import 'game_review_models.dart';
 import 'pv_utils.dart';
 
 // ================================================================
-// نماذج «المدرب المحلي» (Local AI Chess Coach).
+// نماذج «مدرب الشطرنج» (جمل جاهزة).
 //
-// المحرك (Stockfish) = الحساب. النموذج اللغوي المحلي = الشرح فقط.
-// كل الأرقام والنقلات والتصنيف تأتي من MoveAnalysisResult (المحرك)،
-// والنموذج لا يقرر أي منها.
+// المحرك (Stockfish) = الحساب. المدرب = جمل جاهزة تُختار بحسب بيانات
+// المحرك (التصنيف، التقييم، أفضل نقلة، المرحلة، نوع النقلة) ومستوى
+// اللاعب ولغته. كل الأرقام والنقلات والتصنيف تأتي من MoveAnalysisResult.
 // ================================================================
 
 enum CoachLevel { beginner, intermediate, advanced, expert }
@@ -43,7 +43,7 @@ String coachLevelLabel(CoachLevel l, CoachLang lang) {
   return (lang == CoachLang.ar ? ar : en)[l]!;
 }
 
-/// شرح منظَّم (يرجعه النموذج كـ JSON أو يبنيه محرك القوالب).
+/// شرح منظَّم تبنيه [CoachTemplateEngine].
 class CoachExplanation {
   final String title;
   final String summary;
@@ -52,9 +52,6 @@ class CoachExplanation {
   final String? idea;
   final String lesson;
 
-  /// true إذا ولّده النموذج اللغوي المحلي، false إذا كان قالبًا.
-  final bool fromModel;
-
   const CoachExplanation({
     required this.title,
     required this.summary,
@@ -62,60 +59,15 @@ class CoachExplanation {
     required this.lesson,
     this.betterMove,
     this.idea,
-    this.fromModel = false,
   });
-
-  Map<String, dynamic> toJson() => {
-        'title': title,
-        'summary': summary,
-        'explanation': explanation,
-        if (betterMove != null) 'betterMove': betterMove,
-        if (idea != null) 'idea': idea,
-        'lesson': lesson,
-      };
-
-  /// يقرأ JSON بتسامح؛ يعيد null إذا لم يحتوِ على شرح مفيد.
-  static CoachExplanation? fromJson(
-    Map<String, dynamic> m, {
-    bool fromModel = false,
-  }) {
-    String? s(String k) {
-      final v = m[k];
-
-      if (v == null) return null;
-
-      final t = v.toString().trim();
-
-      return t.isEmpty || t == 'null' ? null : t;
-    }
-
-    final summary = s('summary');
-    final explanation = s('explanation');
-
-    if (summary == null && explanation == null) return null;
-
-    return CoachExplanation(
-      title: s('title') ?? '',
-      summary: summary ?? '',
-      explanation: explanation ?? '',
-      betterMove: s('betterMove'),
-      idea: s('idea'),
-      lesson: s('lesson') ?? '',
-      fromModel: fromModel,
-    );
-  }
 }
 
-String _qualityKey(MoveQuality q) => q.name.toUpperCase();
-
-/// بيانات Stockfish المنظمة لنقلة واحدة (هذا فقط ما يراه النموذج).
+/// بيانات Stockfish المنظمة لنقلة واحدة.
 /// التقييمات بالبيدق من منظور اللاعب الذي نفّذ النقلة
 /// (موجب = جيد له).
 class CoachMoveInput {
   final int moveNumber;
   final String side; // white / black
-  final String fenBefore;
-  final String fenAfter;
   final String san;
   final MoveQuality quality;
   final double evalBefore;
@@ -130,8 +82,6 @@ class CoachMoveInput {
   const CoachMoveInput({
     required this.moveNumber,
     required this.side,
-    this.fenBefore = '',
-    this.fenAfter = '',
     required this.san,
     required this.quality,
     required this.evalBefore,
@@ -155,8 +105,6 @@ class CoachMoveInput {
     return CoachMoveInput(
       moveNumber: r.moveNumber,
       side: r.side == 'w' ? 'white' : 'black',
-      fenBefore: r.fenBefore,
-      fenAfter: r.fenAfter,
       san: r.san,
       quality: r.classification,
       evalBefore: r.evaluationBeforeCp / 100.0,
@@ -170,30 +118,6 @@ class CoachMoveInput {
     );
   }
 
-  /// بصيغة المثال في المواصفات.
-  Map<String, dynamic> toJson({bool revealBest = true}) => {
-        'move': san,
-        'fenBefore': fenBefore,
-        'fenAfter': fenAfter,
-        'classification': _qualityKey(quality),
-        'evaluationBefore': double.parse(evalBefore.toStringAsFixed(2)),
-        'evaluationAfter': double.parse(evalAfter.toStringAsFixed(2)),
-        'evaluationLoss': double.parse(evalLoss.toStringAsFixed(2)),
-        if (revealBest) 'bestMove': bestMove,
-        if (revealBest) 'principalVariation': principalVariation,
-        'gamePhase': phase,
-        'side': side,
-        'critical': isCritical,
-
-        if (tablebaseVerdict != null) 'tablebase': tablebaseVerdict,
-      };
-
-  /// كل النقلات المسموح للنموذج بذكرها.
-  Set<String> allowedMoves({required bool revealBest}) => {
-        san,
-        if (revealBest && bestMove.isNotEmpty) bestMove,
-        if (revealBest) ...principalVariation,
-      };
 }
 
 /// تحليل وضعية (للمدرب: «تحليل وضعية»).
@@ -213,15 +137,4 @@ class CoachPositionInput {
     required this.principalVariation,
     required this.phase,
   });
-
-  Map<String, dynamic> toJson() => {
-        'fen': fen,
-        'sideToMove': sideToMove,
-        'evaluationWhite': double.parse(evalPawns.toStringAsFixed(2)),
-        'bestMove': bestMove,
-        'principalVariation': principalVariation,
-        'gamePhase': phase,
-      };
-
-  Set<String> allowedMoves() => {bestMove, ...principalVariation};
 }

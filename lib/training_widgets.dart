@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'app_settings.dart';
 import 'bot_setup_view.dart' show BotPalette;
-import 'coach_models.dart';
 import 'training_coach.dart';
 
 /// يظهر/يختفي بحركة بسيطة: Fade + Slide Up (وFade Out عند الإخفاء).
@@ -44,12 +43,13 @@ class CoachAction {
   const CoachAction(this.label, this.onTap, {this.primary = false});
 }
 
-/// بطاقة المدرب (تظهر فوق الرقعة): عنوان + شرح + أزرار.
+/// بطاقة المدرب (مضغوطة): عنوان قصير + سطر اختياري + أزرار.
+/// تظهر تحت الرقعة وليست فوقها.
 class CoachCard extends StatelessWidget {
   final String title;
   final String body;
 
-  /// سطر إضافي (أفضل نقلة / الخط الرئيسي) — يُعرض LTR.
+  /// سطر إضافي قصير (النقلة / الخط الرئيسي) — يُعرض LTR.
   final String? detail;
   final Color accent;
   final List<CoachAction> actions;
@@ -57,9 +57,9 @@ class CoachCard extends StatelessWidget {
   const CoachCard({
     super.key,
     required this.title,
-    required this.body,
     required this.accent,
     required this.actions,
+    this.body = '',
     this.detail,
   });
 
@@ -67,67 +67,63 @@ class CoachCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
       decoration: BoxDecoration(
         color: const Color(0xF2101B35),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: accent.withValues(alpha: 0.7)),
-        boxShadow: [
-          BoxShadow(
-            color: accent.withValues(alpha: 0.25),
-            blurRadius: 16,
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: BotPalette.text,
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 150),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
+          Row(
+            children: [
+              Flexible(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: BotPalette.text,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              if (body.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
                     body,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: BotPalette.muted,
-                      fontSize: 13,
-                      height: 1.35,
+                      fontSize: 12,
                     ),
                   ),
-                  if (detail != null) ...[
-                    const SizedBox(height: 6),
-                    Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: Text(
-                        detail!,
-                        style: const TextStyle(
-                          color: BotPalette.gold,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
+                ),
+              ],
+            ],
+          ),
+          if (detail != null && detail!.isNotEmpty)
+            Directionality(
+              textDirection: TextDirection.ltr,
+              child: Text(
+                detail!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: BotPalette.gold,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 2),
           Wrap(
-            spacing: 8,
-            runSpacing: 4,
+            spacing: 6,
             children: [
               for (final a in actions)
                 a.primary
@@ -137,6 +133,8 @@ class CoachCard extends StatelessWidget {
                           backgroundColor: accent,
                           foregroundColor: Colors.white,
                           visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          textStyle: const TextStyle(fontSize: 13),
                         ),
                         child: Text(a.label),
                       )
@@ -145,6 +143,8 @@ class CoachCard extends StatelessWidget {
                         style: TextButton.styleFrom(
                           foregroundColor: BotPalette.text,
                           visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          textStyle: const TextStyle(fontSize: 13),
                         ),
                         child: Text(a.label),
                       ),
@@ -172,7 +172,7 @@ class CoachPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: const Color(0xEE101B35),
         borderRadius: BorderRadius.circular(22),
@@ -209,41 +209,11 @@ class CoachPill extends StatelessWidget {
   }
 }
 
-/// «🎓 أداؤك في التدريب» (بعد انتهاء المباراة).
+/// «🎓 أداؤك في التدريب» (بعد انتهاء المباراة) — سطران فقط.
 class TrainingSummaryCard extends StatelessWidget {
   final TrainingSummary summary;
 
-  /// ملاحظة المدرب عن المباراة (قالب أو نموذج محلي).
-  final CoachExplanation? note;
-
-  const TrainingSummaryCard({super.key, required this.summary, this.note});
-
-  Widget _line(String label, int value, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: BotPalette.muted,
-                fontSize: 13,
-              ),
-            ),
-          ),
-          Text(
-            '$value',
-            style: TextStyle(
-              color: color,
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  const TrainingSummaryCard({super.key, required this.summary});
 
   @override
   Widget build(BuildContext context) {
@@ -251,55 +221,35 @@ class TrainingSummaryCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       decoration: BoxDecoration(
         color: BotPalette.card,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: BotPalette.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            '🎓 أداءك في التدريب',
-            style: TextStyle(
+          Text(
+            '🎓 بنفسك ${summary.foundBySelf} • تلميح ${summary.neededHint}'
+            ' • الحل ${summary.sawSolution} • أخطاء ${summary.mistakes}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
               color: BotPalette.text,
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
-          _line(
-            'النقلات التي وجدتها بنفسك',
-            summary.foundBySelf,
-            BotPalette.green,
-          ),
-          _line('احتجت تلميحاً', summary.neededHint, BotPalette.gold),
-          _line('شاهدت الحل', summary.sawSolution, BotPalette.blue),
-          _line('أخطاء', summary.mistakes, BotPalette.red),
-          if (pct != null) ...[
-            const SizedBox(height: 8),
+          if (pct != null)
             Text(
-              'لقد وجدت $pct% من النقلات القوية بنفسك.',
-              style: const TextStyle(
-                color: BotPalette.text,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-          if (note != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              '🎓 ${note!.summary}\n${note!.lesson}',
+              'وجدت $pct% من النقلات القوية بنفسك',
               style: const TextStyle(
                 color: BotPalette.muted,
                 fontSize: 12,
-                height: 1.35,
               ),
             ),
-          ],
         ],
       ),
     );
