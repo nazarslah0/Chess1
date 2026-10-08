@@ -105,7 +105,7 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-/// بطاقة «مدرب الشطرنج» في الشاشة الرئيسية (بنفس هوية التطبيق).
+/// بطاقة «AI COACH» في الشاشة الرئيسية (بنفس هوية التطبيق).
 class _CoachCard extends StatelessWidget {
   final VoidCallback onTap;
 
@@ -128,7 +128,7 @@ class _CoachCard extends StatelessWidget {
               const Text('🎓', style: TextStyle(fontSize: 34)),
               const SizedBox(height: 4),
               Text(
-                'مدرب الشطرنج',
+                'AI COACH',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,

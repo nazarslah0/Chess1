@@ -64,11 +64,6 @@ CoachApiPreset coachApiPreset(String id) => kCoachApiPresets.firstWhere(
       orElse: () => kCoachApiPresets.first,
     );
 
-/// أقل ميزانية رموز لنماذج التفكير (gpt-oss): جزء منها يذهب للتفكير
-/// الداخلي قبل كتابة الجواب، فإذا كانت صغيرة يعود المحتوى فارغًا مع
-/// finish_reason=length.
-const int kReasoningMinTokens = 1500;
-
 /// Remote coach: Stockfish remains responsible for chess calculation;
 /// this class only sends the trusted engine facts to an LLM for explanation.
 class RemoteCoachModel implements LocalCoachModel {
@@ -166,11 +161,6 @@ class RemoteCoachModel implements LocalCoachModel {
       final isGroq = _preset.id == 'groq' || _baseUrl.contains('api.groq.com');
       final isGptOss = isGroq && _model.startsWith('openai/gpt-oss-');
 
-      // نماذج التفكير تحتاج ميزانية أكبر من النص المطلوب نفسه.
-      final budget = isGptOss && maxTokens < kReasoningMinTokens
-          ? kReasoningMinTokens
-          : maxTokens;
-
       final body = <String, dynamic>{
         'model': _model,
         'messages': [
@@ -178,18 +168,16 @@ class RemoteCoachModel implements LocalCoachModel {
           {'role': 'user', 'content': user},
         ],
         'temperature': temperature,
-        if (isGptOss) 'max_completion_tokens': budget else 'max_tokens': budget,
+        if (isGptOss) 'max_completion_tokens': maxTokens else 'max_tokens': maxTokens,
         'stream': false,
-        // low: تفكير أقصر = جواب أسرع وأرخص، ويكفي لشرح بيانات جاهزة.
-        if (isGptOss) 'reasoning_effort': 'low',
+        if (isGptOss) 'reasoning_effort': 'medium',
         if (isGptOss) 'include_reasoning': false,
       };
 
       req.add(utf8.encode(jsonEncode(body)));
 
       final res = await req.close().timeout(timeout);
-      final responseBody =
-          await res.transform(utf8.decoder).join().timeout(timeout);
+      final responseBody = await res.transform(utf8.decoder).join().timeout(timeout);
 
       if (res.statusCode < 200 || res.statusCode >= 300) {
         throw _apiException(res.statusCode, responseBody, uri);
@@ -203,13 +191,11 @@ class RemoteCoachModel implements LocalCoachModel {
       try {
         json = jsonDecode(responseBody);
       } catch (_) {
-        throw FormatException(
-            'API returned invalid JSON: ${_safe(responseBody)}');
+        throw FormatException('API returned invalid JSON: ${_safe(responseBody)}');
       }
 
       if (json is! Map) {
-        throw FormatException(
-            'API returned an invalid JSON object: ${_safe(responseBody)}');
+        throw FormatException('API returned an invalid JSON object: ${_safe(responseBody)}');
       }
 
       final choices = json['choices'];
@@ -227,34 +213,20 @@ class RemoteCoachModel implements LocalCoachModel {
 
       final message = first['message'];
       if (message is! Map) {
-        throw FormatException(
-            'API response has no assistant message: ${_safe(responseBody)}');
+        throw FormatException('API response has no assistant message: ${_safe(responseBody)}');
       }
 
       final text = _contentText(message['content']).trim();
       if (text.isEmpty) {
         final finish = first['finish_reason'];
-
-        // length = نفدت الرموز (غالبًا في التفكير الداخلي).
-        if (finish == 'length') {
-          throw const FormatException(
-            'The model ran out of tokens before answering (reasoning '
-            'model). Try a non-reasoning model such as '
-            'llama-3.3-70b-versatile, or retry.',
-          );
-        }
-
         throw FormatException(
-          'API returned empty content'
-          '${finish == null ? '' : ' (finish_reason=$finish)'}: '
-          '${_safe(responseBody)}',
+          'API returned empty content${finish == null ? '' : ' (finish_reason=$finish)'}: ${_safe(responseBody)}',
         );
       }
 
       return text;
     } on TimeoutException {
-      throw TimeoutException(
-          'Coach API request timed out after ${timeout.inSeconds} seconds.');
+      throw TimeoutException('Coach API request timed out after ${timeout.inSeconds} seconds.');
     } on SocketException catch (e) {
       throw SocketException('Could not connect to coach API: ${e.message}');
     } finally {
@@ -278,9 +250,7 @@ class RemoteCoachModel implements LocalCoachModel {
 
   static String? _errorMessage(Map<dynamic, dynamic> json) {
     final error = json['error'];
-    if (error is Map && error['message'] != null) {
-      return error['message'].toString();
-    }
+    if (error is Map && error['message'] != null) return error['message'].toString();
     if (error is String) return error;
     if (json['message'] != null) return json['message'].toString();
     return null;
@@ -302,12 +272,7 @@ class RemoteCoachModel implements LocalCoachModel {
   static String _safe(String value, {int maxLength = 600}) {
     final redacted = value
         .replaceAll(RegExp(r'gsk_[A-Za-z0-9_-]+'), 'gsk_***REDACTED***')
-        .replaceAll(
-          RegExp(r'Bearer\s+[A-Za-z0-9._-]+', caseSensitive: false),
-          'Bearer ***REDACTED***',
-        );
-    return redacted.length <= maxLength
-        ? redacted
-        : '${redacted.substring(0, maxLength)}...';
+        .replaceAll(RegExp(r'Bearer\s+[A-Za-z0-9._-]+', caseSensitive: false), 'Bearer ***REDACTED***');
+    return redacted.length <= maxLength ? redacted : '${redacted.substring(0, maxLength)}...';
   }
 }

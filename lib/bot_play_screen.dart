@@ -10,11 +10,15 @@ import 'app_ui.dart';
 import 'board_input.dart';
 import 'board_widget.dart' show BoardArrow;
 import 'bot_setup_view.dart';
+import 'coach_models.dart';
 import 'coach_session.dart';
+import 'coach_templates.dart';
 import 'engine_service.dart';
 import 'game_analysis_screen.dart';
 import 'game_review_models.dart';
 import 'lichess_data_service.dart';
+import 'local_coach_service.dart';
+import 'analysis_result.dart';
 import 'models.dart';
 import 'pv_utils.dart';
 import 'sound_service.dart';
@@ -147,6 +151,7 @@ class _Coach {
   final bool soft;
   final bool reviewOnly;
   final MoveQuality firstQuality;
+  final bool informational;
 
   /// مستوى التلميح المعروض حاليًا: 1 رسالة، 2 سهم، 3 نقلة + PV.
   int level = 1;
@@ -158,6 +163,12 @@ class _Coach {
   /// المستخدم أعاد نقلته (الوضعية عادت لما قبلها).
   bool retrying = false;
 
+  /// بيانات المحرك لنقلة المستخدم (يشرحها المدرب المحلي).
+  MoveAnalysisResult? result;
+
+  /// شرح المدرب (قالب فوري ثم نموذج محلي إن توفر).
+  CoachExplanation? explanation;
+  bool explaining = false;
 
   _Coach({
     required this.ply,
@@ -169,6 +180,7 @@ class _Coach {
     required this.soft,
     required this.reviewOnly,
     required this.firstQuality,
+    this.informational = false,
   });
 
   bool get canRetry => !reviewOnly && !retrying;
@@ -248,6 +260,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
   bool _variationPlayed = false;
   bool _summaryHidden = false;
   bool _sessionRecorded = false;
+  CoachExplanation? _gameNote;
 
   final Map<int, TrainingEntry> _entries = <int, TrainingEntry>{};
   final Map<String, PositionEval> _beforeCache = <String, PositionEval>{};
@@ -395,8 +408,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
 
     _trainingOn = widget.coachMode || _settings.smartTraining;
     _sessionRecorded = false;
-
-    unawaited(CoachSessionStore.instance.load());
+    _gameNote = null;
 
     _state.startPosition();
     _state.flipped = _userColor == 'b';
@@ -625,6 +637,10 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
     if (!mounted || _result != null) return;
 
     setState(() => _thinking = true);
+
+    // لا نشغّل النموذج اللغوي وStockfish بثقلهما معًا: أي توليد جارٍ
+    // يُوقف قبل أن يبدأ المحرك نقلة الروبوت.
+    await LocalCoachService.instance.cancel();
 
     final started = DateTime.now();
 
@@ -871,6 +887,43 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
     );
 
     if (!stronger) {
+      // في وضع «المدرب» مع شرح كل النقلات: لا نستخدم الـLLM ليقرر
+      // جودة النقلة؛ Stockfish حسم ذلك مسبقًا. نعرض فقط شرحًا لغويًا
+      // للنتيجة ثم نتابع المباراة.
+      final explainEveryMove =
+          widget.coachMode && _settings.coachUseModel && _settings.coachExplainAll;
+
+      if (explainEveryMove) {
+        final coach = _Coach(
+          ply: um.ply,
+          fenBefore: um.fenBefore,
+          bestUci: bestOk ? j.bestUci! : um.uci,
+          bestSan: bestOk ? pvToSan(um.fenBefore, [j.bestUci!]) : um.san,
+          pvSan: j.pv.isEmpty ? '' : pvToSan(um.fenBefore, j.pv),
+          judgement: j,
+          soft: false,
+          reviewOnly: false,
+          firstQuality: firstQuality,
+          informational: true,
+        );
+
+        coach.result = result;
+        coach.explanation = _quickExplanation(result, reveal: true);
+
+        setState(() => _coach = coach);
+        unawaited(_loadExplanation(coach, deep: false));
+
+        if (_settings.trainingFeedback) {
+          if (j.kind == CoachKind.best) {
+            _cue('best');
+          } else if (j.kind == CoachKind.excellent) {
+            _cue('best');
+          }
+        }
+
+        return true;
+      }
+
       setState(() => _coach = null);
 
       if (_settings.trainingFeedback) {
@@ -908,13 +961,84 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
       ..maxLevel = maxLevel < 1 ? 1 : maxLevel
       ..bestMoveTried = tried;
 
+    coach.result = result;
+    coach.explanation = _quickExplanation(result, reveal: false);
+
     _closeVariation(notify: false);
 
     setState(() => _coach = coach);
 
     if (j.kind == CoachKind.severe) _cue('bad');
 
+    // المحرك انتهى؛ الآن (وحده) يعمل النموذج المحلي للشرح.
+    unawaited(_loadExplanation(coach));
+
     return !reviewOnly;
+  }
+
+  CoachExplanation _quickExplanation(
+    MoveAnalysisResult r, {
+    required bool reveal,
+  }) {
+    return CoachTemplateEngine.explainMove(
+      CoachMoveInput.fromResult(r),
+      level: coachLevelFromName(_settings.coachLevelName),
+      lang: coachLangFromName(_settings.coachLangName),
+      revealBest: reveal,
+    );
+  }
+
+  /// الشرح الفوري بقالب، ثم يُستبدل بشرح النموذج المحلي إن توفر.
+  Future<void> _loadExplanation(_Coach c, {bool deep = false}) async {
+    final r = c.result;
+
+    if (r == null) return;
+
+    if (!_settings.coachUseModel) return;
+
+    setState(() => c.explaining = true);
+
+    CoachExplanation e;
+
+    try {
+      e = await LocalCoachService.instance.explainMove(
+        r,
+        deep: deep,
+        revealBest: deep,
+      );
+    } catch (_) {
+      e = _quickExplanation(r, reveal: deep);
+    }
+
+    if (!mounted) return;
+
+    // البطاقة أُغلقت أو استُبدلت أثناء التوليد.
+    if (!identical(_coach, c)) return;
+
+    setState(() {
+      c.explanation = e;
+      c.explaining = false;
+    });
+  }
+
+  /// «اشرح أكثر»: يكشف أفضل نقلة والخط الرئيسي مع شرح أعمق.
+  void _explainMore() {
+    final c = _coach;
+
+    if (c == null || c.level >= 3) return;
+
+    setState(() {
+      c.level = 3;
+      c.maxLevel = 3;
+      final r = c.result;
+
+      if (r != null) c.explanation = _quickExplanation(r, reveal: true);
+    });
+
+    _updateEntry(c);
+    _cue('hint');
+
+    unawaited(_loadExplanation(c, deep: true));
   }
 
   void _updateEntry(_Coach c) {
@@ -1125,7 +1249,8 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
   // نهاية اللعبة
   // ------------------------------------------------------------
 
-  /// يحفظ إحصاءات المباراة في ذاكرة المدرب (مرة واحدة).
+  /// يحفظ إحصاءات المباراة في ذاكرة المدرب (مرة واحدة)، ثم يجهّز
+  /// ملاحظة المدرب عن المباراة (قالب أو نموذج محلي).
   Future<void> _recordSession() async {
     if (_sessionRecorded || !_trainingOn || _entries.isEmpty) return;
 
@@ -1135,6 +1260,14 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
       ..sort((a, b) => a.ply.compareTo(b.ply)));
 
     await CoachSessionStore.instance.recordGame(moves);
+
+    if (moves.length < 3) return;
+
+    try {
+      final note = await LocalCoachService.instance.explainGame(moves);
+
+      if (mounted) setState(() => _gameNote = note);
+    } catch (_) {}
   }
 
   bool _checkEnd() {
@@ -1322,7 +1455,6 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
 
   static const double _barHeight = 44;
   static const double _gap = 6;
-  static const double _coachSlotHeight = 104;
 
   Widget _playerBar(String color) {
     final isUser = color == _userColor;
@@ -1593,22 +1725,47 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
     ];
   }
 
-  /// سطر قصير جدًا للخطأ (بدون شرح).
-  String _severeLine(_Coach c) {
-    switch (c.judgement.tablebaseVerdict) {
+  String _severeBody(_Coach c) {
+    final j = c.judgement;
+
+    switch (j.tablebaseVerdict) {
       case 'lostWin':
-        return 'تحوّل الفوز إلى خسارة';
+        return 'هذه النقلة حوّلت وضعية رابحة إلى خاسرة.';
       case 'missedWin':
-        return 'ضاع الفوز';
+        return 'هذه النقلة حوّلت الفوز إلى تعادل.';
       case 'blunder':
-        return 'تحوّل التعادل إلى خسارة';
+        return 'هذه النقلة حوّلت التعادل إلى خسارة.';
     }
 
-    return 'خسرت أفضلية';
+    return 'هذه النقلة سمحت للخصم بالحصول على أفضلية.\n'
+        'هناك نقلة أفضل في هذه الوضعية.';
   }
 
-  /// بطاقة المدرب: عنوان قصير + أزرار فقط (بلا شرح)، وتظهر تحت
-  /// الرقعة وليست فوقها.
+  /// يضيف شرح المدرب (قالب/نموذج) إلى نص البطاقة.
+  String _withExplanation(_Coach c, String base) {
+    final e = c.explanation;
+
+    final b = StringBuffer(base);
+
+    if (e != null) {
+      final text = [e.summary, e.explanation]
+          .where((t) => t.trim().isNotEmpty)
+          .join('\n');
+
+      if (text.isNotEmpty) b.write('\n\n🎓 $text');
+
+      final idea = e.idea;
+
+      if (idea != null && idea.isNotEmpty) b.write('\n💡 $idea');
+
+      if (c.level >= 3 && e.lesson.isNotEmpty) b.write('\n📌 ${e.lesson}');
+    }
+
+    if (c.explaining) b.write('\n⏳ المدرب يكتب شرحًا...');
+
+    return b.toString();
+  }
+
   Widget? _coachCard() {
     final c = _coach;
 
@@ -1617,14 +1774,47 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
     final canArrow = _settings.trainingHintArrow;
     final canSolution = _settings.trainingAllowBestMove;
 
+    // شرح عادي لكل نقلة في وضع المدرب. لا توجد هنا تلميحات أو
+    // إجبار على إعادة النقلة؛ الهدف أن يشرح النموذج ما حدث بعد أن
+    // حسم Stockfish التقييم.
+    if (c.informational) {
+      final r = c.result;
+      final q = r?.classification;
+      final title = q == MoveQuality.brilliant
+          ? '✨ نقلة Brilliant'
+          : (q == MoveQuality.best || c.judgement.playedWasBest
+              ? '🟢 نقلة ممتازة'
+              : '🎓 شرح النقلة');
+
+      final body = _withExplanation(
+        c,
+        '${r?.san ?? ''} · ${c.judgement.phase}',
+      );
+
+      return CoachCard(
+        key: ValueKey<String>('card-info-${c.ply}'),
+        title: title,
+        body: body,
+        detail: c.pvSan.isEmpty ? null : c.pvSan,
+        accent: q == MoveQuality.blunder || q == MoveQuality.mistake
+            ? BotPalette.red
+            : BotPalette.blue,
+        actions: [
+          CoachAction('متابعة المباراة', _continueGame, primary: true),
+        ],
+      );
+    }
+
     // تجربة أفضل نقلة على رقعة منفصلة.
     if (_variation != null && _variationPlayed) {
       return CoachCard(
         key: const ValueKey<String>('card-trial'),
-        title: '🧪 تجربة — لا تؤثر على مباراتك',
+        title: '🧪 تجربة تدريبية',
+        body: 'هذه تجربة مؤقتة على رقعة منفصلة — لن تتأثر مباراتك.',
+        detail: c.bestSan.isEmpty ? null : c.bestSan,
         accent: BotPalette.blue,
         actions: [
-          CoachAction('العودة', _closeTrial, primary: true),
+          CoachAction('العودة للمباراة', _closeTrial, primary: true),
         ],
       );
     }
@@ -1632,52 +1822,78 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
     final actions = <CoachAction>[];
 
     String title;
-    String body = '';
+    String body;
     String? detail;
     Color accent;
 
     if (c.level <= 1) {
       if (c.retrying) {
-        title = '🤔 جرّب نقلة أخرى';
+        title = '🤔 فكّر في نقلة أقوى';
+        body = 'عادت الوضعية إلى ما قبل نقلتك. جرّب نقلة أخرى.';
         accent = BotPalette.blue;
       } else if (c.soft) {
-        title = '💡 هناك نقلة أقوى';
+        title = '💡 هناك نقلة أقوى!';
+        body = 'نقلتك جيدة، لكن هناك خيار أقوى في هذه الوضعية.\n'
+            'ابحث عن نقلة أقوى.';
         accent = BotPalette.gold;
       } else {
         title = '🔴 انتبه!';
-        body = _severeLine(c);
+        body = '${_severeBody(c)}\nابحث عن نقلة أقوى.';
         accent = BotPalette.red;
       }
 
+      if (c.judgement.onlyMove) {
+        body += '\nالوضعية تتطلب نقلة دقيقة (شبه وحيدة).';
+      }
+
+      body = _withExplanation(c, body);
+
       if (c.canRetry) {
-        actions.add(CoachAction('حاول مجددًا', _retry, primary: true));
+        actions.add(
+          CoachAction(
+            c.soft ? 'حاول العثور عليها' : 'حاول مرة أخرى',
+            _retry,
+            primary: true,
+          ),
+        );
       }
 
       if (canArrow || canSolution) {
-        actions.add(CoachAction('تلميح', _hint));
+        actions.add(CoachAction('إظهار تلميح', _hint));
       }
+
+      if (canSolution) actions.add(CoachAction('اشرح أكثر', _explainMore));
     } else if (c.level == 2) {
-      title = '✨ النقلة الأفضل على الرقعة';
+      title = '✨ وجدنا النقلة الأفضل';
+      body = 'السهم يوضح النقلة الأقوى.\nهل تريد تجربة هذه النقلة؟';
+      body = _withExplanation(c, body);
       accent = BotPalette.gold;
 
       actions.add(CoachAction('جرّبها', _tryBest, primary: true));
 
-      if (canSolution) actions.add(CoachAction('النقلة', _showSolution));
+      if (canSolution) actions.add(CoachAction('عرض النقلة', _showSolution));
 
-      if (c.canRetry) actions.add(CoachAction('حاول مجددًا', _retry));
+      if (canSolution) actions.add(CoachAction('اشرح أكثر', _explainMore));
+
+      if (c.canRetry) actions.add(CoachAction('حاول مرة أخرى', _retry));
     } else {
-      title = '✨ ${c.bestSan}';
-      detail = c.pvSan.split(' ').take(4).join(' ');
+      title = '✨ أفضل نقلة: ${c.bestSan}';
+      body = 'الخط الرئيسي من Stockfish:';
+      body = _withExplanation(c, body);
+      detail = c.pvSan.isEmpty ? c.bestSan : c.pvSan;
       accent = BotPalette.gold;
 
       actions.add(CoachAction('جرّبها', _tryBest, primary: true));
 
-      if (c.canRetry) actions.add(CoachAction('حاول مجددًا', _retry));
+      if (c.canRetry) actions.add(CoachAction('حاول مرة أخرى', _retry));
     }
 
     if (!c.retrying) {
       actions.add(
-        CoachAction(c.reviewOnly ? 'إغلاق' : 'تابع', _continueGame),
+        CoachAction(
+          c.reviewOnly ? 'إغلاق' : 'متابعة المباراة',
+          _continueGame,
+        ),
       );
     }
 
@@ -1722,7 +1938,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
         return GestureDetector(
           key: const ValueKey<String>('summary'),
           onTap: () => setState(() => _summaryHidden = true),
-          child: TrainingSummaryCard(summary: summary),
+          child: TrainingSummaryCard(summary: summary, note: _gameNote),
         );
       }
     }
@@ -1774,11 +1990,13 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
                   ),
                 );
 
-                return Align(
-                  alignment: Alignment.topCenter,
-                  child: SizedBox(
-                    width: side,
-                    child: Column(
+                return Stack(
+                  children: [
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: SizedBox(
+                        width: side,
+                        child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             _playerBar(topColor),
@@ -1802,24 +2020,19 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
                             _playerBar(bottomColor),
                           ],
                         ),
-                  ),
+                      ),
+                    ),
+                    Positioned(
+                      left: (c.maxWidth - side) / 2,
+                      width: side,
+                      bottom: 0,
+                      child: FloatingSwitcher(child: _slotWidget()),
+                    ),
+                  ],
                 );
               },
             ),
           ),
-          // رسائل المدرب: خانة ثابتة تحت الرقعة (لا تغطيها ولا تتحرك
-          // الرقعة عند ظهورها).
-          if (_trainingOn)
-            SizedBox(
-              height: _coachSlotHeight,
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 520),
-                  child: FloatingSwitcher(child: _slotWidget()),
-                ),
-              ),
-            ),
           _statusLine(),
           _movesStrip(),
           const SizedBox(height: 4),
