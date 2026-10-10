@@ -4,10 +4,9 @@ name: Deploy Web Preview (GitHub Pages)
 # تُنشر تلقائيًا عند كل push على main. محرك Stockfish أصلي (Android فقط)
 # فلا يعمل في المتصفح — هذه النسخة لمعاينة الواجهة والشاشات والأصوات.
 
+# متوقف عن التشغيل التلقائي: يعمل يدويًا فقط من Actions ← Run workflow
+# (الـ APK هو الذي يُبنى الآن عند كل push).
 on:
-  push:
-    branches: [ main ]
-
   workflow_dispatch: {}
 
 permissions:
