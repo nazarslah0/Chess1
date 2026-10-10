@@ -16,6 +16,7 @@ dependencies:
   shared_preferences: ^2.5.3
   path_provider: ^2.1.5
   lc0: ^0.1.0
+  flutter_svg: ^2.0.17
 
 dev_dependencies:
   flutter_test:
@@ -32,6 +33,16 @@ flutter:
     - assets/pieces/wood/
     - assets/pieces/Chesscom/
     - assets/pieces/alpha/
+    - assets/pieces/chessnut_brown/
+    - assets/pieces/chessnut_blue/
+    - assets/pieces/chessnut_burgundy/
+    - assets/pieces/kosal_blue/
+    - assets/pieces/kosal_red/
+    - assets/pieces/kosal_violet/
+    - assets/pieces/echiquier/
+    - assets/pieces/echiquier_ink/
+    - assets/pieces/wisdom/
+    - assets/pieces/wisdom_brown/
 
     # Maia weights (lc0 .pb.gz) - see assets/maia/README.txt
     - assets/maia/
