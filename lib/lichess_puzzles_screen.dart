@@ -1015,36 +1015,52 @@ class _ProgressBar extends StatelessWidget {
 
   const _ProgressBar({required this.fill, required this.accent});
 
+  static const double _h = 12;
+
   @override
   Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0, end: fill),
-      duration: const Duration(milliseconds: 450),
-      curve: Curves.easeOutCubic,
-      builder: (context, v, _) => Container(
-        height: 12,
-        decoration: BoxDecoration(
-          color: Colors.white12,
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: FractionallySizedBox(
-              widthFactor: v,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color.lerp(accent, Colors.white, 0.25)!,
-                      accent,
-                    ],
+    final target = fill.isNaN ? 0.0 : fill.clamp(0.0, 1.0);
+
+    return SizedBox(
+      height: _h,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(_h / 2),
+        child: LayoutBuilder(
+          builder: (context, c) {
+            final full = c.maxWidth.isFinite ? c.maxWidth : 0.0;
+
+            return Stack(
+              children: [
+                // المسار الرمادي.
+                const Positioned.fill(
+                  child: ColoredBox(color: Colors.white12),
+                ),
+                // الجزء الملوّن: عرض وارتفاع صريحان فلا يمكن أن يختفي.
+                PositionedDirectional(
+                  start: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0, end: target),
+                    duration: const Duration(milliseconds: 450),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, v, _) => Container(
+                      width: full * v,
+                      height: _h,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Color.lerp(accent, Colors.white, 0.25)!,
+                            accent,
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-          ),
+              ],
+            );
+          },
         ),
       ),
     );
