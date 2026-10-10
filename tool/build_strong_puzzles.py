@@ -171,14 +171,44 @@ mates_kept = [p for p in accepted if p['mt']]
 others = [p for p in accepted if not p['mt']][:MAX_NON_MATE]
 print('dropped:', dict(dropped))
 
-final = mates_kept + others
+# ----------------------------------------------------------------
+# المستويات: 7 مستويات بتقسيم متساوٍ حسب التقييم (لكل صفحة تقسيمها).
+# من كل مستوى عدا الأخير نأخذ أفضل PER_LEVEL لغزًا (حسب الجودة)،
+# وفي الأخير (جراند ماستر) نأخذ كل ألغازه.
+#   lb = رقم المستوى في صفحتي بريلينت والتدريب (-1 = غير موجود)
+#   lm = رقم المستوى في صفحة جيك ميت
+# ----------------------------------------------------------------
+PER_LEVEL = 50
+LEVELS = 7
+
+pool = mates_kept + others
+
+
+def assign(items, key):
+    items = sorted(items, key=lambda p: (p['rating'], p['id']))
+    n = len(items)
+    for i in range(LEVELS):
+        band = items[n * i // LEVELS: n * (i + 1) // LEVELS]
+        chosen = band if i == LEVELS - 1 else sorted(band, key=lambda p: -p['_s'])[:PER_LEVEL]
+        for p in chosen:
+            p[key] = i
+
+
+assign(pool, 'lb')
+assign(mates_kept, 'lm')
+
+final = [p for p in pool if 'lb' in p or 'lm' in p]
 final.sort(key=lambda p: p['rating'])
 for p in final:
     del p['_s']
+
+counts_b = collections.Counter(p['lb'] for p in final if 'lb' in p)
+counts_m = collections.Counter(p['lm'] for p in final if 'lm' in p)
+print('بريليانت/تدريب:', [counts_b[i] for i in range(LEVELS)], sum(counts_b.values()))
+print('جيك ميت:', [counts_m[i] for i in range(LEVELS)], sum(counts_m.values()))
 
 with open(out, 'w', encoding='utf-8') as f:
     json.dump(final, f, ensure_ascii=False, separators=(',', ':'))
 
 r = [p['rating'] for p in final]
-print(f'pool={len(rows)} mates_kept={len(mates_kept)} '
-      f'others={len(others)} total={len(final)} ratings={min(r)}..{max(r)}')
+print(f'total={len(final)} ratings={min(r)}..{max(r)}')
