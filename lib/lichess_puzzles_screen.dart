@@ -36,6 +36,11 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
   List<LichessPuzzle> _items = <LichessPuzzle>[];
   Set<String> _solved = <String>{};
   int _index = 0;
+
+  /// مستويات الصعوبة: كل مستوى شريحة من الألغاز مرتبة بالتقييم.
+  List<List<LichessPuzzle>> _levels = <List<LichessPuzzle>>[];
+  List<String> _ranges = <String>[];
+  int _level = 0;
   bool _loading = true;
 
   /// رقم النقلة التالية المطلوبة من اللاعب داخل moves.
@@ -60,7 +65,8 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
 
   bool get _isMate => widget.category == PuzzleCategory.mate;
 
-  String get _title => _isMate ? 'ألغاز جيك ميت' : 'ألغاز بريليانت';
+  Color get _accent =>
+      _isMate ? const Color(0xFFE5534B) : const Color(0xFF2EC4C4);
 
   @override
   void initState() {
@@ -88,17 +94,32 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
   }
 
   Future<void> _load() async {
-    final items = await LichessPuzzleRepository.loadCategory(widget.category);
+    final all = await LichessPuzzleRepository.loadCategory(widget.category);
     final solved = await LichessPuzzleRepository.loadSolved();
 
     if (!mounted) return;
 
-    // نبدأ من أول لغز غير محلول.
+    final built = _buildLevels(all);
+
+    // نبدأ من أعلى مستوى مفتوح.
+    var level = 0;
+
+    while (level < _kLevelCount - 1 &&
+        _doneIn(built.levels[level], solved) >= _needFor(built.levels[level])) {
+      level++;
+    }
+
+    final items = built.levels[level];
+
+    // ثم من أول لغز غير محلول داخله.
     var start = items.indexWhere((p) => !solved.contains(p.id));
 
     if (start < 0) start = 0;
 
     setState(() {
+      _levels = built.levels;
+      _ranges = built.ranges;
+      _level = level;
       _items = items;
       _solved = solved;
       _index = start;
@@ -106,6 +127,171 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
     });
 
     unawaited(_loadCurrent());
+  }
+
+  /// يقسم الألغاز إلى [_kLevelCount] شرائح متساوية العدد حسب التقييم.
+  ({List<List<LichessPuzzle>> levels, List<String> ranges}) _buildLevels(
+    List<LichessPuzzle> all,
+  ) {
+    final sorted = List<LichessPuzzle>.of(all)
+      ..sort((a, b) => a.rating.compareTo(b.rating));
+
+    final n = sorted.length;
+    final levels = <List<LichessPuzzle>>[];
+    final ranges = <String>[];
+
+    for (var i = 0; i < _kLevelCount; i++) {
+      final slice = sorted.sublist(
+        n * i ~/ _kLevelCount,
+        n * (i + 1) ~/ _kLevelCount,
+      );
+
+      ranges.add(
+        slice.isEmpty ? '' : '${slice.first.rating}–${slice.last.rating}',
+      );
+
+      // في بريليانت تأتي ألغاز التضحية أولًا داخل المستوى.
+      if (!_isMate) {
+        slice.sort((a, b) {
+          if (a.sacrifice != b.sacrifice) return a.sacrifice ? -1 : 1;
+
+          return a.rating.compareTo(b.rating);
+        });
+      }
+
+      levels.add(slice);
+    }
+
+    return (levels: levels, ranges: ranges);
+  }
+
+  static int _doneIn(List<LichessPuzzle> l, Set<String> solved) =>
+      l.where((p) => solved.contains(p.id)).length;
+
+  static int _needFor(List<LichessPuzzle> l) =>
+      l.length < _kNeedPerLevel ? l.length : _kNeedPerLevel;
+
+  bool _unlocked(int i) =>
+      i == 0 ||
+      (i < _levels.length &&
+          _doneIn(_levels[i - 1], _solved) >= _needFor(_levels[i - 1]));
+
+  List<_LevelInfo> _infos() => <_LevelInfo>[
+        for (var i = 0; i < _levels.length; i++)
+          _LevelInfo(
+            name: _kLevelNames[i],
+            range: _ranges[i],
+            done: _doneIn(_levels[i], _solved),
+            need: _needFor(_levels[i]),
+            unlocked: _unlocked(i),
+          ),
+      ];
+
+  void _selectLevel(int i) {
+    if (i == _level || i < 0 || i >= _levels.length) return;
+
+    if (!_unlocked(i)) {
+      showAppSnack(
+        context,
+        'أنهِ ${_needFor(_levels[i - 1])} ألغاز من مستوى '
+        '${_kLevelNames[i - 1]} لفتح هذا المستوى',
+      );
+
+      return;
+    }
+
+    final items = _levels[i];
+
+    var start = items.indexWhere((p) => !_solved.contains(p.id));
+
+    if (start < 0) start = 0;
+
+    setState(() {
+      _level = i;
+      _items = items;
+      _index = start;
+    });
+
+    unawaited(_loadCurrent());
+  }
+
+  void _openLevelsSheet() {
+    final infos = _infos();
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF12151F),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'مسار المستويات',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'أنهِ $_kNeedPerLevel ألغاز في كل مستوى لفتح الذي يليه',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white54, fontSize: 12),
+              ),
+              const SizedBox(height: 12),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: infos.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (_, i) => _LevelRow(
+                    index: i,
+                    info: infos[i],
+                    current: i == _level,
+                    accent: _accent,
+                    previousName: i > 0 ? _kLevelNames[i - 1] : '',
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      _selectLevel(i);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  ThemeData _screenTheme() {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorSchemeSeed: _accent,
+      scaffoldBackgroundColor: const Color(0xFF0E1118),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Color(0xFF0E1118),
+        foregroundColor: Colors.white,
+        centerTitle: true,
+      ),
+    );
   }
 
   LichessPuzzle? get _current =>
@@ -318,11 +504,26 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
     // لا نحتسب اللغز محلولًا إن كُشف الحل.
     final counted = !_revealed;
 
+    final before = _doneIn(_items, _solved);
+    final need = _needFor(_items);
+
+    var message = _isMate ? 'كش مات! أحسنت ✅' : 'أحسنت! حللت اللغز ✅';
+
+    if (counted && !_solved.contains(p.id)) {
+      final after = before + 1;
+
+      if (before < need && after >= need) {
+        message = _level < _kLevelCount - 1
+            ? 'أحسنت! فتحت مستوى ${_kLevelNames[_level + 1]} 🎉'
+            : 'أكملت المسار كله! 👑';
+      }
+    }
+
     setState(() {
       _finished = true;
       _busy = false;
       _hintUci = null;
-      _feedback = _isMate ? 'كش مات! أحسنت ✅' : 'أحسنت! حللت اللغز ✅';
+      _feedback = message;
       _feedbackColor = AppColors.success;
 
       if (counted) _solved = <String>{..._solved, p.id};
@@ -396,16 +597,17 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
   Widget build(BuildContext context) {
     final p = _current;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          p == null ? _title : '$_title ${_index + 1} / ${_items.length}',
+    return Theme(
+      data: _screenTheme(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(p == null ? '' : '${_index + 1} / ${_items.length}'),
         ),
-      ),
-      body: SafeArea(
-        child: _loading
-            ? const LoadingView()
-            : (p == null ? _buildEmpty() : _buildPuzzle(p)),
+        body: SafeArea(
+          child: _loading
+              ? const LoadingView()
+              : (p == null ? _buildEmpty() : _buildPuzzle(p)),
+        ),
       ),
     );
   }
@@ -430,14 +632,19 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
 
     final arrow = parseUci(_hintUci);
 
-    final solvedCount = _items.where((e) => _solved.contains(e.id)).length;
-
     final line = _solutionText;
 
     return PuzzleLayout(
       title: 'الدور على $sideName — $goal',
-      subtitle:
-          '${_tagsLine(p)}  —  حُلّ $solvedCount من ${_items.length}',
+      subtitle: _tagsLine(p),
+      header: _LevelHeader(
+        isMate: _isMate,
+        accent: _accent,
+        level: _level,
+        infos: _infos(),
+        onSelect: _selectLevel,
+        onOpenSheet: _openLevelsSheet,
+      ),
       board: AppBoard(
         state: _state,
         onTap: _onTap,
@@ -487,6 +694,406 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
           child: const Text('التالي'),
         ),
       ],
+    );
+  }
+}
+
+
+// ================================================================
+// مسار المستويات
+// ================================================================
+
+const int _kLevelCount = 7;
+const int _kNeedPerLevel = 15;
+
+const List<String> _kLevelNames = <String>[
+  'مبتدئ',
+  'أساسي',
+  'متوسط',
+  'متقدم',
+  'خبير',
+  'ماستر',
+  'جراند ماستر',
+];
+
+class _LevelInfo {
+  final String name;
+  final String range;
+  final int done;
+  final int need;
+  final bool unlocked;
+
+  const _LevelInfo({
+    required this.name,
+    required this.range,
+    required this.done,
+    required this.need,
+    required this.unlocked,
+  });
+
+  bool get complete => need > 0 && done >= need;
+
+  double get fill => need == 0 ? 0 : (done / need).clamp(0.0, 1.0);
+}
+
+/// ترويسة صفحة الألغاز: العنوان + بطاقة المستوى الحالي + مسار من
+/// سبعة مقاطع (مقطع لكل مستوى) يمكن لمس أي مقطع مفتوح للانتقال إليه.
+class _LevelHeader extends StatelessWidget {
+  final bool isMate;
+  final Color accent;
+  final int level;
+  final List<_LevelInfo> infos;
+  final ValueChanged<int> onSelect;
+  final VoidCallback onOpenSheet;
+
+  const _LevelHeader({
+    required this.isMate,
+    required this.accent,
+    required this.level,
+    required this.infos,
+    required this.onSelect,
+    required this.onOpenSheet,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (infos.isEmpty || level >= infos.length) {
+      return const SizedBox.shrink();
+    }
+
+    final cur = infos[level];
+    final last = level == infos.length - 1;
+
+    final String hint;
+
+    if (last) {
+      hint = cur.complete ? 'أكملت المسار 👑' : 'لإكمال المسار';
+    } else {
+      hint = cur.complete ? 'المستوى التالي مفتوح ✓' : 'للمستوى التالي';
+    }
+
+    const titleStyle = TextStyle(
+      fontSize: 26,
+      fontWeight: FontWeight.w800,
+      height: 1.2,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: isMate ? '# ' : '!! ',
+                style: titleStyle.copyWith(color: accent),
+              ),
+              TextSpan(
+                text: 'ألغاز ',
+                style: titleStyle.copyWith(color: Colors.white),
+              ),
+              TextSpan(
+                text: isMate ? 'Checkmate' : 'Brilliant',
+                style: titleStyle.copyWith(color: accent),
+              ),
+            ],
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 12),
+        Material(
+          color: const Color(0xFF161A24),
+          borderRadius: BorderRadius.circular(20),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: onOpenSheet,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white12),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      _LevelBadge(
+                        label: '${level + 1}',
+                        accent: accent,
+                        size: 44,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              cur.name,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            if (cur.range.isNotEmpty)
+                              Text(
+                                'تقييم ${cur.range}',
+                                style: const TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 12,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${cur.done > cur.need ? cur.need : cur.done}'
+                            '/${cur.need}',
+                            style: TextStyle(
+                              color: accent,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          Text(
+                            hint,
+                            style: const TextStyle(
+                              color: Colors.white54,
+                              fontSize: 11.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.expand_more_rounded,
+                        color: Colors.white54,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      for (var i = 0; i < infos.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 4),
+                        Expanded(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => onSelect(i),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: _Segment(
+                                info: infos[i],
+                                current: i == level,
+                                accent: accent,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Segment extends StatelessWidget {
+  final _LevelInfo info;
+  final bool current;
+  final Color accent;
+
+  const _Segment({
+    required this.info,
+    required this.current,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final h = current ? 10.0 : 7.0;
+
+    return Container(
+      height: h,
+      decoration: BoxDecoration(
+        color: info.unlocked ? Colors.white12 : Colors.white10,
+        borderRadius: BorderRadius.circular(h / 2),
+        boxShadow: current
+            ? [BoxShadow(color: accent.withValues(alpha: 0.45), blurRadius: 8)]
+            : null,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(h / 2),
+        child: Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: FractionallySizedBox(
+            widthFactor: info.fill,
+            child: Container(color: accent),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LevelBadge extends StatelessWidget {
+  final String label;
+  final Color accent;
+  final double size;
+  final IconData? icon;
+
+  const _LevelBadge({
+    required this.label,
+    required this.accent,
+    required this.size,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.lerp(accent, Colors.white, 0.35)!,
+            accent,
+          ],
+        ),
+      ),
+      child: icon != null
+          ? Icon(icon, color: Colors.black87, size: size * 0.5)
+          : Text(
+              label,
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w900,
+                fontSize: size * 0.42,
+              ),
+            ),
+    );
+  }
+}
+
+class _LevelRow extends StatelessWidget {
+  final int index;
+  final _LevelInfo info;
+  final bool current;
+  final Color accent;
+  final String previousName;
+  final VoidCallback onTap;
+
+  const _LevelRow({
+    required this.index,
+    required this.info,
+    required this.current,
+    required this.accent,
+    required this.previousName,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final locked = !info.unlocked;
+
+    final Widget trailing;
+
+    if (current) {
+      trailing = Icon(Icons.radio_button_checked_rounded, color: accent);
+    } else if (locked) {
+      trailing = const SizedBox.shrink();
+    } else if (info.complete) {
+      trailing = Icon(Icons.check_circle_rounded, color: accent);
+    } else {
+      trailing = Text(
+        '${info.done}/${info.need}',
+        style: TextStyle(color: accent, fontWeight: FontWeight.w800),
+      );
+    }
+
+    final subtitle = locked
+        ? 'أنهِ ${info.need} ألغاز من $previousName'
+        : (info.range.isEmpty ? '' : 'تقييم ${info.range}');
+
+    return Opacity(
+      opacity: locked ? 0.5 : 1,
+      child: Material(
+        color: current ? accent.withValues(alpha: 0.14) : const Color(0xFF161A24),
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: current ? accent : Colors.white12,
+                width: current ? 1.4 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                locked
+                    ? Container(
+                        width: 40,
+                        height: 40,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white12,
+                        ),
+                        child: const Icon(
+                          Icons.lock_rounded,
+                          color: Colors.white54,
+                          size: 20,
+                        ),
+                      )
+                    : _LevelBadge(
+                        label: '${index + 1}',
+                        accent: accent,
+                        size: 40,
+                      ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        info.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
+                      ),
+                      if (subtitle.isNotEmpty)
+                        Text(
+                          subtitle,
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 12,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                trailing,
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

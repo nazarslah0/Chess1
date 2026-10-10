@@ -212,6 +212,9 @@ class PuzzleLayout extends StatelessWidget {
   final Widget? solution;
   final List<Widget> actions;
 
+  /// ترويسة اختيارية تظهر فوق العنوان (مثل مسار المستويات).
+  final Widget? header;
+
   const PuzzleLayout({
     super.key,
     required this.title,
@@ -221,6 +224,7 @@ class PuzzleLayout extends StatelessWidget {
     this.feedback,
     this.feedbackColor = Colors.grey,
     this.solution,
+    this.header,
   });
 
   @override
@@ -231,6 +235,10 @@ class PuzzleLayout extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       child: Column(
         children: [
+          if (header != null) ...[
+            header!,
+            const SizedBox(height: 14),
+          ],
           Align(
             alignment: AlignmentDirectional.centerStart,
             child: Text(
