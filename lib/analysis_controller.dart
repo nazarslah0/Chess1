@@ -60,6 +60,7 @@ class GameAnalysisController extends ChangeNotifier {
     this.blackLabel,
     this.depth = 14,
     this.multiPv = 2,
+    this.engineOptions,
     EngineService? engine,
     AnalysisCache? cache,
   })  : _engine = engine ?? EngineService(),
@@ -72,6 +73,10 @@ class GameAnalysisController extends ChangeNotifier {
   final String? blackLabel;
   final int depth;
   final int multiPv;
+
+  /// خيارات UCI تُرسل للمحرك قبل التحليل (مثل Threads وHash) — تستخدمها
+  /// الوضعية العميقة. null = إعدادات المحرك الافتراضية (تحليل سريع).
+  final Map<String, String>? engineOptions;
 
   final EngineService _engine;
   final AnalysisCache _cache;
@@ -253,6 +258,12 @@ class GameAnalysisController extends ChangeNotifier {
     // محرك Stockfish يبدأ هنا فقط عند غياب تحليل صالح محفوظ.
     _engine.init();
 
+    final opts = engineOptions;
+    if (opts != null && opts.isNotEmpty) {
+      await _engine.setOptions(opts);
+      if (_disposed || token != _requestToken) return;
+    }
+
     _cancelRequested = false;
 
     await _runAnalysis(token);
@@ -431,7 +442,8 @@ class GameAnalysisController extends ChangeNotifier {
     );
 
     return completer.future.timeout(
-      const Duration(seconds: 30),
+      // البحث العميق يحتاج مهلة أطول كي لا نقطعه قبل bestmove.
+      Duration(seconds: depth >= 20 ? 180 : 30),
       onTimeout: () => _Eval(
         lastPawns,
         lastLabel,

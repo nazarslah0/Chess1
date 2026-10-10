@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'analysis_mode.dart';
 import 'game_analysis_screen.dart';
 import 'pgn_utils.dart';
 import 'source_style.dart';
@@ -48,7 +49,7 @@ class _PgnImportScreenState extends State<PgnImportScreen> {
 
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => GameAnalysisScreen(
+        builder: (_) => AnalysisModeScreen(
           pgn: pgn,
           sourceLabel: 'PGN مستورد',
         ),

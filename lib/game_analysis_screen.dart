@@ -8,6 +8,7 @@ import 'analysis_controller.dart';
 import 'analysis_result.dart';
 import 'analysis_rules.dart';
 import 'app_ui.dart';
+import 'analysis_mode.dart';
 import 'board_widget.dart';
 import 'game_review_models.dart';
 import 'lichess_data_service.dart';
@@ -34,6 +35,9 @@ class GameAnalysisScreen extends StatefulWidget {
   final String? resultLabel;
   final String sourceLabel;
 
+  /// نوع التحليل: سريع (الافتراضي) أو عميق (Deep Analysis).
+  final AnalysisMode mode;
+
   const GameAnalysisScreen({
     super.key,
     required this.pgn,
@@ -41,6 +45,7 @@ class GameAnalysisScreen extends StatefulWidget {
     this.blackLabel,
     this.resultLabel,
     this.sourceLabel = '',
+    this.mode = AnalysisMode.quick,
   });
 
   @override
@@ -65,6 +70,8 @@ class _GameAnalysisScreenState
     pgn: widget.pgn,
     whiteLabel: widget.whiteLabel,
     blackLabel: widget.blackLabel,
+    depth: widget.mode.depth,
+    engineOptions: widget.mode.engineOptions(),
   );
 
   String? get _parseError => _c.parseError;

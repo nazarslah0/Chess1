@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'analysis_mode.dart';
 import 'game_analysis_screen.dart';
 import 'game_source.dart';
 import 'source_style.dart';
@@ -147,7 +148,7 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
   void _openGame(SourceGame g) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => GameAnalysisScreen(
+        builder: (_) => AnalysisModeScreen(
           pgn: g.pgn,
           whiteLabel: g.whiteLabel(_username),
           blackLabel: g.blackLabel(_username),

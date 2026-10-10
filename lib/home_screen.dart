@@ -4,6 +4,7 @@ import 'app_ui.dart';
 import 'bot_play_screen.dart';
 import 'lichess_puzzles.dart' show PuzzleCategory;
 import 'lichess_puzzles_screen.dart';
+import 'menu_card.dart';
 import 'my_games_screen.dart';
 import 'position_analyzer_screen.dart';
 import 'puzzles_screen.dart';
@@ -89,8 +90,12 @@ class HomeScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
               itemCount: entries.length,
               separatorBuilder: (_, __) => const SizedBox(height: 16),
-              itemBuilder: (context, i) => _HomeCard(
-                entry: entries[i],
+              itemBuilder: (context, i) => AppMenuCard(
+                icon: entries[i].icon,
+                label: entries[i].label,
+                subtitle: entries[i].subtitle,
+                color: entries[i].color,
+                imageAsset: entries[i].imageAsset,
                 onTap: () => pushScreen(context, entries[i].builder()),
               ),
             ),
@@ -122,166 +127,4 @@ class _MenuEntry {
     required this.builder,
     this.imageAsset,
   });
-}
-
-/// بطاقة قائمة رئيسية: إطار ملوّن وتدرّج داكن ودائرة أيقونة وزر سهم
-/// دائري مع موجة ملوّنة أسفل البطاقة.
-class _HomeCard extends StatelessWidget {
-  final _MenuEntry entry;
-  final VoidCallback onTap;
-
-  const _HomeCard({required this.entry, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final c = entry.color;
-    final radius = BorderRadius.circular(26);
-
-    return Material(
-      color: Colors.transparent,
-      child: Ink(
-        decoration: BoxDecoration(
-          borderRadius: radius,
-          border: Border.all(color: c.withValues(alpha: 0.75), width: 1.6),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              c.withValues(alpha: 0.20),
-              c.withValues(alpha: 0.06),
-            ],
-          ),
-        ),
-        child: InkWell(
-          borderRadius: radius,
-          onTap: onTap,
-          child: ClipRRect(
-            borderRadius: radius,
-            child: SizedBox(
-              height: 124,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: CustomPaint(painter: _WavePainter(c)),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        _IconCircle(entry: entry),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                entry.label,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 19,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                entry.subtitle,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Colors.white60,
-                                  fontSize: 12.5,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: c, width: 1.8),
-                          ),
-                          child: Icon(
-                            Icons.arrow_back_rounded,
-                            color: c,
-                            size: 22,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _IconCircle extends StatelessWidget {
-  final _MenuEntry entry;
-
-  const _IconCircle({required this.entry});
-
-  @override
-  Widget build(BuildContext context) {
-    final c = entry.color;
-
-    return Container(
-      width: 68,
-      height: 68,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: c.withValues(alpha: 0.18),
-        border: Border.all(color: c, width: 2.2),
-        boxShadow: [
-          BoxShadow(color: c.withValues(alpha: 0.35), blurRadius: 14),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: entry.imageAsset != null
-          ? Image.asset(entry.imageAsset!, fit: BoxFit.cover)
-          : Icon(entry.icon, color: Colors.white, size: 32),
-    );
-  }
-}
-
-/// موجتان شفافتان بلون البطاقة في أسفلها.
-class _WavePainter extends CustomPainter {
-  final Color color;
-
-  const _WavePainter(this.color);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    void wave(double base, double amp, double alpha) {
-      final path = Path()..moveTo(0, size.height);
-      path.lineTo(0, base);
-      path.cubicTo(
-        size.width * 0.28, base - amp,
-        size.width * 0.55, base + amp,
-        size.width, base - amp * 0.4,
-      );
-      path.lineTo(size.width, size.height);
-      path.close();
-      canvas.drawPath(
-        path,
-        Paint()..color = color.withValues(alpha: alpha),
-      );
-    }
-
-    wave(size.height - 22, 10, 0.20);
-    wave(size.height - 12, 8, 0.28);
-  }
-
-  @override
-  bool shouldRepaint(_WavePainter old) => old.color != color;
 }
