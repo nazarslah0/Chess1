@@ -70,6 +70,9 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
   /// مربع تظهر فوقه علامة Brilliant بعد أول نقلة صحيحة.
   String? _brilliantSquare;
 
+  /// أُظهرت علامة !! لهذا اللغز؟ (مرة واحدة فقط لكل لغز).
+  bool _brilliantShown = false;
+
   /// هل يُحلّ هذا اللغز كلغز كش مات (تُقبل أي نقلة تُنهي بكش مات)؟
   bool _mateMode(LichessPuzzle p) =>
       widget.category == PuzzleCategory.mate ||
@@ -152,54 +155,28 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
     unawaited(_loadCurrent());
   }
 
-  /// يقسم الألغاز إلى مستويات حسب تقييم اللغز الحقيقي (حدود ثابتة)،
-  /// فمستوى "مبتدئ" ألغازه سهلة فعلًا وهكذا. أي مستوى فيه أقل من
-  /// [_kNeedPerLevel] لغزًا يُدمج مع المستوى الذي قبله (أو بعده إن كان
-  /// الأول)، حتى لا يوجد مستوى لا يمكن إكمال شرطه.
+  /// يقسم الألغاز إلى [_kLevelNames.length] مستويات متساوية العدد
+  /// تقريبًا، مرتبة بالتقييم: مبتدئ = الأسهل بين الألغاز القوية، وجراند
+  /// ماستر = الأصعب. (كل ألغاز التطبيق قوية، فالتقسيم نسبي لا بحدود
+  /// تقييم ثابتة.) إن قلّت الألغاز عن 50 لكل مستوى نقلّل عدد المستويات.
   ({List<List<LichessPuzzle>> levels, List<String> ranges}) _buildLevels(
     List<LichessPuzzle> all,
   ) {
     final sorted = List<LichessPuzzle>.of(all)
       ..sort((a, b) => a.rating.compareTo(b.rating));
 
-    var groups = <List<LichessPuzzle>>[
-      for (var i = 0; i < _kBandStarts.length; i++)
-        sorted
-            .where(
-              (p) =>
-                  p.rating >= _kBandStarts[i] &&
-                  (i == _kBandStarts.length - 1 ||
-                      p.rating < _kBandStarts[i + 1]),
-            )
-            .toList(),
-    ];
+    var count = sorted.length ~/ _kNeedPerLevel;
 
-    // ندمج المستويات الصغيرة.
-    var merged = true;
+    if (count > _kLevelNames.length) count = _kLevelNames.length;
+    if (count < 1) count = 1;
 
-    while (merged && groups.length > 1) {
-      merged = false;
+    final groups = <List<LichessPuzzle>>[];
 
-      for (var i = 0; i < groups.length; i++) {
-        if (groups[i].length >= _kNeedPerLevel) continue;
+    for (var i = 0; i < count; i++) {
+      final from = sorted.length * i ~/ count;
+      final to = sorted.length * (i + 1) ~/ count;
 
-        final target = i == 0 ? 1 : i - 1;
-        final combined = <LichessPuzzle>[...groups[target], ...groups[i]]
-          ..sort((a, b) => a.rating.compareTo(b.rating));
-
-        final next = <List<LichessPuzzle>>[];
-
-        for (var j = 0; j < groups.length; j++) {
-          if (j == i) continue;
-
-          next.add(j == target ? combined : groups[j]);
-        }
-
-        groups = next;
-        merged = true;
-
-        break;
-      }
+      groups.add(sorted.sublist(from, to));
     }
 
     final ranges = <String>[
@@ -423,6 +400,7 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
       _hintUci = null;
       _solutionText = null;
       _brilliantSquare = null;
+      _brilliantShown = false;
     });
 
     _rebuild(p, 0);
@@ -508,8 +486,9 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
 
     if (matchesLine || acceptsAsMate) {
       // أول نقلة صحيحة في ألغاز بريليانت: نظهر علامة Brilliant فوق القطعة.
-      if (_ply == 1 && _brilliantMode(p)) {
+      if (_ply == 1 && _brilliantMode(p) && !_brilliantShown) {
         _brilliantSquare = parseUci(uci)?.to;
+        _brilliantShown = true;
       } else {
         _brilliantSquare = null;
       }
@@ -744,7 +723,7 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
         labels: _brilliantSquare == null
             ? const <BoardLabel>[]
             : <BoardLabel>[
-                BoardLabel(square: _brilliantSquare!, text: '!! Brilliant'),
+                BoardLabel(square: _brilliantSquare!, text: '!!'),
               ],
       ),
       feedback: _feedback,
@@ -815,10 +794,6 @@ class _BtnLabel extends StatelessWidget {
 // ================================================================
 // مسار المستويات
 // ================================================================
-
-/// بداية تقييم كل مستوى (مبتدئ → جراند ماستر). المستويات الصغيرة
-/// (أقل من [_kNeedPerLevel] لغزًا) تُدمج تلقائيًا.
-const List<int> _kBandStarts = <int>[0, 1000, 1300, 1600, 1900, 2200, 2500];
 
 /// عدد الألغاز اللازم حلّها في المستوى لفتح الذي بعده.
 const int _kNeedPerLevel = 50;

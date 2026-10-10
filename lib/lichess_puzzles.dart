@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -90,6 +91,23 @@ class LichessPuzzle {
   }
 }
 
+/// يفكّ نص JSON إلى ألغاز (دالة عامة ليستدعيها [compute] والاختبارات).
+List<LichessPuzzle> parsePuzzlesJson(String raw) {
+  final list = jsonDecode(raw);
+
+  if (list is! List) return <LichessPuzzle>[];
+
+  final parsed = <LichessPuzzle>[];
+
+  for (final j in list) {
+    final puzzle = LichessPuzzle.fromJson(j);
+
+    if (puzzle != null) parsed.add(puzzle);
+  }
+
+  return parsed;
+}
+
 class LichessPuzzleRepository {
   LichessPuzzleRepository._();
 
@@ -112,17 +130,9 @@ class LichessPuzzleRepository {
 
     try {
       final raw = await rootBundle.loadString(assetPath);
-      final list = jsonDecode(raw);
 
-      if (list is! List) return <LichessPuzzle>[];
-
-      final parsed = <LichessPuzzle>[];
-
-      for (final j in list) {
-        final puzzle = LichessPuzzle.fromJson(j);
-
-        if (puzzle != null) parsed.add(puzzle);
-      }
+      // الملف كبير (عشرات الآلاف): نفكّه في isolate حتى لا تتجمّد الواجهة.
+      final parsed = await compute(parsePuzzlesJson, raw);
 
       _all = parsed;
 
