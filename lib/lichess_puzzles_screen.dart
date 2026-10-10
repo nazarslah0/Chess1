@@ -12,15 +12,17 @@ import 'models.dart';
 import 'sound_service.dart';
 import 'uci_utils.dart';
 
-/// شاشة ألغاز Lichess (متعددة الخطوات) — تُستخدم لصفحتي
-/// "ألغاز بريليانت" و"ألغاز جيك ميت" بحسب [category].
+/// شاشة ألغاز Lichess (متعددة الخطوات) — تُستخدم لثلاث صفحات بحسب
+/// [category]: "ألغاز بريليانت" و"ألغاز جيك ميت" و"ألغاز" (تدريب
+/// بلا حدود على كل الألغاز).
 ///
 /// آلية اللغز (صيغة Lichess):
 ///  1. تُلعب نقلة الخصم الأولى تلقائيًا.
 ///  2. اللاعب يجد النقلة الصحيحة، ثم يردّ الخصم تلقائيًا، وهكذا حتى
 ///     نهاية الخط.
-///  3. في ألغاز جيك ميت تُقبل أي نقلة تُنهي المباراة بكش مات حتى لو
-///     كانت غير النقلة المسجّلة (كما يفعل Lichess).
+///  3. في ألغاز الكش مات (وفي كل لغز ينتهي بكش مات داخل صفحة
+///     "ألغاز") تُقبل أي نقلة تُنهي المباراة بكش مات حتى لو كانت غير
+///     النقلة المسجّلة (كما يفعل Lichess).
 class LichessPuzzlesScreen extends StatefulWidget {
   final PuzzleCategory category;
 
@@ -68,10 +70,26 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
   /// مربع تظهر فوقه علامة Brilliant بعد أول نقلة صحيحة.
   String? _brilliantSquare;
 
-  bool get _isMate => widget.category == PuzzleCategory.mate;
+  /// هل يُحلّ هذا اللغز كلغز كش مات (تُقبل أي نقلة تُنهي بكش مات)؟
+  bool _mateMode(LichessPuzzle p) =>
+      widget.category == PuzzleCategory.mate ||
+      (widget.category == PuzzleCategory.training && p.isMate);
 
-  Color get _accent =>
-      _isMate ? const Color(0xFFE5534B) : const Color(0xFF2EC4C4);
+  /// هل تظهر علامة Brilliant بعد أول نقلة صحيحة؟
+  bool _brilliantMode(LichessPuzzle p) =>
+      widget.category == PuzzleCategory.brilliant ||
+      (widget.category == PuzzleCategory.training && p.isBrilliant);
+
+  Color get _accent {
+    switch (widget.category) {
+      case PuzzleCategory.mate:
+        return const Color(0xFFE5534B);
+      case PuzzleCategory.brilliant:
+        return const Color(0xFF2EC4C4);
+      case PuzzleCategory.training:
+        return const Color(0xFF4F8DF7);
+    }
+  }
 
   @override
   void initState() {
@@ -106,11 +124,11 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
 
     final built = _buildLevels(all);
 
-    // نبدأ من أعلى مستوى مفتوح.
+    // نبدأ من أول مستوى فيه ألغاز لم تُحلّ بعد.
     var level = 0;
 
-    while (level < _kLevelCount - 1 &&
-        _doneIn(built.levels[level], solved) >= _needFor(built.levels[level])) {
+    while (level < built.levels.length - 1 &&
+        _doneIn(built.levels[level], solved) >= built.levels[level].length) {
       level++;
     }
 
@@ -134,40 +152,62 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
     unawaited(_loadCurrent());
   }
 
-  /// يقسم الألغاز إلى [_kLevelCount] شرائح متساوية العدد حسب التقييم.
+  /// يقسم الألغاز إلى مستويات حسب تقييم اللغز الحقيقي (حدود ثابتة)،
+  /// فمستوى "مبتدئ" ألغازه سهلة فعلًا وهكذا. أي مستوى فيه أقل من
+  /// [_kNeedPerLevel] لغزًا يُدمج مع المستوى الذي قبله (أو بعده إن كان
+  /// الأول)، حتى لا يوجد مستوى لا يمكن إكمال شرطه.
   ({List<List<LichessPuzzle>> levels, List<String> ranges}) _buildLevels(
     List<LichessPuzzle> all,
   ) {
     final sorted = List<LichessPuzzle>.of(all)
       ..sort((a, b) => a.rating.compareTo(b.rating));
 
-    final n = sorted.length;
-    final levels = <List<LichessPuzzle>>[];
-    final ranges = <String>[];
+    var groups = <List<LichessPuzzle>>[
+      for (var i = 0; i < _kBandStarts.length; i++)
+        sorted
+            .where(
+              (p) =>
+                  p.rating >= _kBandStarts[i] &&
+                  (i == _kBandStarts.length - 1 ||
+                      p.rating < _kBandStarts[i + 1]),
+            )
+            .toList(),
+    ];
 
-    for (var i = 0; i < _kLevelCount; i++) {
-      final slice = sorted.sublist(
-        n * i ~/ _kLevelCount,
-        n * (i + 1) ~/ _kLevelCount,
-      );
+    // ندمج المستويات الصغيرة.
+    var merged = true;
 
-      ranges.add(
-        slice.isEmpty ? '' : '${slice.first.rating}–${slice.last.rating}',
-      );
+    while (merged && groups.length > 1) {
+      merged = false;
 
-      // في بريليانت تأتي ألغاز التضحية أولًا داخل المستوى.
-      if (!_isMate) {
-        slice.sort((a, b) {
-          if (a.sacrifice != b.sacrifice) return a.sacrifice ? -1 : 1;
+      for (var i = 0; i < groups.length; i++) {
+        if (groups[i].length >= _kNeedPerLevel) continue;
 
-          return a.rating.compareTo(b.rating);
-        });
+        final target = i == 0 ? 1 : i - 1;
+        final combined = <LichessPuzzle>[...groups[target], ...groups[i]]
+          ..sort((a, b) => a.rating.compareTo(b.rating));
+
+        final next = <List<LichessPuzzle>>[];
+
+        for (var j = 0; j < groups.length; j++) {
+          if (j == i) continue;
+
+          next.add(j == target ? combined : groups[j]);
+        }
+
+        groups = next;
+        merged = true;
+
+        break;
       }
-
-      levels.add(slice);
     }
 
-    return (levels: levels, ranges: ranges);
+    final ranges = <String>[
+      for (final g in groups)
+        g.isEmpty ? '' : '${g.first.rating}–${g.last.rating}',
+    ];
+
+    return (levels: groups, ranges: ranges);
   }
 
   static int _doneIn(List<LichessPuzzle> l, Set<String> solved) =>
@@ -426,6 +466,13 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
       }
     }
 
+    // كل ألغاز المستوى محلولة: ننتقل تلقائيًا إلى التالي إن وُجد.
+    if (_level < _levels.length - 1 && _unlocked(_level + 1)) {
+      _selectLevel(_level + 1);
+
+      return;
+    }
+
     _go(1);
   }
 
@@ -457,11 +504,11 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
     final matchesLine = isSameUciMove(p.moves[_ply], uci);
 
     // Lichess: في ألغاز الكش مات تُقبل أي نقلة تُنهي المباراة بكش مات.
-    final acceptsAsMate = _isMate && _isCheckmate();
+    final acceptsAsMate = _mateMode(p) && _isCheckmate();
 
     if (matchesLine || acceptsAsMate) {
       // أول نقلة صحيحة في ألغاز بريليانت: نظهر علامة Brilliant فوق القطعة.
-      if (_ply == 1 && !_isMate) {
+      if (_ply == 1 && _brilliantMode(p)) {
         _brilliantSquare = parseUci(uci)?.to;
       } else {
         _brilliantSquare = null;
@@ -523,13 +570,14 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
     final before = _doneIn(_items, _solved);
     final need = _needFor(_items);
 
-    var message = _isMate ? 'كش مات! أحسنت ✅' : 'أحسنت! حللت اللغز ✅';
+    var message =
+        _mateMode(p) ? 'كش مات! أحسنت ✅' : 'أحسنت! حللت اللغز ✅';
 
     if (counted && !_solved.contains(p.id)) {
       final after = before + 1;
 
       if (before < need && after >= need) {
-        message = _level < _kLevelCount - 1
+        message = _level < _levels.length - 1
             ? 'أحسنت! فتحت مستوى ${_kLevelNames[_level + 1]} 🎉'
             : 'أكملت المسار كله! 👑';
       }
@@ -546,6 +594,25 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
     });
 
     if (counted) await LichessPuzzleRepository.markSolved(p.id);
+
+    // انتهى آخر لغز في المستوى: ننتقل تلقائيًا إلى المستوى التالي.
+    if (counted &&
+        mounted &&
+        _level < _levels.length - 1 &&
+        _doneIn(_items, _solved) >= _items.length) {
+      final gen = _gen;
+
+      setState(() {
+        _feedback = 'أنهيت مستوى ${_kLevelNames[_level]} 🎉 '
+            'ننتقل إلى ${_kLevelNames[_level + 1]}…';
+      });
+
+      await Future<void>.delayed(const Duration(milliseconds: 1600));
+
+      if (!mounted || gen != _gen) return;
+
+      _selectLevel(_level + 1);
+    }
   }
 
   void _hint() {
@@ -642,21 +709,18 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
 
   Widget _buildEmpty() => const CenteredMessage('تعذّر تحميل الألغاز.');
 
-  String _tagsLine(LichessPuzzle p) {
-    final mateIn = p.mateIn;
-
-    return <String>[
-      'صعوبة ${p.rating}',
-      if (mateIn != null) 'كش مات في $mateIn',
-      if (p.sacrifice) 'تضحية',
-      if (_solved.contains(p.id)) 'محلول ✓',
-    ].join(' • ');
-  }
-
   Widget _buildPuzzle(LichessPuzzle p) {
     final sideName = p.solverSide == 'w' ? 'الأبيض' : 'الأسود';
 
-    final goal = _isMate ? 'أنهِ المباراة بكش مات' : 'اعثر على النقلة البريليانت';
+    final String goal;
+
+    if (_mateMode(p)) {
+      goal = 'أنهِ المباراة بكش مات';
+    } else if (_brilliantMode(p)) {
+      goal = 'اعثر على النقلة البريليانت';
+    } else {
+      goal = 'اعثر على أفضل نقلة';
+    }
 
     final arrow = parseUci(_hintUci);
 
@@ -664,9 +728,8 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
 
     return PuzzleLayout(
       title: 'الدور على $sideName — $goal',
-      subtitle: _tagsLine(p),
       header: _LevelHeader(
-        isMate: _isMate,
+        category: widget.category,
         accent: _accent,
         level: _level,
         infos: _infos(),
@@ -735,8 +798,12 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
 // مسار المستويات
 // ================================================================
 
-const int _kLevelCount = 7;
-const int _kNeedPerLevel = 15;
+/// بداية تقييم كل مستوى (مبتدئ → جراند ماستر). المستويات الصغيرة
+/// (أقل من [_kNeedPerLevel] لغزًا) تُدمج تلقائيًا.
+const List<int> _kBandStarts = <int>[0, 1000, 1300, 1600, 1900, 2200, 2500];
+
+/// عدد الألغاز اللازم حلّها في المستوى لفتح الذي بعده.
+const int _kNeedPerLevel = 50;
 
 const List<String> _kLevelNames = <String>[
   'مبتدئ',
@@ -768,17 +835,39 @@ class _LevelInfo {
   double get fill => need == 0 ? 0 : (done / need).clamp(0.0, 1.0);
 }
 
+String _prefixFor(PuzzleCategory c) {
+  switch (c) {
+    case PuzzleCategory.mate:
+      return '# ';
+    case PuzzleCategory.brilliant:
+      return '!! ';
+    case PuzzleCategory.training:
+      return '♟ ';
+  }
+}
+
+String _suffixFor(PuzzleCategory c) {
+  switch (c) {
+    case PuzzleCategory.mate:
+      return 'Checkmate';
+    case PuzzleCategory.brilliant:
+      return 'Brilliant';
+    case PuzzleCategory.training:
+      return 'Puzzles';
+  }
+}
+
 /// ترويسة صفحة الألغاز: العنوان + بطاقة المستوى الحالي + مسار من
 /// سبعة مقاطع (مقطع لكل مستوى) يمكن لمس أي مقطع مفتوح للانتقال إليه.
 class _LevelHeader extends StatelessWidget {
-  final bool isMate;
+  final PuzzleCategory category;
   final Color accent;
   final int level;
   final List<_LevelInfo> infos;
   final VoidCallback onOpenSheet;
 
   const _LevelHeader({
-    required this.isMate,
+    required this.category,
     required this.accent,
     required this.level,
     required this.infos,
@@ -824,7 +913,7 @@ class _LevelHeader extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(
-                      text: isMate ? '# ' : '!! ',
+                      text: _prefixFor(category),
                       style: titleStyle.copyWith(color: accent),
                     ),
                     TextSpan(
@@ -832,7 +921,7 @@ class _LevelHeader extends StatelessWidget {
                       style: titleStyle.copyWith(color: Colors.white),
                     ),
                     TextSpan(
-                      text: isMate ? 'Checkmate' : 'Brilliant',
+                      text: _suffixFor(category),
                       style: titleStyle.copyWith(color: accent),
                     ),
                   ],

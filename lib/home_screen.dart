@@ -67,6 +67,15 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
       _MenuEntry(
+        icon: Icons.psychology_alt_rounded,
+        label: 'ألغاز',
+        color: const Color(0xFF4F8DF7),
+        subtitle: 'حل ألغاز بلا حدود وحسّن مستواك',
+        builder: () => const LichessPuzzlesScreen(
+          category: PuzzleCategory.training,
+        ),
+      ),
+      _MenuEntry(
         icon: Icons.settings_rounded,
         label: 'الإعدادات',
         color: const Color(0xFF8A93A6),

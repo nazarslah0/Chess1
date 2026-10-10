@@ -208,7 +208,9 @@ class SolutionCard extends StatelessWidget {
 /// عنوان، سطر تفاصيل، رقعة، رسالة حالة، بطاقة حل اختيارية، أزرار.
 class PuzzleLayout extends StatelessWidget {
   final String title;
-  final String subtitle;
+
+  /// سطر اختياري تحت العنوان (لا يظهر إن كان null أو فارغًا).
+  final String? subtitle;
   final Widget board;
   final String? feedback;
   final Color feedbackColor;
@@ -221,7 +223,7 @@ class PuzzleLayout extends StatelessWidget {
   const PuzzleLayout({
     super.key,
     required this.title,
-    required this.subtitle,
+    this.subtitle,
     required this.board,
     required this.actions,
     this.feedback,
@@ -233,6 +235,7 @@ class PuzzleLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sol = solution;
+    final sub = subtitle;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(12),
@@ -252,14 +255,16 @@ class PuzzleLayout extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 4),
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Text(
-              subtitle,
-              style: const TextStyle(fontSize: 12, color: AppColors.muted),
+          if (sub != null && sub.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                sub,
+                style: const TextStyle(fontSize: 12, color: AppColors.muted),
+              ),
             ),
-          ),
+          ],
           const SizedBox(height: 8),
           board,
           const SizedBox(height: 8),

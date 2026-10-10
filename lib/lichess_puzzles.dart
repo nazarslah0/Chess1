@@ -3,12 +3,14 @@ import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// تصنيف لغز Lichess داخل التطبيق.
+/// صفحات الألغاز في التطبيق.
 ///
-/// Lichess لا يملك ثيم "brilliant"، لذلك:
-///  - [mate]: أي لغز يحمل ثيم mate (mateIn1..4 …) → صفحة جيك ميت.
-///  - [brilliant]: كل ما عداه → صفحة بريليانت (التضحيات أولًا).
-enum PuzzleCategory { brilliant, mate }
+/// التصنيف يتم عند بناء الملف (tool/build_puzzles.py) بتشغيل نقلات كل لغز:
+///  - [brilliant]: ألغاز فيها تضحية حقيقية.
+///  - [mate]: ألغاز تنتهي بكش مات فعلًا.
+///  - [training]: كل الألغاز (حلّ بلا حدود ورفع المستوى).
+/// اللغز الذي فيه تضحية ثم كش مات يظهر في brilliant وفي mate معًا.
+enum PuzzleCategory { brilliant, mate, training }
 
 /// لغز Lichess متعدد الخطوات.
 ///
@@ -21,8 +23,12 @@ class LichessPuzzle {
   final List<String> moves;
   final int rating;
   final List<String> themes;
-  final PuzzleCategory category;
-  final bool sacrifice;
+
+  /// فيه تضحية حقيقية (صفحة بريليانت).
+  final bool isBrilliant;
+
+  /// ينتهي بكش مات (صفحة جيك ميت).
+  final bool isMate;
 
   const LichessPuzzle({
     required this.id,
@@ -30,8 +36,8 @@ class LichessPuzzle {
     required this.moves,
     required this.rating,
     required this.themes,
-    required this.category,
-    required this.sacrifice,
+    required this.isBrilliant,
+    required this.isMate,
   });
 
   /// لون اللاعب الذي يحلّ اللغز ('w' أو 'b'): عكس صاحب الدور في [fen]
@@ -78,10 +84,8 @@ class LichessPuzzle {
       moves: moves,
       rating: (j['rating'] as num?)?.toInt() ?? 0,
       themes: themes,
-      category: j['cat'] == 'mate'
-          ? PuzzleCategory.mate
-          : PuzzleCategory.brilliant,
-      sacrifice: j['sac'] == true,
+      isBrilliant: j['br'] == true,
+      isMate: j['mt'] == true,
     );
   }
 }
@@ -106,10 +110,13 @@ class LichessPuzzleRepository {
 
       if (list is! List) return <LichessPuzzle>[];
 
-      final parsed = <LichessPuzzle>[
-        for (final j in list)
-          if (LichessPuzzle.fromJson(j) != null) LichessPuzzle.fromJson(j)!,
-      ];
+      final parsed = <LichessPuzzle>[];
+
+      for (final j in list) {
+        final puzzle = LichessPuzzle.fromJson(j);
+
+        if (puzzle != null) parsed.add(puzzle);
+      }
 
       _all = parsed;
 
@@ -119,22 +126,24 @@ class LichessPuzzleRepository {
     }
   }
 
-  /// ألغاز تصنيف واحد، من الأسهل إلى الأصعب.
-  /// في بريليانت تأتي ألغاز التضحية أولًا (الأقرب لمعنى "بريليانت").
+  /// ألغاز صفحة واحدة، من الأسهل إلى الأصعب.
   static Future<List<LichessPuzzle>> loadCategory(
     PuzzleCategory category,
   ) async {
     final all = await loadAll();
 
-    final list = all.where((p) => p.category == category).toList();
-
-    list.sort((a, b) {
-      if (category == PuzzleCategory.brilliant && a.sacrifice != b.sacrifice) {
-        return a.sacrifice ? -1 : 1;
+    final list = all.where((p) {
+      switch (category) {
+        case PuzzleCategory.brilliant:
+          return p.isBrilliant;
+        case PuzzleCategory.mate:
+          return p.isMate;
+        case PuzzleCategory.training:
+          return true;
       }
+    }).toList();
 
-      return a.rating.compareTo(b.rating);
-    });
+    list.sort((a, b) => a.rating.compareTo(b.rating));
 
     return list;
   }
