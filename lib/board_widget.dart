@@ -31,6 +31,19 @@ class BoardBadge {
   });
 }
 
+/// نص صغير يظهر فوق قطعة في الجهة اليسرى من مربعها (مثل Brilliant !!).
+class BoardLabel {
+  final String square;
+  final String text;
+  final Color color;
+
+  const BoardLabel({
+    required this.square,
+    required this.text,
+    this.color = const Color(0xFF1BACA6),
+  });
+}
+
 class BoardWidget extends StatefulWidget {
   final GameState state;
   final BoardTheme boardTheme;
@@ -48,6 +61,9 @@ class BoardWidget extends StatefulWidget {
 
   /// علامات جودة النقلة فوق القطع (مراجعة المباراة فقط).
   final List<BoardBadge> badges;
+
+  /// نصوص فوق القطع (مثل Brilliant عند أول نقلة بريليانت في لغز).
+  final List<BoardLabel> labels;
 
   final bool showCoordinates;
 
@@ -69,6 +85,7 @@ class BoardWidget extends StatefulWidget {
     this.arrows = const [],
     this.targets = const {},
     this.badges = const [],
+    this.labels = const [],
     this.showCoordinates = true,
     this.interactive = true,
   });
@@ -570,6 +587,19 @@ class _BoardWidgetState extends State<BoardWidget> {
                         size: size,
                         flipped: flipped,
                       ),
+
+                  // ==================================================
+                  // نصوص فوق القطع (الجهة اليسرى من المربع)
+                  // ==================================================
+
+                  for (final label in widget.labels)
+                    if (_validSquare(label.square))
+                      _labelPositioned(
+                        label: label,
+                        cell: cell,
+                        size: size,
+                        flipped: flipped,
+                      ),
                 ],
               ),
               ),
@@ -577,6 +607,62 @@ class _BoardWidgetState extends State<BoardWidget> {
           );
         },
       ),
+      ),
+    );
+  }
+
+  Widget _labelPositioned({
+    required BoardLabel label,
+    required double cell,
+    required double size,
+    required bool flipped,
+  }) {
+    final grid = squareToGrid(label.square, flipped: flipped);
+
+    if (grid == null) return const SizedBox.shrink();
+
+    final h = cell * 0.36;
+    final w = cell * 2.1;
+
+    final left = (grid.col * cell - cell * 0.05)
+        .clamp(0.0, size - w)
+        .toDouble();
+
+    final top = (grid.row * cell - h * 0.85)
+        .clamp(0.0, size - h)
+        .toDouble();
+
+    return Positioned(
+      left: left,
+      top: top,
+      child: IgnorePointer(
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: Container(
+            height: h,
+            padding: EdgeInsets.symmetric(horizontal: cell * 0.14),
+            decoration: BoxDecoration(
+              color: label.color,
+              borderRadius: BorderRadius.circular(h / 2),
+              boxShadow: const [
+                BoxShadow(color: Color(0x66000000), blurRadius: 4),
+              ],
+            ),
+            child: Center(
+              widthFactor: 1,
+              child: Text(
+                label.text,
+                maxLines: 1,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: cell * 0.22,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

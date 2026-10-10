@@ -35,6 +35,7 @@ class AppBoard extends StatelessWidget {
   final String? arrowTo;
   final List<BoardArrow> arrows;
   final List<BoardBadge> badges;
+  final List<BoardLabel> labels;
   final bool showCoordinates;
   final bool interactive;
   final double? maxWidth;
@@ -48,6 +49,7 @@ class AppBoard extends StatelessWidget {
     this.arrowTo,
     this.arrows = const [],
     this.badges = const [],
+    this.labels = const [],
     this.showCoordinates = true,
     this.interactive = true,
     this.maxWidth = kBoardMaxWidth,
@@ -67,6 +69,7 @@ class AppBoard extends StatelessWidget {
         arrowTo: arrowTo,
         arrows: arrows,
         badges: badges,
+        labels: labels,
         showCoordinates: showCoordinates,
         interactive: interactive,
       ),

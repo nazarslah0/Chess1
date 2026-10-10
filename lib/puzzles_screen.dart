@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'app_ui.dart';
+import 'board_options.dart';
 import 'board_input.dart';
 import 'models.dart';
 import 'puzzle_storage.dart';
@@ -201,6 +202,7 @@ class _PuzzlesScreenState extends State<PuzzlesScreen> {
               : 'تمرين ${_index + 1} / ${_items.length}',
         ),
         actions: [
+          const BoardOptionsButton(),
           if (p != null)
             IconButton(
               tooltip: 'حذف التمرين',

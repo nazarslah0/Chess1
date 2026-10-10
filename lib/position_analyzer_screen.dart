@@ -3,6 +3,7 @@ import 'package:chess/chess.dart' as ch;
 
 import 'app_settings.dart';
 import 'app_ui.dart';
+import 'board_options.dart';
 import 'engine_service.dart';
 import 'models.dart';
 import 'panels.dart';
@@ -806,7 +807,10 @@ class _PositionAnalyzerScreenState extends State<PositionAnalyzerScreen> {
     return Theme(
       data: _screenTheme(),
       child: Scaffold(
-        appBar: AppBar(title: const Text('وضعية خاصة')),
+        appBar: AppBar(
+          title: const Text('وضعية خاصة'),
+          actions: const [BoardOptionsButton()],
+        ),
         body: SafeArea(
           child: Center(
             child: ConstrainedBox(

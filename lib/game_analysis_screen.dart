@@ -9,6 +9,7 @@ import 'analysis_result.dart';
 import 'analysis_rules.dart';
 import 'app_ui.dart';
 import 'analysis_mode.dart';
+import 'board_options.dart';
 import 'board_widget.dart';
 import 'game_review_models.dart';
 import 'lichess_data_service.dart';

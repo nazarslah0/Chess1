@@ -580,6 +580,14 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
                       },
                     ),
                     ListTile(
+                      leading: const Icon(Icons.palette_outlined),
+                      title: const Text('ثيم القطع والرقعة'),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        showBoardThemeSheet(context);
+                      },
+                    ),
+                    ListTile(
                       leading: const Icon(Icons.copy_rounded),
                       title: const Text('نسخ PGN'),
                       onTap: () {

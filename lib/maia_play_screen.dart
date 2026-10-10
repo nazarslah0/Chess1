@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'app_settings.dart';
 import 'app_ui.dart';
+import 'board_options.dart';
 import 'board_input.dart';
 import 'game_analysis_screen.dart';
 import 'maia_service.dart';
@@ -408,7 +409,10 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('العب ضد Maia')),
+      appBar: AppBar(
+        title: const Text('العب ضد Maia'),
+        actions: const [BoardOptionsButton()],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(12),

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 
 import 'app_ui.dart';
 import 'board_input.dart';
+import 'board_options.dart';
+import 'board_widget.dart' show BoardLabel;
 import 'lichess_puzzles.dart';
 import 'models.dart';
 import 'sound_service.dart';
@@ -62,6 +64,9 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
   Color _feedbackColor = AppColors.muted;
   String? _hintUci;
   String? _solutionText;
+
+  /// مربع تظهر فوقه علامة Brilliant بعد أول نقلة صحيحة.
+  String? _brilliantSquare;
 
   bool get _isMate => widget.category == PuzzleCategory.mate;
 
@@ -377,6 +382,7 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
       _feedback = null;
       _hintUci = null;
       _solutionText = null;
+      _brilliantSquare = null;
     });
 
     _rebuild(p, 0);
@@ -454,6 +460,13 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
     final acceptsAsMate = _isMate && _isCheckmate();
 
     if (matchesLine || acceptsAsMate) {
+      // أول نقلة صحيحة في ألغاز بريليانت: نظهر علامة Brilliant فوق القطعة.
+      if (_ply == 1 && !_isMate) {
+        _brilliantSquare = parseUci(uci)?.to;
+      } else {
+        _brilliantSquare = null;
+      }
+
       _ply++;
 
       if (acceptsAsMate || _ply >= p.moves.length) {
@@ -497,7 +510,10 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
 
     _rebuild(p, _ply);
 
-    setState(() => _busy = false);
+    setState(() {
+      _busy = false;
+      _brilliantSquare = null;
+    });
   }
 
   Future<void> _onSolved(LichessPuzzle p) async {
@@ -600,17 +616,29 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
     return Theme(
       data: _screenTheme(),
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(p == null ? '' : '${_index + 1} / ${_items.length}'),
-        ),
         body: SafeArea(
           child: _loading
-              ? const LoadingView()
-              : (p == null ? _buildEmpty() : _buildPuzzle(p)),
+              ? _withBack(const LoadingView())
+              : (p == null ? _withBack(_buildEmpty()) : _buildPuzzle(p)),
         ),
       ),
     );
   }
+
+  /// زر رجوع فوق حالتي التحميل/الفراغ (لا يوجد شريط علوي في الصفحة).
+  Widget _withBack(Widget child) => Column(
+        children: [
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: IconButton(
+              tooltip: 'رجوع',
+              icon: const Icon(Icons.arrow_back_rounded),
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
+          ),
+          Expanded(child: child),
+        ],
+      );
 
   Widget _buildEmpty() => const CenteredMessage('تعذّر تحميل الألغاز.');
 
@@ -642,7 +670,6 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
         accent: _accent,
         level: _level,
         infos: _infos(),
-        onSelect: _selectLevel,
         onOpenSheet: _openLevelsSheet,
       ),
       board: AppBoard(
@@ -651,6 +678,11 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
         targets: _input.targets,
         arrowFrom: arrow?.from,
         arrowTo: arrow?.to,
+        labels: _brilliantSquare == null
+            ? const <BoardLabel>[]
+            : <BoardLabel>[
+                BoardLabel(square: _brilliantSquare!, text: '!! Brilliant'),
+              ],
       ),
       feedback: _feedback,
       feedbackColor: _feedbackColor,
@@ -743,7 +775,6 @@ class _LevelHeader extends StatelessWidget {
   final Color accent;
   final int level;
   final List<_LevelInfo> infos;
-  final ValueChanged<int> onSelect;
   final VoidCallback onOpenSheet;
 
   const _LevelHeader({
@@ -751,7 +782,6 @@ class _LevelHeader extends StatelessWidget {
     required this.accent,
     required this.level,
     required this.infos,
-    required this.onSelect,
     required this.onOpenSheet,
   });
 
@@ -781,24 +811,37 @@ class _LevelHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: isMate ? '# ' : '!! ',
-                style: titleStyle.copyWith(color: accent),
+        // الصف العلوي: رجوع (يمين) — العنوان — خيارات (يسار).
+        Row(
+          children: [
+            IconButton(
+              tooltip: 'رجوع',
+              icon: const Icon(Icons.arrow_back_rounded),
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: isMate ? '# ' : '!! ',
+                      style: titleStyle.copyWith(color: accent),
+                    ),
+                    TextSpan(
+                      text: 'ألغاز ',
+                      style: titleStyle.copyWith(color: Colors.white),
+                    ),
+                    TextSpan(
+                      text: isMate ? 'Checkmate' : 'Brilliant',
+                      style: titleStyle.copyWith(color: accent),
+                    ),
+                  ],
+                ),
+                textAlign: TextAlign.center,
               ),
-              TextSpan(
-                text: 'ألغاز ',
-                style: titleStyle.copyWith(color: Colors.white),
-              ),
-              TextSpan(
-                text: isMate ? 'Checkmate' : 'Brilliant',
-                style: titleStyle.copyWith(color: accent),
-              ),
-            ],
-          ),
-          textAlign: TextAlign.center,
+            ),
+            const BoardOptionsButton(),
+          ],
         ),
         const SizedBox(height: 12),
         Material(
@@ -873,28 +916,9 @@ class _LevelHeader extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      for (var i = 0; i < infos.length; i++) ...[
-                        if (i > 0) const SizedBox(width: 4),
-                        Expanded(
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () => onSelect(i),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: _Segment(
-                                info: infos[i],
-                                current: i == level,
-                                accent: accent,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                  const SizedBox(height: 14),
+                  _ProgressBar(fill: cur.fill, accent: accent),
+                  const SizedBox(height: 4),
                 ],
               ),
             ),
@@ -905,37 +929,42 @@ class _LevelHeader extends StatelessWidget {
   }
 }
 
-class _Segment extends StatelessWidget {
-  final _LevelInfo info;
-  final bool current;
+/// شريط تقدم واحد متصل نحو المستوى التالي.
+class _ProgressBar extends StatelessWidget {
+  final double fill;
   final Color accent;
 
-  const _Segment({
-    required this.info,
-    required this.current,
-    required this.accent,
-  });
+  const _ProgressBar({required this.fill, required this.accent});
 
   @override
   Widget build(BuildContext context) {
-    final h = current ? 10.0 : 7.0;
-
-    return Container(
-      height: h,
-      decoration: BoxDecoration(
-        color: info.unlocked ? Colors.white12 : Colors.white10,
-        borderRadius: BorderRadius.circular(h / 2),
-        boxShadow: current
-            ? [BoxShadow(color: accent.withValues(alpha: 0.45), blurRadius: 8)]
-            : null,
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(h / 2),
-        child: Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: FractionallySizedBox(
-            widthFactor: info.fill,
-            child: Container(color: accent),
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: fill),
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutCubic,
+      builder: (context, v, _) => Container(
+        height: 12,
+        decoration: BoxDecoration(
+          color: Colors.white12,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: FractionallySizedBox(
+              widthFactor: v,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color.lerp(accent, Colors.white, 0.25)!,
+                      accent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
