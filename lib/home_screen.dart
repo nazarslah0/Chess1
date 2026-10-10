@@ -89,13 +89,12 @@ class HomeScreen extends StatelessWidget {
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
               itemCount: entries.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 16),
+              separatorBuilder: (_, _) => const SizedBox(height: 16),
               itemBuilder: (context, i) => AppMenuCard(
                 icon: entries[i].icon,
                 label: entries[i].label,
                 subtitle: entries[i].subtitle,
                 color: entries[i].color,
-                imageAsset: entries[i].imageAsset,
                 onTap: () => pushScreen(context, entries[i].builder()),
               ),
             ),
@@ -113,10 +112,6 @@ class _MenuEntry {
   final String label;
   final String subtitle;
   final Color color;
-
-  /// مسار صورة اختيارية (asset) تظهر داخل الدائرة بدل الأيقونة.
-  /// سنضيف الصور لاحقًا بتمرير المسار هنا فقط.
-  final String? imageAsset;
   final Widget Function() builder;
 
   const _MenuEntry({
@@ -125,6 +120,5 @@ class _MenuEntry {
     required this.subtitle,
     required this.color,
     required this.builder,
-    this.imageAsset,
   });
 }
