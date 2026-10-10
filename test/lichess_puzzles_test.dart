@@ -44,7 +44,7 @@ void main() {
   setUpAll(() => all = _loadFromDisk());
 
   test('كل الألغاز محمّلة بلا تكرار في المعرّفات', () {
-    expect(all.length, 8530);
+    expect(all.length, 28262);
     expect(all.map((p) => p.id).toSet().length, all.length);
   });
 
@@ -66,24 +66,16 @@ void main() {
       if (ends) mates++;
     }
 
-    expect(mates, greaterThan(1500));
+    expect(mates, greaterThan(4500));
   });
 
-  test('ألغاز بريليانت: عدد معقول وكلها بعلامة تضحية، ولا توجد بلا تصنيف خاطئ',
-      () {
-    final brilliant = all.where((p) => p.isBrilliant).toList();
+  test('كل الألغاز قوية: تضحية، وتقييم عالٍ، وأكثر من نقلة للاعب غالبًا', () {
+    expect(all.every((p) => p.isBrilliant), isTrue);
+    expect(all.every((p) => p.rating >= 2000), isTrue);
 
-    expect(brilliant.length, inInclusiveRange(1000, 1400));
+    final multi = all.where((p) => p.moves.length >= 6).length;
 
-    // ألغاز الكش مات الصافية (mateIn1 البسيطة) لا تُعدّ تضحية.
-    final plainMateIn1 = all.where(
-      (p) => p.mateIn == 1 && !p.themes.contains('sacrifice'),
-    );
-
-    expect(
-      plainMateIn1.where((p) => p.isBrilliant).length,
-      lessThan(plainMateIn1.length ~/ 4),
-    );
+    expect(multi, greaterThan(all.length ~/ 2));
   });
 
   test('اللغز قد يكون في الصفحتين معًا (تضحية ثم كش مات)', () {
