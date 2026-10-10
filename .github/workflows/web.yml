@@ -54,6 +54,24 @@ jobs:
           flutter build web --release \
             --base-href "/${{ github.event.repository.name }}/"
 
+      # يمنع المتصفح من الاحتفاظ بنسخة قديمة من التطبيق: نستبدل
+      # service worker بنسخة تمسح الكاش وتلغي نفسها، فيظهر كل تعديل جديد.
+      - name: Disable stale web cache
+        shell: bash
+        run: |
+          cat > build/web/flutter_service_worker.js <<'EOF'
+          self.addEventListener('install', () => self.skipWaiting());
+          self.addEventListener('activate', (event) => {
+            event.waitUntil((async () => {
+              const keys = await caches.keys();
+              await Promise.all(keys.map((k) => caches.delete(k)));
+              await self.registration.unregister();
+              const cs = await self.clients.matchAll({ type: 'window' });
+              cs.forEach((c) => c.navigate(c.url));
+            })());
+          });
+          EOF
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
