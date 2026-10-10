@@ -151,10 +151,28 @@ class LoadingView extends StatelessWidget {
 class AppActionBar extends StatelessWidget {
   final List<Widget> children;
 
-  const AppActionBar({super.key, required this.children});
+  /// true: كل الأزرار في صف واحد بعرض متساوٍ (بدون التفاف).
+  final bool singleRow;
+
+  const AppActionBar({
+    super.key,
+    required this.children,
+    this.singleRow = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    if (singleRow) {
+      return Row(
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0) const SizedBox(width: 6),
+            Expanded(child: children[i]),
+          ],
+        ],
+      );
+    }
+
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -217,6 +235,9 @@ class PuzzleLayout extends StatelessWidget {
   final Widget? solution;
   final List<Widget> actions;
 
+  /// أزرار [actions] في صف واحد بدل الالتفاف.
+  final bool actionsInOneRow;
+
   /// ترويسة اختيارية تظهر فوق العنوان (مثل مسار المستويات).
   final Widget? header;
 
@@ -230,6 +251,7 @@ class PuzzleLayout extends StatelessWidget {
     this.feedbackColor = Colors.grey,
     this.solution,
     this.header,
+    this.actionsInOneRow = false,
   });
 
   @override
@@ -274,7 +296,7 @@ class PuzzleLayout extends StatelessWidget {
             sol,
           ],
           const SizedBox(height: 10),
-          AppActionBar(children: actions),
+          AppActionBar(children: actions, singleRow: actionsInOneRow),
         ],
       ),
     );

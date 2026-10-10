@@ -118,7 +118,7 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
 
   Future<void> _load() async {
     final all = await LichessPuzzleRepository.loadCategory(widget.category);
-    final solved = await LichessPuzzleRepository.loadSolved();
+    final solved = await LichessPuzzleRepository.loadSolved(widget.category);
 
     if (!mounted) return;
 
@@ -593,7 +593,7 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
       if (counted) _solved = <String>{..._solved, p.id};
     });
 
-    if (counted) await LichessPuzzleRepository.markSolved(p.id);
+    if (counted) await LichessPuzzleRepository.markSolved(widget.category, p.id);
 
     // انتهى آخر لغز في المستوى: ننتقل تلقائيًا إلى المستوى التالي.
     if (counted &&
@@ -763,36 +763,54 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
               ],
             )
           : null,
+      actionsInOneRow: true,
       actions: [
         OutlinedButton(
-          onPressed: _items.length > 1 ? () => _go(-1) : null,
-          child: const Text('السابق'),
+          style: _kRowBtnStyle,
+          onPressed: (_busy || _finished) ? null : _hint,
+          child: const _BtnLabel('تلميح'),
         ),
-        if (!_finished)
-          OutlinedButton(
-            onPressed: _busy ? null : _hint,
-            child: const Text('تلميح'),
-          ),
-        if (!_finished)
-          FilledButton.tonal(
-            onPressed: _busy ? null : _reveal,
-            child: const Text('أرني الحل'),
-          ),
+        FilledButton.tonal(
+          style: _kRowBtnStyle,
+          onPressed: (_busy || _finished) ? null : _reveal,
+          child: const _BtnLabel('أرني الحل'),
+        ),
         OutlinedButton(
-          onPressed: _loadCurrent,
-          child: const Text('أعد المحاولة'),
+          style: _kRowBtnStyle,
+          onPressed: _busy ? null : _loadCurrent,
+          child: const _BtnLabel('أعد المحاولة'),
         ),
+        // لا ينتقل للتالي قبل إنهاء اللغز.
         FilledButton(
-          onPressed: _items.length > 1
-              ? (_finished ? _goNextUnsolved : () => _go(1))
-              : null,
-          child: const Text('التالي'),
+          style: _kRowBtnStyle,
+          onPressed: (_finished && _items.length > 1) ? _goNextUnsolved : null,
+          child: const _BtnLabel('التالي'),
         ),
       ],
     );
   }
 }
 
+
+const ButtonStyle _kRowBtnStyle = ButtonStyle(
+  padding: WidgetStatePropertyAll<EdgeInsetsGeometry>(
+    EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+  ),
+  minimumSize: WidgetStatePropertyAll<Size>(Size(0, 44)),
+);
+
+/// نص زر يتقلّص ليتّسع في صف واحد على الشاشات الضيقة.
+class _BtnLabel extends StatelessWidget {
+  final String text;
+
+  const _BtnLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) => FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(text, maxLines: 1),
+      );
+}
 
 // ================================================================
 // مسار المستويات

@@ -94,7 +94,13 @@ class LichessPuzzleRepository {
   LichessPuzzleRepository._();
 
   static const String assetPath = 'assets/puzzles/lichess_puzzles.json';
-  static const String _solvedKey = 'chess2_lichess_solved_v1';
+  /// المفتاح القديم (مشترك بين كل الصفحات) — كان يسبب فتح مستويات
+  /// بريليانت/كش مات بسبب ألغاز محلولة في صفحة أخرى.
+  static const String _legacySolvedKey = 'chess2_lichess_solved_v1';
+
+  /// تقدّم كل صفحة منفصل عن الأخرى.
+  static String _solvedKey(PuzzleCategory c) =>
+      'chess2_lichess_solved_v2_${c.name}';
 
   static List<LichessPuzzle>? _all;
 
@@ -148,23 +154,32 @@ class LichessPuzzleRepository {
     return list;
   }
 
-  static Future<Set<String>> loadSolved() async {
+  static Future<Set<String>> loadSolved(PuzzleCategory category) async {
     try {
       final p = await SharedPreferences.getInstance();
+      final own = p.getStringList(_solvedKey(category));
 
-      return (p.getStringList(_solvedKey) ?? <String>[]).toSet();
+      if (own != null) return own.toSet();
+
+      // أول تشغيل بعد التحديث: صفحة التدريب (كل الألغاز) ترث التقدّم
+      // القديم؛ بريليانت وكش مات تبدآن من الصفر لأن القديم كان مختلطًا.
+      if (category == PuzzleCategory.training) {
+        return (p.getStringList(_legacySolvedKey) ?? <String>[]).toSet();
+      }
+
+      return <String>{};
     } catch (_) {
       return <String>{};
     }
   }
 
-  static Future<void> markSolved(String id) async {
+  static Future<void> markSolved(PuzzleCategory category, String id) async {
     try {
       final p = await SharedPreferences.getInstance();
-      final set = (p.getStringList(_solvedKey) ?? <String>[]).toSet();
+      final set = (await loadSolved(category)).toSet();
 
       if (set.add(id)) {
-        await p.setStringList(_solvedKey, set.toList());
+        await p.setStringList(_solvedKey(category), set.toList());
       }
     } catch (_) {}
   }
