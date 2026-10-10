@@ -44,7 +44,7 @@ void main() {
   setUpAll(() => all = _loadFromDisk());
 
   test('كل الألغاز محمّلة بلا تكرار في المعرّفات', () {
-    expect(all.length, 28262);
+    expect(all.length, 4925);
     expect(all.map((p) => p.id).toSet().length, all.length);
   });
 
@@ -66,7 +66,7 @@ void main() {
       if (ends) mates++;
     }
 
-    expect(mates, greaterThan(4500));
+    expect(mates, greaterThan(1000));
   });
 
   test('كل الألغاز قوية: تضحية، وتقييم عالٍ، وأكثر من نقلة للاعب غالبًا', () {
@@ -76,6 +76,24 @@ void main() {
     final multi = all.where((p) => p.moves.length >= 6).length;
 
     expect(multi, greaterThan(all.length ~/ 2));
+  });
+
+  test('المستويات: 50 لغزًا في كل مستوى عدا الأخير (كامل) في كل صفحة', () {
+    for (final lv in List.generate(7, (i) => i)) {
+      final b = all.where((p) => p.levelBrilliant == lv).length;
+      final m = all.where((p) => p.levelMate == lv).length;
+
+      if (lv < 6) {
+        expect(b, 50, reason: 'بريليانت مستوى $lv');
+        expect(m, 50, reason: 'جيك ميت مستوى $lv');
+      } else {
+        expect(b, 4038);
+        expect(m, 895);
+      }
+    }
+
+    // ألغاز صفحة جيك ميت كلها تنتهي بكش مات.
+    expect(all.where((p) => p.levelMate >= 0).every((p) => p.isMate), isTrue);
   });
 
   test('اللغز قد يكون في الصفحتين معًا (تضحية ثم كش مات)', () {
