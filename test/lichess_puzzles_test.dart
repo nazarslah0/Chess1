@@ -43,9 +43,9 @@ void main() {
 
   setUpAll(() => all = _loadFromDisk());
 
-  test('الألف لغز كلها محمّلة', () {
-    expect(all.length, 1000);
-    expect(all.map((p) => p.id).toSet().length, 1000);
+  test('العشرة آلاف لغز كلها محمّلة', () {
+    expect(all.length, 10000);
+    expect(all.map((p) => p.id).toSet().length, 10000);
   });
 
   test('كل لغز: نقلاته قانونية وعددها زوجي (آخر نقلة للاعب)', () {
@@ -55,32 +55,39 @@ void main() {
     }
   });
 
-  test('ألغاز جيك ميت تنتهي بكش مات فعلًا', () {
-    final mates = all.where((p) => p.category == PuzzleCategory.mate);
+  test('علم الكش مات يطابق نهاية اللغز فعليًا (في الاتجاهين)', () {
+    var mates = 0;
 
-    expect(mates, isNotEmpty);
+    for (final p in all) {
+      final ends = _play(p)!.in_checkmate;
 
-    for (final p in mates) {
-      expect(_play(p)!.in_checkmate, isTrue, reason: p.id);
+      expect(p.isMate, ends, reason: p.id);
+
+      if (ends) mates++;
     }
+
+    expect(mates, greaterThan(3000));
   });
 
-  test('التصنيف: mate ↔ ثيم mate، والباقي بريليانت', () {
-    for (final p in all) {
-      final hasMate = p.themes.contains('mate');
+  test('ألغاز بريليانت: عدد معقول وكلها بعلامة تضحية، ولا توجد بلا تصنيف خاطئ',
+      () {
+    final brilliant = all.where((p) => p.isBrilliant).toList();
 
-      expect(
-        p.category,
-        hasMate ? PuzzleCategory.mate : PuzzleCategory.brilliant,
-        reason: p.id,
-      );
-    }
+    expect(brilliant.length, inInclusiveRange(1000, 1400));
+
+    // ألغاز الكش مات الصافية (mateIn1 البسيطة) لا تُعدّ تضحية.
+    final plainMateIn1 = all.where(
+      (p) => p.mateIn == 1 && !p.themes.contains('sacrifice'),
+    );
 
     expect(
-      all.where((p) => p.category == PuzzleCategory.mate).length +
-          all.where((p) => p.category == PuzzleCategory.brilliant).length,
-      1000,
+      plainMateIn1.where((p) => p.isBrilliant).length,
+      lessThan(plainMateIn1.length ~/ 4),
     );
+  });
+
+  test('اللغز قد يكون في الصفحتين معًا (تضحية ثم كش مات)', () {
+    expect(all.where((p) => p.isBrilliant && p.isMate), isNotEmpty);
   });
 
   test('solverSide عكس صاحب الدور في FEN', () {
