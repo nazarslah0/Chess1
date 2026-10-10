@@ -1,0 +1,73 @@
+name: Deploy Web Preview (GitHub Pages)
+
+# نسخة ويب من نفس الكود لتجربة كل تعديل من المتصفح بدون حاسوب.
+# تُنشر تلقائيًا عند كل push على main. محرك Stockfish أصلي (Android فقط)
+# فلا يعمل في المتصفح — هذه النسخة لمعاينة الواجهة والشاشات والأصوات.
+
+on:
+  push:
+    branches: [ main ]
+
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-web:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+
+      - name: Generate web project
+        shell: bash
+        run: |
+          flutter create \
+            --platforms=web \
+            --org com.chessanalyzer \
+            --project-name chess_analyzer \
+            .
+
+          rm -f test/widget_test.dart
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build web
+        shell: bash
+        run: |
+          flutter build web --release \
+            --base-href "/${{ github.event.repository.name }}/"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build-web
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
