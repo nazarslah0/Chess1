@@ -10,8 +10,14 @@ enum AnalysisMode {
   /// تحليل سريع ودقيق لمعظم المباريات (الإعدادات الافتراضية).
   quick,
 
+  /// تحليل Lichess السحابي: تقييمات عميقة جاهزة من خوادم Lichess
+  /// (سريعة وبلا إرهاق للهاتف)، والمحرك المحلي للوضعيات غير المخزنة.
+  cloud,
+
   /// Deep Analysis: أقصى عمق ودقة مع كل أنوية المعالج.
   deep;
+
+  bool get useCloud => this == AnalysisMode.cloud;
 
   /// عمق بحث Stockfish لكل وضعية.
   int get depth => this == AnalysisMode.deep ? deepDepth : 14;
@@ -22,7 +28,7 @@ enum AnalysisMode {
   /// خيارات UCI تُرسل لـ Stockfish قبل التحليل. null = الافتراضي.
   /// Threads = كل أنوية الجهاز (8 أو أكثر إن وُجدت)، وHash أكبر.
   Map<String, String>? engineOptions() {
-    if (this == AnalysisMode.quick) return null;
+    if (this != AnalysisMode.deep) return null;
 
     final cores = _cores();
 
@@ -134,6 +140,15 @@ class AnalysisModeScreen extends StatelessWidget {
                       foreground: Color(0xFF8FDB7E),
                     ),
                     onTap: () => _start(context, AnalysisMode.quick),
+                  ),
+                  const SizedBox(height: 16),
+                  AppMenuCard(
+                    icon: Icons.cloud_rounded,
+                    label: 'تحليل Lichess',
+                    subtitle:
+                        'تقييمات عميقة جاهزة من خوادم Lichess، بلا سخونة (يحتاج إنترنت)',
+                    color: const Color(0xFF4DA3FF),
+                    onTap: () => _start(context, AnalysisMode.cloud),
                   ),
                   const SizedBox(height: 16),
                   AppMenuCard(

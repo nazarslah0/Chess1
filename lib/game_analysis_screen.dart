@@ -72,6 +72,7 @@ class _GameAnalysisScreenState
     blackLabel: widget.blackLabel,
     depth: widget.mode.depth,
     engineOptions: widget.mode.engineOptions(),
+    useCloud: widget.mode.useCloud,
   );
 
   String? get _parseError => _c.parseError;

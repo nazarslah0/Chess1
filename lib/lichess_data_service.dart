@@ -590,3 +590,136 @@ class OpeningExplorerService {
     );
   }
 }
+
+
+// ================================================================
+// Cloud Eval (lichess.org/api/cloud-eval): تقييمات Stockfish عميقة
+// جاهزة على خوادم Lichess لملايين الوضعيات (الافتتاح وما بعده).
+// الوضعية غير المخزنة تعيد 404، فنرجع للمحرك المحلي. التقييم يُعاد
+// من منظور الأبيض (مثل شجرة التحليل في Lichess).
+// ================================================================
+
+class CloudEvalLine {
+  /// تقييم بمنظور الأبيض: إما [cp] أو [mate].
+  final int? cp;
+  final int? mate;
+  final List<String> uciMoves;
+
+  const CloudEvalLine({this.cp, this.mate, required this.uciMoves});
+
+  double get evalPawns {
+    if (mate != null) return mate! > 0 ? 100.0 : -100.0;
+
+    return (cp ?? 0) / 100.0;
+  }
+
+  String get evalLabel {
+    if (mate != null) {
+      return mate! > 0 ? 'M${mate!.abs()}' : 'M-${mate!.abs()}';
+    }
+
+    final pawns = (cp ?? 0) / 100.0;
+
+    return '${pawns >= 0 ? '+' : ''}${pawns.toStringAsFixed(2)}';
+  }
+}
+
+class CloudEval {
+  final int depth;
+  final List<CloudEvalLine> lines;
+
+  const CloudEval({required this.depth, required this.lines});
+}
+
+class CloudEvalService {
+  CloudEvalService._();
+
+  static final CloudEvalService instance = CloudEvalService._();
+
+  static const String _base = 'https://lichess.org/api/cloud-eval';
+
+  final Map<String, CloudEval?> _cache = <String, CloudEval?>{};
+  final _Backoff _backoff = _Backoff();
+
+  /// يعيد null عند أي فشل أو غياب الوضعية من السحابة.
+  Future<CloudEval?> fetch(String fen, {int multiPv = 2}) async {
+    final key = '${fen.trim()}|$multiPv';
+
+    if (_cache.containsKey(key)) return _cache[key];
+
+    if (_backoff.blocked) return null;
+
+    final res = await _httpGet(
+      '$_base?fen=${_fenParam(fen)}&multiPv=$multiPv',
+    );
+
+    if (res == null) {
+      _backoff.failure();
+
+      return null;
+    }
+
+    if (res.status == 429) {
+      _backoff.rateLimited();
+
+      return null;
+    }
+
+    if (res.status == 404) {
+      _backoff.success();
+      _cache[key] = null;
+
+      return null;
+    }
+
+    if (res.status != 200) {
+      _backoff.failure();
+
+      return null;
+    }
+
+    _backoff.success();
+
+    try {
+      final json = jsonDecode(res.body);
+
+      if (json is! Map<String, dynamic>) return null;
+
+      final depth = (json['depth'] as num?)?.toInt() ?? 0;
+      final pvs = json['pvs'];
+
+      if (pvs is! List || pvs.isEmpty) return null;
+
+      final lines = <CloudEvalLine>[];
+
+      for (final pv in pvs) {
+        if (pv is! Map<String, dynamic>) continue;
+
+        final moves = (pv['moves'] as String? ?? '')
+            .trim()
+            .split(RegExp(r'\s+'))
+            .where((m) => m.isNotEmpty)
+            .toList();
+
+        if (moves.isEmpty) continue;
+
+        final cp = (pv['cp'] as num?)?.toInt();
+        final mate = (pv['mate'] as num?)?.toInt();
+
+        if (cp == null && mate == null) continue;
+
+        lines.add(CloudEvalLine(cp: cp, mate: mate, uciMoves: moves));
+      }
+
+      if (lines.isEmpty) return null;
+
+      final result = CloudEval(depth: depth, lines: lines);
+
+      _cache[key] = result;
+
+      return result;
+    } catch (_) {
+      return null;
+    }
+  }
+}

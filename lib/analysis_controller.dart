@@ -61,6 +61,7 @@ class GameAnalysisController extends ChangeNotifier {
     this.depth = 14,
     this.multiPv = 2,
     this.engineOptions,
+    this.useCloud = false,
     EngineService? engine,
     AnalysisCache? cache,
   })  : _engine = engine ?? EngineService(),
@@ -77,6 +78,13 @@ class GameAnalysisController extends ChangeNotifier {
   /// خيارات UCI تُرسل للمحرك قبل التحليل (مثل Threads وHash) — تستخدمها
   /// الوضعية العميقة. null = إعدادات المحرك الافتراضية (تحليل سريع).
   final Map<String, String>? engineOptions;
+
+  /// تحليل Lichess السحابي: نطلب التقييم الجاهز من خوادم Lichess أولًا
+  /// (سريع وبلا حرارة)، ونرجع لـ Stockfish المحلي للوضعيات غير المخزنة.
+  final bool useCloud;
+
+  /// أقل عمق نقبله من السحابة (أعمق من تحليلنا المحلي السريع).
+  static const int _minCloudDepth = 20;
 
   final EngineService _engine;
   final AnalysisCache _cache;
@@ -229,7 +237,7 @@ class GameAnalysisController extends ChangeNotifier {
     // إعدادات التحليل المؤثرة على النتيجة (توفر أوزان Maia).
     final maia = await MaiaService.availableBuckets();
 
-    _settingsKey = 'maia:${maia.join(",")}';
+    _settingsKey = 'maia:${maia.join(",")}${useCloud ? '|cloud' : ''}';
 
     _cacheKey = _cache.keyFor(
       pgn: pgn,
@@ -373,13 +381,34 @@ class GameAnalysisController extends ChangeNotifier {
   /// النقلة الوحيدة القوية فعلًا؟) ولاختيار "أفضل نقلة في
   /// المباراة" بمعيار حقيقي بدل تخمين. التكلفة الإضافية
   /// محدودة (نفس البحث، سطر PV إضافي) وليست تحليلًا مضاعفًا.
-  Future<_Eval> _evaluatePosition(String fen, {int? ply}) =>
-      _evaluatePositionWithSettings(
-        fen,
-        depth: depth,
-        multiPv: 2,
-        ply: ply,
-      );
+  Future<_Eval> _evaluatePosition(String fen, {int? ply}) async {
+    if (useCloud) {
+      final cloud = await CloudEvalService.instance.fetch(fen, multiPv: 2);
+
+      if (cloud != null && cloud.depth >= _minCloudDepth) {
+        final first = cloud.lines.first;
+        final second = cloud.lines.length > 1 ? cloud.lines[1] : null;
+
+        return _Eval(
+          first.evalPawns,
+          first.evalLabel,
+          first.uciMoves.first,
+          first.uciMoves,
+          secondBestCpWhite: second == null
+              ? null
+              : cpFromWhitePerspective(second.evalPawns, second.evalLabel),
+          secondBestUci: second?.uciMoves.first,
+        );
+      }
+    }
+
+    return _evaluatePositionWithSettings(
+      fen,
+      depth: depth,
+      multiPv: 2,
+      ply: ply,
+    );
+  }
 
   /// تحليل مستقل قابل للضبط. يُستخدم للتحليل العادي وللتأكيد العميق
   /// للمرشحين لـBrilliant دون تغيير إعدادات المباراة الأساسية.
