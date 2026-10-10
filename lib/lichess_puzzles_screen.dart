@@ -155,28 +155,25 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
     unawaited(_loadCurrent());
   }
 
-  /// يقسم الألغاز إلى [_kLevelNames.length] مستويات متساوية العدد
-  /// تقريبًا، مرتبة بالتقييم: مبتدئ = الأسهل بين الألغاز القوية، وجراند
-  /// ماستر = الأصعب. (كل ألغاز التطبيق قوية، فالتقسيم نسبي لا بحدود
-  /// تقييم ثابتة.) إن قلّت الألغاز عن 50 لكل مستوى نقلّل عدد المستويات.
+  /// يجمع الألغاز في مستوياتها حسب رقم المستوى المحفوظ في ملف الألغاز
+  /// (مبتدئ → جراند ماستر)، وكل مستوى مرتب بالتقييم من الأسهل للأصعب.
   ({List<List<LichessPuzzle>> levels, List<String> ranges}) _buildLevels(
     List<LichessPuzzle> all,
   ) {
-    final sorted = List<LichessPuzzle>.of(all)
-      ..sort((a, b) => a.rating.compareTo(b.rating));
+    final groups = <List<LichessPuzzle>>[
+      for (var i = 0; i < _kLevelNames.length; i++) <LichessPuzzle>[],
+    ];
 
-    var count = sorted.length ~/ _kNeedPerLevel;
+    for (final p in all) {
+      final lv = p.levelFor(widget.category);
 
-    if (count > _kLevelNames.length) count = _kLevelNames.length;
-    if (count < 1) count = 1;
+      if (lv >= 0 && lv < groups.length) groups[lv].add(p);
+    }
 
-    final groups = <List<LichessPuzzle>>[];
+    groups.removeWhere((g) => g.isEmpty);
 
-    for (var i = 0; i < count; i++) {
-      final from = sorted.length * i ~/ count;
-      final to = sorted.length * (i + 1) ~/ count;
-
-      groups.add(sorted.sublist(from, to));
+    for (final g in groups) {
+      g.sort((a, b) => a.rating.compareTo(b.rating));
     }
 
     final ranges = <String>[
@@ -796,7 +793,7 @@ class _BtnLabel extends StatelessWidget {
 // ================================================================
 
 /// عدد الألغاز اللازم حلّها في المستوى لفتح الذي بعده.
-const int _kNeedPerLevel = 50;
+const int _kNeedPerLevel = 45;
 
 const List<String> _kLevelNames = <String>[
   'مبتدئ',

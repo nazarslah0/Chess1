@@ -31,6 +31,12 @@ class LichessPuzzle {
   /// ينتهي بكش مات (صفحة جيك ميت).
   final bool isMate;
 
+  /// رقم المستوى (0..6) في صفحتي بريليانت والتدريب، أو -1 إن لم يكن فيهما.
+  final int levelBrilliant;
+
+  /// رقم المستوى (0..6) في صفحة جيك ميت، أو -1 إن لم يكن فيها.
+  final int levelMate;
+
   const LichessPuzzle({
     required this.id,
     required this.fen,
@@ -39,7 +45,13 @@ class LichessPuzzle {
     required this.themes,
     required this.isBrilliant,
     required this.isMate,
+    this.levelBrilliant = -1,
+    this.levelMate = -1,
   });
+
+  /// رقم مستوى اللغز في صفحة [c] (-1 = ليس في هذه الصفحة).
+  int levelFor(PuzzleCategory c) =>
+      c == PuzzleCategory.mate ? levelMate : levelBrilliant;
 
   /// لون اللاعب الذي يحلّ اللغز ('w' أو 'b'): عكس صاحب الدور في [fen]
   /// لأن أول نقلة هي للخصم.
@@ -87,6 +99,8 @@ class LichessPuzzle {
       themes: themes,
       isBrilliant: j['br'] == true,
       isMate: j['mt'] == true,
+      levelBrilliant: (j['lb'] as num?)?.toInt() ?? -1,
+      levelMate: (j['lm'] as num?)?.toInt() ?? -1,
     );
   }
 }
@@ -148,16 +162,7 @@ class LichessPuzzleRepository {
   ) async {
     final all = await loadAll();
 
-    final list = all.where((p) {
-      switch (category) {
-        case PuzzleCategory.brilliant:
-          return p.isBrilliant;
-        case PuzzleCategory.mate:
-          return p.isMate;
-        case PuzzleCategory.training:
-          return true;
-      }
-    }).toList();
+    final list = all.where((p) => p.levelFor(category) >= 0).toList();
 
     list.sort((a, b) => a.rating.compareTo(b.rating));
 
