@@ -8,8 +8,9 @@
   - شعبية >= 90 (أو >= 85 لألغاز الكش مات)، لُعب >= 300 مرة، وانحراف
     التقييم <= 100 (تقييم موثوق).
   - كل الألغاز تحمل ثيم sacrifice => تظهر كلها في صفحة بريلينت.
-  - ألغاز الكش مات (ثيم mate) تُصفّى من المتشابه: نمط الكش النهائي
-    نفسه (المربعات حول الملك + القطعة + عدد النقلات) لا يتكرر أكثر من مرتين.
+  - بلا أي تكرار: (1) نفس الوضعية أو وضعية تختلف بأقل من 4 مربعات،
+    (2) نفس سلسلة النقلات، (3) ألغاز الكش مات: نفس نمط الكش النهائي
+    (المربعات حول الملك + القطعة + عدد النقلات) لا يتكرر. يبقى الأعلى جودة.
   - ترتيب الجودة: الشعبية، عدد مرات اللعب، تنوّع الأفكار (انحراف،
     نقلة هادئة، تحويل، اعتراض...)، وتفضيل الألغاز متعددة النقلات.
 """
@@ -18,7 +19,8 @@ import collections, csv, json, math, sys
 src = sys.argv[1]
 out = sys.argv[2] if len(sys.argv) > 2 else 'assets/puzzles/lichess_puzzles.json'
 MAX_NON_MATE = 22000   # سقف ألغاز غير الكش مات (للحفاظ على حجم التطبيق)
-MATE_KEEP_PER_PATTERN = 2
+MATE_KEEP_PER_PATTERN = 1   # أي نمط كش مات لا يتكرر
+NEAR_DUP_SQUARES = 3        # وضعيتان تختلفان بأقل من/تساوي 3 مربعات = مكرّر
 
 IDEAS = {
     'deflection', 'quietMove', 'clearance', 'interference', 'discoveredAttack',
@@ -107,19 +109,67 @@ with open(src, newline='', encoding='utf-8-sig') as f:
             'br': True, 'mt': is_mate, '_s': score,
         })
 
-mates = [p for p in rows if p['mt']]
-others = [p for p in rows if not p['mt']]
+def position(p):
+    b = parse(p['fen'])
+    return {s: c for s, c in b.items()}, p['fen'].split()[1]
 
-groups = collections.defaultdict(list)
-for p in mates:
-    groups[mate_signature(p)].append(p)
-mates_kept = []
-for g in groups.values():
-    g.sort(key=lambda p: -p['_s'])
-    mates_kept += g[:MATE_KEEP_PER_PATTERN]
 
-others.sort(key=lambda p: -p['_s'])
-others = others[:MAX_NON_MATE]
+def chunk_keys(pos):
+    """4 أجزاء من الرقعة؛ أي وضعيتين تختلفان بمربعين أو أقل تتطابقان في جزأين على الأقل."""
+    parts = [[] for _ in range(4)]
+    for (f, r), c in sorted(pos.items()):
+        parts[(f // 4) + 2 * (r // 4)].append((f, r, c))
+    parts = [tuple(x) for x in parts]
+    return [(i, j, parts[i], parts[j]) for i in range(4) for j in range(i + 1, 4)]
+
+
+def diff_squares(a, b):
+    return sum(1 for s in set(a) | set(b) if a.get(s) != b.get(s))
+
+
+rows.sort(key=lambda p: -p['_s'])
+
+accepted, index, seen_moves, seen_mates = [], collections.defaultdict(list), set(), set()
+dropped = collections.Counter()
+
+for p in rows:
+    key_moves = tuple(p['moves'])
+    if key_moves in seen_moves:
+        dropped['same_moves'] += 1
+        continue
+
+    if p['mt']:
+        sig = mate_signature(p)
+        if sig in seen_mates:
+            dropped['same_mate_pattern'] += 1
+            continue
+
+    pos, side = position(p)
+    keys = [(side,) + k for k in chunk_keys(pos)]
+    dup = False
+
+    for k in keys:
+        for q in index.get(k, ()):
+            if diff_squares(pos, q) <= NEAR_DUP_SQUARES:
+                dup = True
+                break
+        if dup:
+            break
+
+    if dup:
+        dropped['near_same_position'] += 1
+        continue
+
+    seen_moves.add(key_moves)
+    if p['mt']:
+        seen_mates.add(sig)
+    for k in keys:
+        index[k].append(pos)
+    accepted.append(p)
+
+mates_kept = [p for p in accepted if p['mt']]
+others = [p for p in accepted if not p['mt']][:MAX_NON_MATE]
+print('dropped:', dict(dropped))
 
 final = mates_kept + others
 final.sort(key=lambda p: p['rating'])
@@ -130,5 +180,5 @@ with open(out, 'w', encoding='utf-8') as f:
     json.dump(final, f, ensure_ascii=False, separators=(',', ':'))
 
 r = [p['rating'] for p in final]
-print(f'pool={len(rows)} mates_before={len(mates)} mates_kept={len(mates_kept)} '
+print(f'pool={len(rows)} mates_kept={len(mates_kept)} '
       f'others={len(others)} total={len(final)} ratings={min(r)}..{max(r)}')
