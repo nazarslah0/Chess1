@@ -36,11 +36,7 @@ flutter:
     - assets/pieces/chessnut_brown/
     - assets/pieces/chessnut_blue/
     - assets/pieces/chessnut_burgundy/
-    - assets/pieces/kosal_blue/
-    - assets/pieces/kosal_red/
-    - assets/pieces/kosal_violet/
     - assets/pieces/echiquier/
-    - assets/pieces/echiquier_ink/
     - assets/pieces/wisdom/
     - assets/pieces/wisdom_brown/
 
