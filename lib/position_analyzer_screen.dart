@@ -11,7 +11,7 @@ import 'sound_service.dart';
 import 'uci_utils.dart';
 
 /// ============================================================
-/// Position Analyzer Screen (تحليل وضعية)
+/// Position Analyzer Screen (وضعية خاصة)
 /// ============================================================
 
 class PositionAnalyzerScreen extends StatefulWidget {
@@ -58,9 +58,6 @@ class _PositionAnalyzerScreenState extends State<PositionAnalyzerScreen> {
 
   Set<String> targets =
       <String>{};
-
-  final TextEditingController fenController =
-      TextEditingController();
 
   // ==========================================================
   // Init
@@ -263,8 +260,6 @@ class _PositionAnalyzerScreenState extends State<PositionAnalyzerScreen> {
     engine.dispose();
 
     soundService.dispose();
-
-    fenController.dispose();
 
     state.dispose();
 
@@ -687,359 +682,253 @@ class _PositionAnalyzerScreenState extends State<PositionAnalyzerScreen> {
   // Build
   // ==========================================================
 
-  @override
-  Widget build(
-    BuildContext context,
-  ) {
-    final pieceTheme =
-        AppSettings.instance.pieceTheme;
+  static const Color _accent = Color(0xFF4169FF);
+  static const Color _page = Color(0xFF0E1118);
+  static const Color _surface = Color(0xFF161A24);
 
-    final top =
-        pvLines[1];
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'تحليل وضعية ♟️',
+  ThemeData _screenTheme() {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorSchemeSeed: _accent,
+      scaffoldBackgroundColor: _page,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: _page,
+        foregroundColor: Colors.white,
+        centerTitle: true,
+      ),
+      cardTheme: CardThemeData(
+        color: _surface,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0x1FFFFFFF)),
         ),
       ),
+    );
+  }
 
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding:
-              const EdgeInsets.all(12),
+  Future<void> _confirmClear() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('مسح الرقعة؟'),
+        content: const Text('ستُزال كل القطع من الرقعة.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('مسح'),
+          ),
+        ],
+      ),
+    );
 
-          child: Column(
-            children: [
-              // =================================================
-              // Board
-              // =================================================
+    if (ok == true) state.clearBoardForSetup();
+  }
 
-              AppBoard(
-                state: state,
-                onTap: _onBoardTap,
-                targets: targets,
-                arrowFrom: top != null && top.bestFrom.isNotEmpty
-                    ? top.bestFrom
-                    : null,
-                arrowTo: top != null && top.bestTo.isNotEmpty
-                    ? top.bestTo
-                    : null,
-              ),
+  Widget _modeSwitch() {
+    return SegmentedButton<String>(
+      showSelectedIcon: false,
+      expandedInsets: EdgeInsets.zero,
+      segments: const [
+        ButtonSegment<String>(
+          value: 'play',
+          icon: Icon(Icons.sports_esports_rounded),
+          label: Text('وضع اللعب'),
+        ),
+        ButtonSegment<String>(
+          value: 'setup',
+          icon: Icon(Icons.tune_rounded),
+          label: Text('إعداد الوضعية'),
+        ),
+      ],
+      selected: <String>{state.mode == 'setup' ? 'setup' : 'play'},
+      onSelectionChanged: (s) {
+        if (s.first == 'setup') {
+          state.enterSetupModeFromCurrent();
+        } else {
+          state.enterPlayModeFromSetup();
+        }
+      },
+    );
+  }
 
-              const SizedBox(
-                height: 10,
-              ),
-
-              // =================================================
-              // Board controls
-              // =================================================
-
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                alignment:
-                    WrapAlignment.center,
-
-                children: [
-                  FilledButton(
-                    onPressed: () {
-                      state
-                          .enterPlayModeFromSetup();
-                    },
-
-                    child:
-                        const Text(
-                      'وضع اللعب',
-                    ),
-                  ),
-
-                  OutlinedButton(
-                    onPressed: () {
-                      state
-                          .enterSetupModeFromCurrent();
-                    },
-
-                    child:
-                        const Text(
-                      'إعداد الوضعية',
-                    ),
-                  ),
-
-                  OutlinedButton(
-                    onPressed: () {
-                      state.flipBoard();
-                    },
-
-                    child:
-                        const Text(
-                      'قلب الرقعة',
-                    ),
-                  ),
-
-                  OutlinedButton(
-                    onPressed: () {
-                      state.startPosition();
-                    },
-
-                    child:
-                        const Text(
-                      'الوضعية الابتدائية',
-                    ),
-                  ),
-
-                  OutlinedButton(
-                    style:
-                        OutlinedButton.styleFrom(
-                      foregroundColor:
-                          Colors.red,
-                    ),
-
-                    onPressed: () {
-                      state
-                          .clearBoardForSetup();
-                    },
-
-                    child:
-                        const Text(
-                      'مسح الرقعة',
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(
-                height: 12,
-              ),
-
-              // =================================================
-              // Setup panel
-              // =================================================
-
-              if (state.mode ==
-                  'setup')
-                SetupPanel(
-                  state: state,
-                  pieceTheme:
-                      pieceTheme,
-                  selectedPiece:
-                      selectedSetupPiece,
-                  eraseMode:
-                      eraseMode,
-
-                  onSelectPiece: (
-                    String piece,
-                  ) {
-                    setState(() {
-                      selectedSetupPiece =
-                          piece;
-
-                      eraseMode =
-                          false;
-                    });
-                  },
-
-                  onToggleErase: () {
-                    setState(() {
-                      eraseMode =
-                          !eraseMode;
-
-                      selectedSetupPiece =
-                          null;
-                    });
-                  },
-
-                  onChanged: () {},
+  Widget _toolTile({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color color = Colors.white70,
+  }) {
+    return Expanded(
+      child: Material(
+        color: _surface,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.white12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: color, size: 22),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  style: TextStyle(color: color, fontSize: 12, height: 1.2),
                 ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-              const SizedBox(
-                height: 12,
-              ),
+  @override
+  Widget build(BuildContext context) {
+    final pieceTheme = AppSettings.instance.pieceTheme;
 
-              // =================================================
-              // FEN
-              // =================================================
+    final top = pvLines[1];
 
-              Card(
-                child: Padding(
-                  padding:
-                      const EdgeInsets.all(
-                    12,
-                  ),
+    return Theme(
+      data: _screenTheme(),
+      child: Scaffold(
+        appBar: AppBar(title: const Text('وضعية خاصة')),
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // الرقعة
+                    AppBoard(
+                      state: state,
+                      onTap: _onBoardTap,
+                      targets: targets,
+                      arrowFrom: top != null && top.bestFrom.isNotEmpty
+                          ? top.bestFrom
+                          : null,
+                      arrowTo: top != null && top.bestTo.isNotEmpty
+                          ? top.bestTo
+                          : null,
+                    ),
 
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment
-                            .start,
+                    const SizedBox(height: 12),
 
-                    children: [
-                      const Text(
-                        'FEN',
-                        style:
-                            TextStyle(
-                          fontWeight:
-                              FontWeight.bold,
+                    // تبديل الوضع: لعب / إعداد
+                    _modeSwitch(),
+
+                    const SizedBox(height: 10),
+
+                    // أدوات الرقعة
+                    Row(
+                      children: [
+                        _toolTile(
+                          icon: Icons.flip_rounded,
+                          label: 'قلب الرقعة',
+                          onTap: state.flipBoard,
                         ),
-                      ),
-
-                      const SizedBox(
-                        height: 5,
-                      ),
-
-                      SelectableText(
-                        state.currentFen,
-                        style:
-                            const TextStyle(
-                          fontFamily:
-                              'monospace',
-                          fontSize: 12,
+                        const SizedBox(width: 8),
+                        _toolTile(
+                          icon: Icons.restart_alt_rounded,
+                          label: 'الوضعية الابتدائية',
+                          onTap: state.startPosition,
                         ),
-                      ),
-
-                      const SizedBox(
-                        height: 8,
-                      ),
-
-                      TextField(
-                        controller:
-                            fenController,
-
-                        textDirection:
-                            TextDirection
-                                .ltr,
-
-                        textAlign:
-                            TextAlign.left,
-
-                        decoration:
-                            const InputDecoration(
-                          labelText:
-                              'الصق FEN هنا',
-                          border:
-                              OutlineInputBorder(),
+                        const SizedBox(width: 8),
+                        _toolTile(
+                          icon: Icons.delete_outline_rounded,
+                          label: 'مسح الرقعة',
+                          color: Colors.redAccent,
+                          onTap: _confirmClear,
                         ),
-                      ),
+                      ],
+                    ),
 
-                      const SizedBox(
-                        height: 8,
-                      ),
-
-                      FilledButton.icon(
-                        onPressed: () {
-                          final fen =
-                              fenController
-                                  .text
-                                  .trim();
-
-                          if (fen.isEmpty) {
-                            return;
-                          }
-
-                          final loaded =
-                              state.loadFen(
-                            fen,
-                          );
-
-                          if (!loaded &&
-                              mounted) {
-                            showAppSnack(context, 'FEN غير صالح');
-                          }
+                    // لوحة القطع (في وضع الإعداد فقط)
+                    if (state.mode == 'setup') ...[
+                      const SizedBox(height: 12),
+                      SetupPanel(
+                        state: state,
+                        pieceTheme: pieceTheme,
+                        selectedPiece: selectedSetupPiece,
+                        eraseMode: eraseMode,
+                        onSelectPiece: (String piece) {
+                          setState(() {
+                            selectedSetupPiece = piece;
+                            eraseMode = false;
+                          });
                         },
-
-                        icon:
-                            const Icon(
-                          Icons.download,
-                        ),
-
-                        label:
-                            const Text(
-                          'تحميل FEN',
-                        ),
+                        onToggleErase: () {
+                          setState(() {
+                            eraseMode = !eraseMode;
+                            selectedSetupPiece = null;
+                          });
+                        },
+                        onChanged: () {},
                       ),
                     ],
-                  ),
+
+                    const SizedBox(height: 12),
+
+                    // التحليل
+                    AnalysisPanel(
+                      engineStatus: engineStatus,
+                      engineReady: engineReady,
+                      analyzing: engine.analyzing,
+                      multiPv: multiPv,
+                      lines: pvLines,
+                      onAnalyze: _analyze,
+                      onStop: () {
+                        engine.stop();
+                      },
+                      onMultiPvChanged: (int value) {
+                        setState(() {
+                          multiPv = value;
+                        });
+                      },
+                      onSelectLine: (int index) {
+                        // لا نغير وضعية الرقعة عند اختيار PV.
+                      },
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // الكتاب + Tablebase + نقلات بشرية
+                    PositionInsightsPanel(
+                      fen: state.currentFen,
+                      enabled: state.mode == 'play' && state.legal,
+                      engineBestUci: top != null &&
+                              top.bestFrom.isNotEmpty &&
+                              top.bestTo.isNotEmpty
+                          ? '${top.bestFrom}${top.bestTo}'
+                          : null,
+                      onPlayMove: _playUci,
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // سجل النقلات
+                    MoveListPanel(history: state.history),
+                  ],
                 ),
               ),
-
-              const SizedBox(
-                height: 12,
-              ),
-
-              // =================================================
-              // Analysis
-              // =================================================
-
-              AnalysisPanel(
-                engineStatus:
-                    engineStatus,
-
-                engineReady:
-                    engineReady,
-
-                analyzing:
-                    engine.analyzing,
-
-                multiPv:
-                    multiPv,
-
-                lines:
-                    pvLines,
-
-                onAnalyze:
-                    _analyze,
-
-                onStop: () {
-                  engine.stop();
-                },
-
-                onMultiPvChanged: (
-                  int value,
-                ) {
-                  setState(() {
-                    multiPv = value;
-                  });
-                },
-
-                onSelectLine: (
-                  int index,
-                ) {
-                  // لا نغير وضعية الرقعة
-                  // عند اختيار PV.
-                },
-              ),
-
-              const SizedBox(
-                height: 12,
-              ),
-
-              // =================================================
-              // الكتاب + Tablebase + Maia
-              // =================================================
-
-              PositionInsightsPanel(
-                fen: state.currentFen,
-                enabled: state.mode == 'play' && state.legal,
-                engineBestUci: top != null &&
-                        top.bestFrom.isNotEmpty &&
-                        top.bestTo.isNotEmpty
-                    ? '${top.bestFrom}${top.bestTo}'
-                    : null,
-                onPlayMove: _playUci,
-              ),
-
-              const SizedBox(
-                height: 12,
-              ),
-
-              // =================================================
-              // Move history
-              // =================================================
-
-              MoveListPanel(
-                history:
-                    state.history,
-              ),
-            ],
+            ),
           ),
         ),
       ),

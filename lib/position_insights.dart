@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:chess/chess.dart' as ch;
 import 'package:flutter/material.dart';
 
-import 'app_settings.dart';
 import 'lichess_data_service.dart';
 import 'maia_service.dart';
 import 'models.dart';
@@ -38,6 +37,9 @@ class PositionInsightsPanel extends StatefulWidget {
       _PositionInsightsPanelState();
 }
 
+/// مستوى Maia الثابت في هذه الشاشة.
+const int _kMaiaBucket = 1900;
+
 class _MaiaRow {
   final String uci;
   final String san;
@@ -51,11 +53,9 @@ class _PositionInsightsPanelState extends State<PositionInsightsPanel> {
   int _req = 0;
 
   // الكتاب
-  ExplorerPositionData? _masters;
   ExplorerPositionData? _lichess;
   bool _bookLoading = false;
   bool _bookFailed = false;
-  bool _bookMasters = true;
 
   // Tablebase
   bool _tbEligible = false;
@@ -114,7 +114,6 @@ class _PositionInsightsPanelState extends State<PositionInsightsPanel> {
         _tbLoading = false;
         _tbEligible = false;
         _tb = null;
-        _masters = null;
         _lichess = null;
         _maia = const <_MaiaRow>[];
         _maiaState = 'idle';
@@ -152,18 +151,15 @@ class _PositionInsightsPanelState extends State<PositionInsightsPanel> {
   // ------------------------------------------------------------
 
   Future<void> _loadBook(String fen, int req) async {
-    final r = await Future.wait<ExplorerPositionData?>([
-      OpeningExplorerService.instance.mastersStats(fen),
-      OpeningExplorerService.instance.lichessStats(fen),
-    ]);
+    // الكتاب ثابت على قاعدة Lichess (بلا اختيار من الواجهة).
+    final r = await OpeningExplorerService.instance.lichessStats(fen);
 
     if (!mounted || req != _req) return;
 
     setState(() {
-      _masters = r[0];
-      _lichess = r[1];
+      _lichess = r;
       _bookLoading = false;
-      _bookFailed = r[0] == null && r[1] == null;
+      _bookFailed = r == null;
     });
   }
 
@@ -181,8 +177,9 @@ class _PositionInsightsPanelState extends State<PositionInsightsPanel> {
   Future<void> _loadMaia(String fen, int req) async {
     if (!mounted || req != _req) return;
 
+    // مستوى Maia ثابت على 1900 (بلا اختيار من الواجهة).
     final bucket = MaiaService.nearestAvailable(
-      AppSettings.instance.maiaBucket,
+      _kMaiaBucket,
       _available,
     );
 
@@ -331,7 +328,7 @@ class _PositionInsightsPanelState extends State<PositionInsightsPanel> {
   // ---------------- الكتاب ----------------
 
   Widget _buildBook() {
-    final data = _bookMasters ? _masters : _lichess;
+    final data = _lichess;
 
     Widget body;
 
@@ -359,25 +356,7 @@ class _PositionInsightsPanelState extends State<PositionInsightsPanel> {
       );
     }
 
-    return _card(
-      'الكتاب (Opening Explorer)',
-      body,
-      trailing: Wrap(
-        spacing: 6,
-        children: [
-          ChoiceChip(
-            label: const Text('أساتذة'),
-            selected: _bookMasters,
-            onSelected: (_) => setState(() => _bookMasters = true),
-          ),
-          ChoiceChip(
-            label: const Text('Lichess'),
-            selected: !_bookMasters,
-            onSelected: (_) => setState(() => _bookMasters = false),
-          ),
-        ],
-      ),
-    );
+    return _card('الكتاب', body);
   }
 
   Widget _bookRow(ExplorerMoveStat m, int positionTotal) {
@@ -620,29 +599,7 @@ class _PositionInsightsPanelState extends State<PositionInsightsPanel> {
         body = _hint('—');
     }
 
-    return _card(
-      'Maia (نقلات بشرية)',
-      body,
-      trailing: _available.length > 1
-          ? Wrap(
-              spacing: 6,
-              children: [
-                for (final b in _available)
-                  ChoiceChip(
-                    label: Text('$b'),
-                    selected: _shownBucket == b ||
-                        (_shownBucket == null &&
-                            AppSettings.instance.maiaBucket == b),
-                    onSelected: (_) async {
-                      await AppSettings.instance.setMaiaBucket(b);
-
-                      _schedule();
-                    },
-                  ),
-              ],
-            )
-          : null,
-    );
+    return _card('نقلات بشرية', body);
   }
 
   Widget _maiaRow(_MaiaRow r) {

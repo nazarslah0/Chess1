@@ -21,10 +21,10 @@ class HomeScreen extends StatelessWidget {
     final entries = <_MenuEntry>[
       _MenuEntry(
         icon: Icons.grid_view_rounded,
-        label: 'تحليل وضعية',
+        label: 'وضعية خاصة',
         color: const Color(0xFF4169FF),
-        subtitle: 'أنشئ وضعية أو الصق FEN: Stockfish '
-            'والكتاب وTablebase وMaia',
+        subtitle: 'أنشئ أي وضعية على الرقعة وحلّلها: '
+            'Stockfish والكتاب وTablebase',
         builder: () => const PositionAnalyzerScreen(),
       ),
       _MenuEntry(
