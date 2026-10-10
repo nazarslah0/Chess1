@@ -56,6 +56,8 @@ class _PgnImportScreenState extends State<PgnImportScreen> {
     );
   }
 
+  static const Color _blue = Color(0xFF3D6BFF);
+
   @override
   Widget build(BuildContext context) {
     return SourceScaffold(
@@ -89,6 +91,7 @@ class _PgnImportScreenState extends State<PgnImportScreen> {
                       '[Result "1-0"]\n\n'
                       '1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 ...',
                   alignLabelWithHint: true,
+                  accent: _blue,
                 ),
               ),
             ),
@@ -104,7 +107,7 @@ class _PgnImportScreenState extends State<PgnImportScreen> {
             SizedBox(
               height: 50,
               child: FilledButton.icon(
-                style: SourceStyle.primaryButton(),
+                style: SourceStyle.primaryButton(color: _blue),
                 onPressed: _analyze,
                 icon: const Icon(Icons.query_stats_rounded),
                 label: const Text('تحليل المباراة'),

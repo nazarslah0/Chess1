@@ -60,7 +60,6 @@ class GameAnalysisController extends ChangeNotifier {
     this.blackLabel,
     this.depth = 14,
     this.multiPv = 2,
-    this.engineOptions,
     this.useCloud = false,
     EngineService? engine,
     AnalysisCache? cache,
@@ -75,11 +74,7 @@ class GameAnalysisController extends ChangeNotifier {
   final int depth;
   final int multiPv;
 
-  /// خيارات UCI تُرسل للمحرك قبل التحليل (مثل Threads وHash) — تستخدمها
-  /// الوضعية العميقة. null = إعدادات المحرك الافتراضية (تحليل سريع).
-  final Map<String, String>? engineOptions;
-
-  /// تحليل Lichess السحابي: نطلب التقييم الجاهز من خوادم Lichess أولًا
+  /// تحليل PRO السحابي: نطلب التقييم الجاهز من الخادم أولًا
   /// (سريع وبلا حرارة)، ونرجع لـ Stockfish المحلي للوضعيات غير المخزنة.
   final bool useCloud;
 
@@ -265,12 +260,6 @@ class GameAnalysisController extends ChangeNotifier {
 
     // محرك Stockfish يبدأ هنا فقط عند غياب تحليل صالح محفوظ.
     _engine.init();
-
-    final opts = engineOptions;
-    if (opts != null && opts.isNotEmpty) {
-      await _engine.setOptions(opts);
-      if (_disposed || token != _requestToken) return;
-    }
 
     _cancelRequested = false;
 
@@ -471,8 +460,7 @@ class GameAnalysisController extends ChangeNotifier {
     );
 
     return completer.future.timeout(
-      // البحث العميق يحتاج مهلة أطول كي لا نقطعه قبل bestmove.
-      Duration(seconds: depth >= 20 ? 180 : 30),
+      const Duration(seconds: 30),
       onTimeout: () => _Eval(
         lastPawns,
         lastLabel,

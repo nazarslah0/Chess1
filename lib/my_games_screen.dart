@@ -45,7 +45,9 @@ class AnalyzeGameScreen extends StatelessWidget {
 
             final cardW = w * 0.2895;
             final gap = w * 0.0245;
-            final cardsTop = bgH * 0.549;
+            // رفع كل المحتوى قليلًا للأعلى.
+            final lift = bgH * 0.03;
+            final cardsTop = bgH * 0.549 - lift;
             final cardH = cardW * 1.877;
 
             final contentH = math.max(h, cardsTop + cardH + 24);
@@ -70,14 +72,14 @@ class AnalyzeGameScreen extends StatelessWidget {
                       children: [
                         // العنوان.
                         Positioned(
-                          top: bgH * 0.414 - w * 0.075,
+                          top: bgH * 0.414 - w * 0.075 - lift,
                           left: 0,
                           right: 0,
                           child: _title(w),
                         ),
                         // العنوان الفرعي.
                         Positioned(
-                          top: bgH * 0.475 - w * 0.03,
+                          top: bgH * 0.475 - w * 0.03 - lift,
                           left: 0,
                           right: 0,
                           child: Text(
@@ -91,7 +93,7 @@ class AnalyzeGameScreen extends StatelessWidget {
                         ),
                         // الفاصل مع التاج.
                         Positioned(
-                          top: bgH * 0.512 - w * 0.02,
+                          top: bgH * 0.512 - w * 0.02 - lift,
                           left: 0,
                           right: 0,
                           child: _divider(w),
@@ -107,8 +109,8 @@ class AnalyzeGameScreen extends StatelessWidget {
                               _SourceCard(
                                 width: cardW,
                                 icon: _chessComIcon,
-                                title: 'chess.com',
-                                subtitle: 'استيراد من موقع chess.com',
+                                title: 'Chess.com',
+                                subtitle: 'استيراد من موقع\nChess.com',
                                 accent: const Color(0xFF63C13F),
                                 border: const Color(0x8C4FB02E),
                                 colors: const [
@@ -125,7 +127,7 @@ class AnalyzeGameScreen extends StatelessWidget {
                                 width: cardW,
                                 icon: _lichessIcon,
                                 title: 'Lichess',
-                                subtitle: 'استيراد من موقع Lichess',
+                                subtitle: 'استيراد من موقع\nLichess',
                                 accent: const Color(0xFFE5A93B),
                                 border: const Color(0x66E0A33A),
                                 colors: const [
@@ -288,8 +290,8 @@ class _SourceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final h = width * 1.877;
     final radius = BorderRadius.circular(width * 0.15);
-    final titleSize = width * 0.115;
-    final subSize = width * 0.063;
+    final titleSize = width * 0.13;
+    final subSize = width * 0.073;
     final ring = width * 0.277;
 
     return SizedBox(

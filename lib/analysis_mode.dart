@@ -1,5 +1,3 @@
-import 'dart:io' show Platform;
-
 import 'package:flutter/material.dart';
 
 import 'game_analysis_screen.dart';
@@ -7,45 +5,17 @@ import 'menu_card.dart';
 
 /// نوع تحليل المباراة.
 enum AnalysisMode {
-  /// تحليل سريع ودقيق لمعظم المباريات (الإعدادات الافتراضية).
+  /// تحليل سريع ودقيق لمعظم المباريات (Stockfish على الجهاز).
   quick,
 
-  /// تحليل Lichess السحابي: تقييمات عميقة جاهزة من خوادم Lichess
-  /// (سريعة وبلا إرهاق للهاتف)، والمحرك المحلي للوضعيات غير المخزنة.
-  cloud,
+  /// PRO: تقييمات عميقة جاهزة من السحابة (أعمق وأدق وبلا إرهاق للجهاز)،
+  /// ويرجع Stockfish المحلي للوضعيات غير المخزنة.
+  pro;
 
-  /// Deep Analysis: أقصى عمق ودقة مع كل أنوية المعالج.
-  deep;
+  bool get useCloud => this == AnalysisMode.pro;
 
-  bool get useCloud => this == AnalysisMode.cloud;
-
-  /// عمق بحث Stockfish لكل وضعية.
-  int get depth => this == AnalysisMode.deep ? deepDepth : 14;
-
-  /// عمق التحليل العميق (قابل للتعديل: أعلى = أدق وأبطأ).
-  static const int deepDepth = 24;
-
-  /// خيارات UCI تُرسل لـ Stockfish قبل التحليل. null = الافتراضي.
-  /// Threads = كل أنوية الجهاز (8 أو أكثر إن وُجدت)، وHash أكبر.
-  Map<String, String>? engineOptions() {
-    if (this != AnalysisMode.deep) return null;
-
-    final cores = _cores();
-
-    return <String, String>{
-      'Threads': '$cores',
-      'Hash': cores >= 8 ? '512' : '256',
-    };
-  }
-
-  static int _cores() {
-    try {
-      final n = Platform.numberOfProcessors;
-      return n < 1 ? 1 : n;
-    } catch (_) {
-      return 4; // الويب أو منصة لا تدعم القراءة
-    }
-  }
+  /// عمق البحث المحلي لكل وضعية.
+  int get depth => 14;
 }
 
 /// شاشة اختيار نوع التحليل: تظهر بعد اختيار مباراة (Chess.com / Lichess)
@@ -57,6 +27,9 @@ class AnalysisModeScreen extends StatelessWidget {
   final String? resultLabel;
   final String sourceLabel;
 
+  /// true إن كان اللاعب المبحوث عنه بالأسود: يظهر في أسفل الرقعة.
+  final bool playerIsBlack;
+
   const AnalysisModeScreen({
     super.key,
     required this.pgn,
@@ -64,6 +37,7 @@ class AnalysisModeScreen extends StatelessWidget {
     this.blackLabel,
     this.resultLabel,
     this.sourceLabel = '',
+    this.playerIsBlack = false,
   });
 
   void _start(BuildContext context, AnalysisMode mode) {
@@ -75,6 +49,7 @@ class AnalysisModeScreen extends StatelessWidget {
           blackLabel: blackLabel,
           resultLabel: resultLabel,
           sourceLabel: sourceLabel,
+          playerIsBlack: playerIsBlack,
           mode: mode,
         ),
       ),
@@ -143,26 +118,17 @@ class AnalysisModeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   AppMenuCard(
-                    icon: Icons.cloud_rounded,
-                    label: 'تحليل Lichess',
-                    subtitle:
-                        'تقييمات عميقة جاهزة من خوادم Lichess، بلا سخونة (يحتاج إنترنت)',
-                    color: const Color(0xFF4DA3FF),
-                    onTap: () => _start(context, AnalysisMode.cloud),
-                  ),
-                  const SizedBox(height: 16),
-                  AppMenuCard(
                     icon: Icons.biotech_rounded,
                     label: 'Deep Analysis',
-                    subtitle:
-                        'أدق عمق ممكن بكل أنوية المعالج، لكنه يستغرق وقتًا أطول',
+                    subtitle: 'تحليل أعمق وأدق بتقييمات عميقة جاهزة، '
+                        'دون إرهاق جهازك (يحتاج إنترنت)',
                     color: amber,
                     badge: const _Pill(
                       text: 'PRO',
                       background: amber,
                       foreground: Colors.black,
                     ),
-                    onTap: () => _start(context, AnalysisMode.deep),
+                    onTap: () => _start(context, AnalysisMode.pro),
                   ),
                 ],
               ),

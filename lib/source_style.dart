@@ -19,6 +19,7 @@ class SourceStyle {
     String? hint,
     IconData? icon,
     bool alignLabelWithHint = false,
+    Color accent = green,
   }) {
     OutlineInputBorder border(Color c, [double w = 1]) => OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -36,13 +37,17 @@ class SourceStyle {
       filled: true,
       fillColor: panel,
       enabledBorder: border(Colors.white12),
-      focusedBorder: border(green, 2),
+      focusedBorder: border(accent, 2),
     );
   }
 
-  static ButtonStyle primaryButton() => FilledButton.styleFrom(
-        backgroundColor: green,
-        foregroundColor: Colors.white,
+  static ButtonStyle primaryButton({
+    Color color = green,
+    Color foreground = Colors.white,
+  }) =>
+      FilledButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: foreground,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),

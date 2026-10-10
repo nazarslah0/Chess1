@@ -34,6 +34,14 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
 
   GameSource get _source => widget.source;
 
+  /// لون المصدر: ذهبي لـ Lichess، وأخضر لـ Chess.com.
+  bool get _isLichess => _source is LichessSource;
+
+  Color get _accent =>
+      _isLichess ? const Color(0xFFE5A93B) : SourceStyle.green;
+
+  Color get _onAccent => _isLichess ? Colors.black87 : Colors.white;
+
   @override
   void initState() {
     super.initState();
@@ -150,6 +158,8 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
       MaterialPageRoute(
         builder: (_) => AnalysisModeScreen(
           pgn: g.pgn,
+          playerIsBlack: g.blackLabel(_username).trim().toLowerCase() ==
+              _username.trim().toLowerCase(),
           whiteLabel: g.whiteLabel(_username),
           blackLabel: g.blackLabel(_username),
           resultLabel: g.resultLabel(_username),
@@ -207,6 +217,7 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
                 label: 'اسم مستخدم ${_source.name}',
                 hint: 'مثال: ${_source.usernameHint}',
                 icon: Icons.person_outline,
+                accent: _accent,
               ),
               onSubmitted: (_) => _search(),
             ),
@@ -215,15 +226,18 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
           SizedBox(
             height: 56,
             child: FilledButton(
-              style: SourceStyle.primaryButton(),
+              style: SourceStyle.primaryButton(
+                color: _accent,
+                foreground: _onAccent,
+              ),
               onPressed: _loadingGames ? null : _search,
               child: _loadingGames
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: _onAccent,
                       ),
                     )
                   : const Text('بحث'),
@@ -263,12 +277,12 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
     if (_games.isEmpty) {
       return Center(
         child: _loadingGames
-            ? const Column(
+            ? Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(color: SourceStyle.green),
-                  SizedBox(height: 12),
-                  Text(
+                  CircularProgressIndicator(color: _accent),
+                  const SizedBox(height: 12),
+                  const Text(
                     'جاري تحميل آخر $_limit مباراة...',
                     style: TextStyle(color: Colors.white70),
                   ),
@@ -308,9 +322,9 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
               color: SourceStyle.avatar,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.person_rounded,
-              color: SourceStyle.green,
+              color: _accent,
               size: 28,
             ),
           ),
@@ -340,7 +354,7 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
               icon: const Icon(Icons.swap_horiz_rounded, size: 18),
               label: const Text('تبديل'),
               style: TextButton.styleFrom(
-                foregroundColor: SourceStyle.green,
+                foregroundColor: _accent,
               ),
             ),
         ],

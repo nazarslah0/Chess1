@@ -35,8 +35,11 @@ class GameAnalysisScreen extends StatefulWidget {
   final String? resultLabel;
   final String sourceLabel;
 
-  /// نوع التحليل: سريع (الافتراضي) أو عميق (Deep Analysis).
+  /// نوع التحليل: سريع (الافتراضي) أو PRO.
   final AnalysisMode mode;
+
+  /// true إن كان اللاعب المبحوث عنه بالأسود: نقلب الرقعة ليظهر في الأسفل.
+  final bool playerIsBlack;
 
   const GameAnalysisScreen({
     super.key,
@@ -46,6 +49,7 @@ class GameAnalysisScreen extends StatefulWidget {
     this.resultLabel,
     this.sourceLabel = '',
     this.mode = AnalysisMode.quick,
+    this.playerIsBlack = false,
   });
 
   @override
@@ -71,7 +75,6 @@ class _GameAnalysisScreenState
     whiteLabel: widget.whiteLabel,
     blackLabel: widget.blackLabel,
     depth: widget.mode.depth,
-    engineOptions: widget.mode.engineOptions(),
     useCloud: widget.mode.useCloud,
   );
 
@@ -119,6 +122,8 @@ class _GameAnalysisScreenState
     if (_c.parseError != null) return;
 
     _boardState.loadFen(_c.fens.first);
+
+    if (widget.playerIsBlack) _boardState.flipBoard();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _c.start();
