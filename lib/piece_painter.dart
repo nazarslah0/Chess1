@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'models.dart';
 
@@ -86,4 +87,48 @@ class PiecePainter extends CustomPainter {
         oldDelegate.color != color ||
         oldDelegate.theme != theme;
   }
+}
+
+/// صورة القطعة من الأصول: SVG إن كان الثيم SVG، وإلا PNG.
+/// عند فشل التحميل يُرسم الرمز الاحتياطي.
+Widget pieceAssetImage(
+  PieceTheme theme,
+  String color,
+  String type, {
+  double? width,
+  double? height,
+  bool gapless = true,
+}) {
+  final fallback = CustomPaint(painter: PiecePainter(type, color, theme));
+  final path = theme.assetPath(color, type);
+
+  if (theme.svg) {
+    return SvgPicture.asset(
+      path,
+      width: width,
+      height: height,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) => fallback,
+    );
+  }
+
+  return Image.asset(
+    path,
+    width: width,
+    height: height,
+    fit: BoxFit.contain,
+    gaplessPlayback: gapless,
+    filterQuality: FilterQuality.medium,
+    errorBuilder: (context, error, stackTrace) => fallback,
+  );
+}
+
+/// تحميل مسبق لقطعة SVG حتى لا تومض عند أول ظهور.
+void precachePieceSvg(String path) {
+  final loader = SvgAssetLoader(path);
+
+  svg.cache.putIfAbsent(
+    loader.cacheKey(null),
+    () => loader.loadBytes(null),
+  );
 }

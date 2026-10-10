@@ -142,11 +142,15 @@ class _BoardWidgetState extends State<BoardWidget> {
     if (folder != null) {
       for (final c in const ['w', 'b']) {
         for (final t in const ['K', 'Q', 'R', 'B', 'N', 'P']) {
-          precacheImage(
-            AssetImage(widget.pieceTheme.assetPath(c, t)),
-            context,
-            onError: (e, st) {},
-          );
+          if (widget.pieceTheme.svg) {
+            precachePieceSvg(widget.pieceTheme.assetPath(c, t));
+          } else {
+            precacheImage(
+              AssetImage(widget.pieceTheme.assetPath(c, t)),
+              context,
+              onError: (e, st) {},
+            );
+          }
         }
       }
     }
@@ -713,25 +717,7 @@ class _BoardWidgetState extends State<BoardWidget> {
     final type = piece.substring(1, 2);
 
     if (widget.pieceTheme.assetFolder != null) {
-      return Image.asset(
-        widget.pieceTheme.assetPath(
-          color,
-          type,
-        ),
-        fit: BoxFit.contain,
-        gaplessPlayback: true,
-        filterQuality: FilterQuality.medium,
-        errorBuilder:
-            (context, error, stackTrace) {
-          return CustomPaint(
-            painter: PiecePainter(
-              type,
-              color,
-              widget.pieceTheme,
-            ),
-          );
-        },
-      );
+      return pieceAssetImage(widget.pieceTheme, color, type);
     }
 
     return CustomPaint(

@@ -43,13 +43,7 @@ Widget _pieceImage(PieceTheme theme, String piece, double size) {
     return fallback;
   }
 
-  return Image.asset(
-    theme.assetPath(color, type),
-    width: size,
-    height: size,
-    fit: BoxFit.contain,
-    errorBuilder: (context, error, stackTrace) => fallback,
-  );
+  return pieceAssetImage(theme, color, type, width: size, height: size);
 }
 
 /// ============================================================

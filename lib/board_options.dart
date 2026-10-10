@@ -205,11 +205,7 @@ class _PiecePreview extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(6),
         child: theme.assetFolder != null
-            ? Image.asset(
-                theme.assetPath('w', 'n'),
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => fallback,
-              )
+            ? pieceAssetImage(theme, 'w', 'N')
             : fallback,
       ),
     );

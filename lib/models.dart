@@ -47,6 +47,9 @@ class PieceTheme {
 
   final String? assetFolder;
 
+  /// true: ملفات القطع SVG (تُرسم بـ flutter_svg) بدل PNG.
+  final bool svg;
+
   const PieceTheme({
     required this.name,
     required this.whiteFill,
@@ -54,6 +57,7 @@ class PieceTheme {
     required this.blackFill,
     required this.blackStroke,
     this.assetFolder,
+    this.svg = false,
   });
 
   String assetPath(
@@ -61,7 +65,7 @@ class PieceTheme {
     String typeLetter,
   ) {
     return 'assets/pieces/$assetFolder/'
-        '$colorLetter$typeLetter.png';
+        '$colorLetter$typeLetter.${svg ? 'svg' : 'png'}';
   }
 }
 
@@ -205,6 +209,108 @@ const List<BoardTheme> boardThemes = [
     border: Color(0xFF4A3A10),
     imageAsset: 'assets/chessground/boards/leather.jpg',
   ),
+
+  // ===== ثيمات رقع إضافية: خشب كلاسيكي وأخضر (مرجعها الألوان فقط) =====
+  BoardTheme(
+    name: 'خشب كلاسيكي — جوزي',
+    light: Color(0xFFE0C097),
+    dark: Color(0xFFB85C38),
+    lastMove: Color(0x88F4E04D),
+    checkColor: Color(0xFFDC2626),
+    selected: Color(0x552563EB),
+    target: Color(0x552563EB),
+    border: Color(0xFF522919),
+  ),
+  BoardTheme(
+    name: 'خشب كلاسيكي — عسلي',
+    light: Color(0xFFF4D1B1),
+    dark: Color(0xFFEAA464),
+    lastMove: Color(0x88F4E04D),
+    checkColor: Color(0xFFDC2626),
+    selected: Color(0x552563EB),
+    target: Color(0x552563EB),
+    border: Color(0xFF69492D),
+  ),
+  BoardTheme(
+    name: 'خشب كلاسيكي — رملي',
+    light: Color(0xFFCFC8BE),
+    dark: Color(0xFFB0A392),
+    lastMove: Color(0x88F4E04D),
+    checkColor: Color(0xFFDC2626),
+    selected: Color(0x552563EB),
+    target: Color(0x552563EB),
+    border: Color(0xFF4F4941),
+  ),
+  BoardTheme(
+    name: 'خشب كلاسيكي — كاكاو',
+    light: Color(0xFFAB8A86),
+    dark: Color(0xFF885953),
+    lastMove: Color(0x88F4E04D),
+    checkColor: Color(0xFFDC2626),
+    selected: Color(0x552563EB),
+    target: Color(0x552563EB),
+    border: Color(0xFF3D2825),
+  ),
+  BoardTheme(
+    name: 'أخضر — سلطة',
+    light: Color(0xFFF4EEA9),
+    dark: Color(0xFF519259),
+    lastMove: Color(0x88F6F669),
+    checkColor: Color(0xFFDC2626),
+    selected: Color(0x552563EB),
+    target: Color(0x552563EB),
+    border: Color(0xFF244128),
+  ),
+  BoardTheme(
+    name: 'أخضر — أفوكادو',
+    light: Color(0xFFECECA4),
+    dark: Color(0xFF72A843),
+    lastMove: Color(0x88F6F669),
+    checkColor: Color(0xFFDC2626),
+    selected: Color(0x552563EB),
+    target: Color(0x552563EB),
+    border: Color(0xFF334B1E),
+  ),
+  BoardTheme(
+    name: 'أخضر — غابة',
+    light: Color(0xFF7DA989),
+    dark: Color(0xFF468557),
+    lastMove: Color(0x88F6F669),
+    checkColor: Color(0xFFDC2626),
+    selected: Color(0x552563EB),
+    target: Color(0x552563EB),
+    border: Color(0xFF1F3B27),
+  ),
+  BoardTheme(
+    name: 'أخضر — صيفي',
+    light: Color(0xFFF2E9C0),
+    dark: Color(0xFF5D9A75),
+    lastMove: Color(0x88F6F669),
+    checkColor: Color(0xFFDC2626),
+    selected: Color(0x552563EB),
+    target: Color(0x552563EB),
+    border: Color(0xFF294534),
+  ),
+  BoardTheme(
+    name: 'أخضر — عشب',
+    light: Color(0xFFC6E377),
+    dark: Color(0xFF729D39),
+    lastMove: Color(0x88F6F669),
+    checkColor: Color(0xFFDC2626),
+    selected: Color(0x552563EB),
+    target: Color(0x552563EB),
+    border: Color(0xFF334619),
+  ),
+  BoardTheme(
+    name: 'أخضر — نعناع',
+    light: Color(0xFFDDFFBC),
+    dark: Color(0xFF91C788),
+    lastMove: Color(0x88F6F669),
+    checkColor: Color(0xFFDC2626),
+    selected: Color(0x552563EB),
+    target: Color(0x552563EB),
+    border: Color(0xFF41593D),
+  ),
 ];
 
 /// مظهر تحليل المباريات القريب من واجهة Chess.com الظاهرة في الطلب.
@@ -292,6 +398,96 @@ const List<PieceTheme> pieceThemes = [
     blackFill: Color(0xFF111111),
     blackStroke: Color(0xFFF9F9F9),
     assetFolder: 'alpha',
+  ),
+  PieceTheme(
+    name: 'قطع كلاسيكية — شستنت — بني',
+    whiteFill: Color(0xFFFCFCFC),
+    whiteStroke: Color(0xFF222222),
+    blackFill: Color(0xFF161616),
+    blackStroke: Color(0xFFEAEAEA),
+    assetFolder: 'chessnut_brown',
+    svg: true,
+  ),
+  PieceTheme(
+    name: 'قطع كلاسيكية — شستنت — أزرق',
+    whiteFill: Color(0xFFFCFCFC),
+    whiteStroke: Color(0xFF222222),
+    blackFill: Color(0xFF161616),
+    blackStroke: Color(0xFFEAEAEA),
+    assetFolder: 'chessnut_blue',
+    svg: true,
+  ),
+  PieceTheme(
+    name: 'قطع كلاسيكية — شستنت — عنابي',
+    whiteFill: Color(0xFFFCFCFC),
+    whiteStroke: Color(0xFF222222),
+    blackFill: Color(0xFF161616),
+    blackStroke: Color(0xFFEAEAEA),
+    assetFolder: 'chessnut_burgundy',
+    svg: true,
+  ),
+  PieceTheme(
+    name: 'قطع كلاسيكية — كوسال — أزرق',
+    whiteFill: Color(0xFFFCFCFC),
+    whiteStroke: Color(0xFF222222),
+    blackFill: Color(0xFF161616),
+    blackStroke: Color(0xFFEAEAEA),
+    assetFolder: 'kosal_blue',
+    svg: true,
+  ),
+  PieceTheme(
+    name: 'قطع كلاسيكية — كوسال — أحمر',
+    whiteFill: Color(0xFFFCFCFC),
+    whiteStroke: Color(0xFF222222),
+    blackFill: Color(0xFF161616),
+    blackStroke: Color(0xFFEAEAEA),
+    assetFolder: 'kosal_red',
+    svg: true,
+  ),
+  PieceTheme(
+    name: 'قطع كلاسيكية — كوسال — بنفسجي',
+    whiteFill: Color(0xFFFCFCFC),
+    whiteStroke: Color(0xFF222222),
+    blackFill: Color(0xFF161616),
+    blackStroke: Color(0xFFEAEAEA),
+    assetFolder: 'kosal_violet',
+    svg: true,
+  ),
+  PieceTheme(
+    name: 'قطع كلاسيكية — إشيكييه — كلاسيكي',
+    whiteFill: Color(0xFFFCFCFC),
+    whiteStroke: Color(0xFF222222),
+    blackFill: Color(0xFF161616),
+    blackStroke: Color(0xFFEAEAEA),
+    assetFolder: 'echiquier',
+    svg: true,
+  ),
+  PieceTheme(
+    name: 'قطع كلاسيكية — إشيكييه — حبر',
+    whiteFill: Color(0xFFFCFCFC),
+    whiteStroke: Color(0xFF222222),
+    blackFill: Color(0xFF161616),
+    blackStroke: Color(0xFFEAEAEA),
+    assetFolder: 'echiquier_ink',
+    svg: true,
+  ),
+  PieceTheme(
+    name: 'قطع كلاسيكية — ويزدم — كلاسيكي',
+    whiteFill: Color(0xFFFCFCFC),
+    whiteStroke: Color(0xFF222222),
+    blackFill: Color(0xFF161616),
+    blackStroke: Color(0xFFEAEAEA),
+    assetFolder: 'wisdom',
+    svg: true,
+  ),
+  PieceTheme(
+    name: 'قطع كلاسيكية — ويزدم — بني',
+    whiteFill: Color(0xFFFCFCFC),
+    whiteStroke: Color(0xFF222222),
+    blackFill: Color(0xFF161616),
+    blackStroke: Color(0xFFEAEAEA),
+    assetFolder: 'wisdom_brown',
+    svg: true,
   ),
 ];
 
