@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="256" height="256" role="img" aria-label="white bishop">
+  <title>White Bishop</title>
+  <g stroke-linecap="round" stroke-linejoin="round">
+    
+<path d="M50 10 C38 20 34 29 39 39 C42 45 47 48 50 50 C53 48 58 45 61 39 C66 29 62 20 50 10 Z" fill="#F5F1E8" stroke="#55514B" stroke-width="2.5"/>
+<path d="M57 18 L44 35" stroke="#B8B2A8" stroke-width="3" stroke-linecap="round" opacity=".65"/>
+<path d="M39 49 Q50 44 61 49 L62 60 Q72 67 75 82 L79 92 H21 L25 82 Q28 67 38 60 Z" fill="#F5F1E8" stroke="#55514B" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M38 60 Q50 66 62 60" fill="none" stroke="#B8B2A8" stroke-width="2.5" opacity=".55"/>
+
+    <path d="M18 92 Q50 97 82 92" fill="none" stroke="#55514B" stroke-width="2" opacity=".8"/>
+  </g>
+</svg>
