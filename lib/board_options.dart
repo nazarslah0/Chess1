@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'app_settings.dart';
 import 'models.dart';
@@ -231,6 +232,10 @@ class _BoardPreview extends StatelessWidget {
     final asset = theme.imageAsset;
 
     if (asset == null) return grid;
+
+    if (asset.toLowerCase().endsWith('.svg')) {
+      return SvgPicture.asset(asset, fit: BoxFit.fill);
+    }
 
     return Image.asset(
       asset,

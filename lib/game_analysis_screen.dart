@@ -14,6 +14,7 @@ import 'board_widget.dart';
 import 'game_review_models.dart';
 import 'lichess_data_service.dart';
 import 'models.dart';
+import 'piece_painter.dart';
 import 'pgn_utils.dart';
 import 'pv_utils.dart';
 import 'source_style.dart';

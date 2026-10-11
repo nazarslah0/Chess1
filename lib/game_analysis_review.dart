@@ -161,8 +161,10 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (hasFigurine) ...[
-                Image.asset(
-                  chessComPieceTheme.assetPath(ply.color, first),
+                pieceAssetImage(
+                  chessComPieceTheme,
+                  ply.color,
+                  first,
                   width: 20,
                   height: 20,
                 ),
@@ -311,10 +313,7 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
                   : const Color(0xFF5A5856),
               borderRadius: BorderRadius.circular(4),
             ),
-            child: Image.asset(
-              chessComPieceTheme.assetPath(color, 'P'),
-              fit: BoxFit.contain,
-            ),
+            child: pieceAssetImage(chessComPieceTheme, color, 'P'),
           ),
           const SizedBox(width: 10),
           Expanded(

@@ -5,13 +5,6 @@ import 'board_widget.dart';
 import 'maia_service.dart';
 import 'models.dart';
 
-const String _kPieceCredits =
-    'Chessnut pieces — Alexis Luengas, Apache License 2.0.\n'
-    'Kosal pieces — Philatype, CC BY 4.0.\n'
-    'Echiquier pieces — Vincent Tellier, CC BY-SA 4.0.\n'
-    'Wisdom Chess pieces — Vladimir Nikolic.\n'
-    'Colour variants by caderek. Sets obtained via sharechess.github.io.';
-
 /// الإعدادات العامة: ثيم الرقعة والقطع (تنطبق على كل رقع التطبيق)،
 /// مستوى Maia الافتراضي، واسمك في المباريات.
 class SettingsScreen extends StatefulWidget {
@@ -169,21 +162,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     labelText: 'اسم المستخدم',
                   ),
                   onChanged: _s.setPlayerName,
-                ),
-                const Divider(height: 32),
-                const Text(
-                  'حقوق القطع والرقع',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  _kPieceCredits,
-                  textDirection: TextDirection.ltr,
-                  style: TextStyle(
-                    fontSize: 12,
-                    height: 1.5,
-                    color: Colors.grey.shade600,
-                  ),
                 ),
               ],
             );

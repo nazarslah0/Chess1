@@ -160,10 +160,7 @@ extension _AnalysisStageViews on _GameAnalysisScreenState {
                   ? Border.all(color: _green, width: 3)
                   : null,
             ),
-            child: Image.asset(
-              chessComPieceTheme.assetPath(color, 'P'),
-              fit: BoxFit.contain,
-            ),
+            child: pieceAssetImage(chessComPieceTheme, color, 'P'),
           ),
         ],
       );

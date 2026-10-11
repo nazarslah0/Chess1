@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import 'models.dart';
 import 'game_review_models.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
 import 'piece_painter.dart';
 import 'board_geometry.dart';
 
@@ -112,6 +114,19 @@ class _RealBoardBackdrop extends StatelessWidget {
 
     if (asset == null) return child;
 
+    // رقعة SVG: متجهة، صغيرة الحجم، ومتعددة الألوان.
+    if (asset.toLowerCase().endsWith('.svg')) {
+      return Stack(
+        fit: StackFit.passthrough,
+        children: [
+          Positioned.fill(
+            child: SvgPicture.asset(asset, fit: BoxFit.fill),
+          ),
+          child,
+        ],
+      );
+    }
+
     return DecoratedBox(
       decoration: BoxDecoration(
         image: DecorationImage(
@@ -156,7 +171,11 @@ class _BoardWidgetState extends State<BoardWidget> {
     }
 
     if (board != null) {
-      precacheImage(AssetImage(board), context, onError: (e, st) {});
+      if (board.toLowerCase().endsWith('.svg')) {
+        precachePieceSvg(board);
+      } else {
+        precacheImage(AssetImage(board), context, onError: (e, st) {});
+      }
     }
   }
 
