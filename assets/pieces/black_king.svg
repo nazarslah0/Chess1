@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="256" height="256" role="img" aria-label="black king">
+  <title>Black King</title>
+  <g stroke-linecap="round" stroke-linejoin="round">
+    
+<path d="M50 10 V27 M41 18 H59" stroke="#252629" stroke-width="5" stroke-linecap="round" fill="none"/>
+<path d="M37 31 Q50 25 63 31 L67 42 Q65 49 58 51 L61 61 Q71 67 74 79 L78 91 H22 L26 79 Q29 67 39 61 L42 51 Q35 49 33 42 Z" fill="#252629" stroke="#111214" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M35 43 Q50 49 65 43 M39 61 Q50 66 61 61" fill="none" stroke="#77797D" stroke-width="2.5" opacity=".55"/>
+
+    <path d="M18 92 Q50 97 82 92" fill="none" stroke="#111214" stroke-width="2" opacity=".8"/>
+  </g>
+</svg>
