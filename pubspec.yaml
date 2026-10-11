@@ -29,6 +29,7 @@ flutter:
   assets:
     # Chess pieces
     - assets/pieces/classic_svg/
+    - assets/pieces/modern_svg/
 
     # Maia weights (lc0 .pb.gz) - see assets/maia/README.txt
     - assets/maia/
