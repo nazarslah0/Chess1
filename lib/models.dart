@@ -75,7 +75,7 @@ class PieceTheme {
 
 const List<BoardTheme> boardThemes = [
   BoardTheme(
-    name: 'كلاسيكي خشب SVG',
+    name: 'خشبي',
     light: Color(0xFFF3DDB8),
     dark: Color(0xFFBC8C62),
     lastMove: Color(0x88F4E04D),
@@ -85,11 +85,33 @@ const List<BoardTheme> boardThemes = [
     border: Color(0xFF4A2C12),
     imageAsset: 'assets/boards_svg/classic_wood.svg',
   ),
+  BoardTheme(
+    name: 'خشبي داكن',
+    light: Color(0xFFD9B48A),
+    dark: Color(0xFF7A4B2A),
+    lastMove: Color(0x88F4E04D),
+    checkColor: Color(0xFFDC2626),
+    selected: Color(0x552563EB),
+    target: Color(0x552563EB),
+    border: Color(0xFF2C160A),
+    imageAsset: 'assets/boards_svg/dark_wood.svg',
+  ),
+  BoardTheme(
+    name: 'أزرق',
+    light: Color(0xFFE6EEF6),
+    dark: Color(0xFF6F8FB0),
+    lastMove: Color(0x88FFD54A),
+    checkColor: Color(0xFFDC2626),
+    selected: Color(0x552563EB),
+    target: Color(0x552563EB),
+    border: Color(0xFF35506E),
+    imageAsset: 'assets/boards_svg/classic_blue.svg',
+  ),
 ];
 
 /// مظهر تحليل المباريات القريب من واجهة Chess.com الظاهرة في الطلب.
 const BoardTheme chessComBoardTheme = BoardTheme(
-  name: 'كلاسيكي أخضر SVG (الافتراضي)',
+  name: 'أخضر',
   light: Color(0xFFF2F2D8),
   dark: Color(0xFF7DA05C),
   lastMove: Color(0x88F6F669),
@@ -101,7 +123,7 @@ const BoardTheme chessComBoardTheme = BoardTheme(
 );
 
 const PieceTheme chessComPieceTheme = PieceTheme(
-  name: 'كلاسيكي SVG (الافتراضي)',
+  name: 'كلاسيكي',
   whiteFill: Color(0xFFF7F7F7),
   whiteStroke: Color(0xFF555555),
   blackFill: Color(0xFF333333),
@@ -114,7 +136,17 @@ const PieceTheme chessComPieceTheme = PieceTheme(
 /// Piece Themes List
 /// ============================================================
 
-const List<PieceTheme> pieceThemes = <PieceTheme>[];
+const List<PieceTheme> pieceThemes = [
+  PieceTheme(
+    name: 'عصري',
+    whiteFill: Color(0xFFFCFCFC),
+    whiteStroke: Color(0xFF222222),
+    blackFill: Color(0xFF161616),
+    blackStroke: Color(0xFFEAEAEA),
+    assetFolder: 'modern_svg',
+    svg: true,
+  ),
+];
 
 /// ============================================================
 /// Move Entry
