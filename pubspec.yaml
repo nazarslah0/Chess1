@@ -28,21 +28,7 @@ flutter:
 
   assets:
     # Chess pieces
-    - assets/pieces/classic/
-    - assets/pieces/flat/
-    - assets/pieces/wood/
-    - assets/pieces/Chesscom/
-    - assets/pieces/alpha/
-    - assets/pieces/chessnut_brown/
-    - assets/pieces/chessnut_blue/
-    - assets/pieces/chessnut_burgundy/
-    - assets/pieces/kosal_blue/
-    - assets/pieces/kosal_red/
-    - assets/pieces/kosal_violet/
-    - assets/pieces/echiquier/
-    - assets/pieces/echiquier_ink/
-    - assets/pieces/wisdom/
-    - assets/pieces/wisdom_brown/
+    - assets/pieces/classic_svg/
 
     # Maia weights (lc0 .pb.gz) - see assets/maia/README.txt
     - assets/maia/
@@ -58,9 +44,6 @@ flutter:
 
     # رقع SVG (متجهة)
     - assets/boards_svg/
-
-    # Chess boards
-    - assets/chessground/boards/
 
     # New chess sounds only
     - assets/sounds/move.mp3

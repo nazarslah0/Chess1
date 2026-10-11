@@ -3,8 +3,8 @@
 تم تحديث المشروع وفق الطلب:
 
 ## 1. الوسائط
-- إضافة حزمة لوحات الشطرنج من `assets/chessground/boards/`.
-- إضافة مجموعات القطع من `assets/chessground/piece_sets/`.
+- الرقع: ألوان مسطحة في الكود + رقعتان SVG في `assets/boards_svg/` (حُذفت صور الرقع).
+- القطع: كلها SVG في `assets/pieces/` (حُذفت قطع PNG).
 - إضافة مجموعة Staunty بصيغة PNG في `assets/pieces/chesscom/` لاستخدام شاشة التحليل.
 
 ## 2. الأصوات
