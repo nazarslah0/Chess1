@@ -41,5 +41,8 @@ flutter:
     # رقع SVG (متجهة)
     - assets/boards_svg/
 
+    # صور الروبوتات (شاشة العب ضد روبوت)
+    - assets/bots/
+
     # أصوات الشطرنج (WAV)
     - assets/sounds/
