@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'ads_service.dart';
 import 'app_ui.dart';
 import 'bot_play_screen.dart';
 import 'lichess_puzzles.dart' show PuzzleCategory;
@@ -79,7 +80,7 @@ class HomeScreen extends StatelessWidget {
         icon: Icons.settings_rounded,
         label: 'الإعدادات',
         color: const Color(0xFF8A93A6),
-        subtitle: 'ثيم الرقعة والقطع، مستوى Maia، اسمك',
+        subtitle: 'ثيم الرقعة والقطع، اسمك',
         builder: () => const SettingsScreen(),
       ),
     ];
@@ -92,22 +93,31 @@ class HomeScreen extends StatelessWidget {
         title: const Text('محلل الشطرنج ♟️'),
       ),
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-              itemCount: entries.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 16),
-              itemBuilder: (context, i) => AppMenuCard(
-                icon: entries[i].icon,
-                label: entries[i].label,
-                subtitle: entries[i].subtitle,
-                color: entries[i].color,
-                onTap: () => pushScreen(context, entries[i].builder()),
+        child: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                    itemCount: entries.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 16),
+                    itemBuilder: (context, i) => AppMenuCard(
+                      icon: entries[i].icon,
+                      label: entries[i].label,
+                      subtitle: entries[i].subtitle,
+                      color: entries[i].color,
+                      onTap: () =>
+                          pushScreen(context, entries[i].builder()),
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
+            // بانر أسفل القائمة فقط، بعيدًا عن الرقعة وأزرار اللعب.
+            const AdBanner(),
+          ],
         ),
       ),
     );

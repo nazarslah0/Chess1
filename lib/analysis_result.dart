@@ -5,7 +5,7 @@ import 'lichess_data_service.dart' show BookMoveInfo;
 /// قواعد التصنيف أو تخطيط البيانات المحفوظة، فلا تُخلط النتائج
 /// القديمة بالجديدة: مفتاح الكاش يتضمنه، وأي ملف محفوظ بإصدار آخر
 /// يُتجاهل.
-const int kAnalysisVersion = 3;
+const int kAnalysisVersion = 4;
 
 /// نسخة المحرك المسجَّلة مع التحليل.
 const String kEngineVersion = 'stockfish19';
@@ -154,13 +154,6 @@ class MoveAnalysisResult {
   /// إحصائيات الكتاب (Opening Explorer).
   final BookMoveInfo? bookInfo;
 
-  /// Maia: احتمال أن يجد لاعب بهذا التصنيف النقلة المُلعَبة / أفضل
-  /// نقلة Stockfish، وأرجح نقلة عند Maia، وتصنيف Maia المستخدم.
-  final double? maiaProbability;
-  final double? maiaBestProbability;
-  final String? maiaTopUci;
-  final int? maiaBucket;
-
   const MoveAnalysisResult({
     required this.ply,
     required this.moveNumber,
@@ -198,10 +191,6 @@ class MoveAnalysisResult {
     this.tablebaseWdlBeforeWhite,
     this.tablebaseWdlAfterWhite,
     this.bookInfo,
-    this.maiaProbability,
-    this.maiaBestProbability,
-    this.maiaTopUci,
-    this.maiaBucket,
   });
 
   MoveAnalysisResult copyWith({
@@ -246,10 +235,6 @@ class MoveAnalysisResult {
         tablebaseWdlBeforeWhite: tablebaseWdlBeforeWhite,
         tablebaseWdlAfterWhite: tablebaseWdlAfterWhite,
         bookInfo: bookInfo,
-        maiaProbability: maiaProbability,
-        maiaBestProbability: maiaBestProbability,
-        maiaTopUci: maiaTopUci,
-        maiaBucket: maiaBucket,
       );
 
   /// نتيجة Tablebase بعد النقلة من منظور اللاعب الذي نفّذها:
@@ -297,10 +282,6 @@ class MoveAnalysisResult {
         'tbb': tablebaseWdlBeforeWhite,
         'tba': tablebaseWdlAfterWhite,
         'book': bookInfo?.toJson(),
-        'mp': maiaProbability,
-        'mbp': maiaBestProbability,
-        'mtop': maiaTopUci,
-        'mbk': maiaBucket,
       };
 
   static MoveAnalysisResult fromJson(dynamic j) {
@@ -346,10 +327,6 @@ class MoveAnalysisResult {
       tablebaseWdlBeforeWhite: _asInt(m['tbb']),
       tablebaseWdlAfterWhite: _asInt(m['tba']),
       bookInfo: BookMoveInfo.fromJson(m['book']),
-      maiaProbability: _asDouble(m['mp']),
-      maiaBestProbability: _asDouble(m['mbp']),
-      maiaTopUci: m['mtop']?.toString(),
-      maiaBucket: _asInt(m['mbk']),
     );
   }
 }

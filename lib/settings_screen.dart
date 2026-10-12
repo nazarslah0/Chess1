@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
+import 'about_screen.dart';
+import 'ads_service.dart';
 import 'app_settings.dart';
 import 'board_widget.dart';
-import 'maia_service.dart';
 import 'models.dart';
 
-/// الإعدادات العامة: ثيم الرقعة والقطع (تنطبق على كل رقع التطبيق)،
-/// مستوى Maia الافتراضي، واسمك في المباريات.
+/// الإعدادات العامة: ثيم الرقعة والقطع (تنطبق على كل رقع التطبيق)
+/// واسمك في المباريات.
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -22,17 +23,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController _nameCtrl =
       TextEditingController(text: _s.playerName);
 
-  List<int> _maiaAvailable = const <int>[];
-
   @override
   void initState() {
     super.initState();
 
     _preview.startPosition();
-
-    MaiaService.availableBuckets().then((v) {
-      if (mounted) setState(() => _maiaAvailable = v);
-    });
   }
 
   @override
@@ -111,36 +106,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const Divider(height: 32),
                 const Text(
-                  'Maia',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  _maiaAvailable.isEmpty
-                      ? 'لم يتم العثور على أوزان Maia في التطبيق '
-                          '(انظر assets/maia/README.txt).'
-                      : 'المستوى الافتراضي في تحليل الوضعية واللعب:',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    for (final b in MaiaService.buckets)
-                      ChoiceChip(
-                        label: Text('$b'),
-                        selected: _s.maiaBucket == b,
-                        onSelected: _maiaAvailable.contains(b)
-                            ? (_) => _s.setMaiaBucket(b)
-                            : null,
-                      ),
-                  ],
-                ),
-                const Divider(height: 32),
-                const Text(
                   'اسمك في المباريات',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
@@ -162,6 +127,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     labelText: 'اسم المستخدم',
                   ),
                   onChanged: _s.setPlayerName,
+                ),
+                const Divider(height: 32),
+                ValueListenableBuilder<bool>(
+                  valueListenable: AdsService.instance.privacyOptionsRequired,
+                  builder: (context, required, _) {
+                    if (!required) return const SizedBox.shrink();
+
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.privacy_tip_outlined),
+                      title: const Text('خيارات الخصوصية'),
+                      onTap: AdsService.instance.showPrivacyOptions,
+                    );
+                  },
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.info_outline),
+                  title: const Text('حول التطبيق والتراخيص'),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const AboutScreen(),
+                    ),
+                  ),
                 ),
               ],
             );

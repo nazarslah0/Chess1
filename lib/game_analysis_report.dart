@@ -19,10 +19,8 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
       children: [
         _buildAccuracySummary(),
         const SizedBox(height: 12),
-        _buildPerformanceCard(),
-        if (_maiaPerformance('w') != null ||
-            _maiaPerformance('b') != null)
-          const SizedBox(height: 12),
+        _buildPuzzlesNote(),
+        if (_puzzlesAdded > 0) const SizedBox(height: 12),
         _buildPhaseSummary(),
       ],
     );
@@ -157,16 +155,6 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
               _bookNoteAt(k)!,
               style: TextStyle(
                 color: moveQualityInfo[MoveQuality.book]!.color,
-                fontSize: 12,
-              ),
-            ),
-          ],
-          if (_maiaNoteAt(k) != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              _maiaNoteAt(k)!,
-              style: const TextStyle(
-                color: Colors.white70,
                 fontSize: 12,
               ),
             ),

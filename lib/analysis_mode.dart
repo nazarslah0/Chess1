@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
+import 'ads_service.dart';
 import 'game_analysis_screen.dart';
 import 'menu_card.dart';
 
@@ -54,6 +57,78 @@ class AnalysisModeScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// PRO يعتمد على تحليل Lichess السحابي، فلا يعمل بلا إنترنت.
+  static Future<bool> _online() async {
+    // الويب: قيود CORS تمنع هذا الفحص، فنكتفي بمحاولة التحليل نفسها.
+    if (kIsWeb) return true;
+
+    try {
+      final r = await http
+          .head(Uri.parse('https://lichess.org'))
+          .timeout(const Duration(seconds: 6));
+
+      return r.statusCode < 500;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// PRO يُفتح بعد مشاهدة إعلان مكافئ.
+  Future<void> _startPro(BuildContext context) async {
+    if (!await _online()) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Deep Analysis يحتاج اتصالًا بالإنترنت (يعتمد على تحليل '
+            'Lichess). تحقق من اتصالك وحاول مجددًا.',
+          ),
+        ),
+      );
+
+      return;
+    }
+
+    if (!context.mounted) return;
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Deep Analysis (PRO)'),
+        content: const Text(
+          'شاهد إعلانًا قصيرًا لفتح التحليل العميق لهذه المباراة.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('شاهد الإعلان'),
+          ),
+        ],
+      ),
+    );
+
+    if (ok != true || !context.mounted) return;
+
+    final earned = await AdsService.instance.showRewarded();
+
+    if (!context.mounted) return;
+
+    if (earned) {
+      _start(context, AnalysisMode.pro);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('أكمل مشاهدة الإعلان لفتح التحليل العميق.'),
+        ),
+      );
+    }
   }
 
   @override
@@ -128,7 +203,7 @@ class AnalysisModeScreen extends StatelessWidget {
                       background: amber,
                       foreground: Colors.black,
                     ),
-                    onTap: () => _start(context, AnalysisMode.pro),
+                    onTap: () => _startPro(context),
                   ),
                 ],
               ),

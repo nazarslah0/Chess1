@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'ads_service.dart';
 import 'app_ui.dart';
 import 'board_options.dart';
 import 'board_input.dart';
@@ -121,7 +122,8 @@ class BotPlayScreen extends StatefulWidget {
 
 class _BotPlayScreenState extends State<BotPlayScreen> {
   final GameState _state = GameState();
-  late final BoardInput _input = BoardInput(_state);
+  late final BoardInput _input = BoardInput(_state)
+    ..onIllegal = () => _sound.playIllegal();
   final SoundService _sound = SoundService();
   final math.Random _rng = math.Random();
 
@@ -238,6 +240,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
     _state.startPosition();
     _state.flipped = _userColor == 'b';
     _input.clear();
+    _sound.playGameStart();
 
     setState(() {
       _started = true;
@@ -386,6 +389,15 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
   // نهاية اللعبة
   // ------------------------------------------------------------
 
+  /// إعلان بيني بعد انتهاء المباراة (بعد لحظة ليرى المستخدم النتيجة).
+  Future<void> _adAfterGame() async {
+    await Future<void>.delayed(const Duration(milliseconds: 1500));
+
+    if (!mounted) return;
+
+    await AdsService.instance.showInterstitial();
+  }
+
   bool _checkEnd() {
     final c = _state.chess;
 
@@ -414,6 +426,8 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
       _resultText = text;
     });
 
+    unawaited(_adAfterGame());
+
     return true;
   }
 
@@ -424,6 +438,10 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
       _result = whiteWins ? '1-0' : '0-1';
       _resultText = 'استسلمت — فاز الروبوت (${_level.name})';
     });
+
+    _sound.playGameOver();
+
+    unawaited(_adAfterGame());
   }
 
   // ------------------------------------------------------------

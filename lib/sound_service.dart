@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 
-/// أصوات الشطرنج (MP3).
+/// أصوات الشطرنج (WAV).
 ///
 /// تستخدم [AudioPool] المخصصة للمؤثرات القصيرة: تُحمَّل الأصوات مرة
 /// واحدة وتُشغَّل فورًا عند كل نقلة بدون stop/seek/resume (التي كانت
@@ -14,13 +14,16 @@ class SoundService {
   }
 
   static const Map<String, String> _files = {
-    'move': 'sounds/move.mp3',
-    'capture': 'sounds/take.mp3',
-    'check': 'sounds/snap.mp3',
-    'checkmate': 'sounds/snap.mp3',
-    'castle': 'sounds/swap.mp3',
-    'promotion': 'sounds/swap.mp3',
-    'game_over': 'sounds/rewind.mp3',
+    'move': 'sounds/move.wav',
+    'capture': 'sounds/capture.wav',
+    'check': 'sounds/check.wav',
+    'checkmate': 'sounds/checkmate.wav',
+    'castle': 'sounds/castle.wav',
+    'promotion': 'sounds/promote.wav',
+    'game_over': 'sounds/game_end.wav',
+    'game_start': 'sounds/game_start.wav',
+    'draw': 'sounds/draw.wav',
+    'illegal': 'sounds/illegal_move.wav',
   };
 
   final Map<String, AudioPool> _pools = <String, AudioPool>{};
@@ -35,7 +38,7 @@ class SoundService {
   }
 
   Future<void> _preparePools() async {
-    // ملفات متكررة (check/checkmate، castle/promotion) تشارك Pool واحدة.
+    // أي ملفات متكررة تشارك Pool واحدة.
     final byPath = <String, AudioPool>{};
 
     for (final entry in _files.entries) {
@@ -81,6 +84,9 @@ class SoundService {
   void playCastle() => _playNow('castle');
   void playPromotion() => _playNow('promotion');
   void playGameOver() => _playNow('game_over');
+  void playGameStart() => _playNow('game_start');
+  void playDraw() => _playNow('draw');
+  void playIllegal() => _playNow('illegal');
 
   void playKind(String kind) {
     if (_files.containsKey(kind)) {

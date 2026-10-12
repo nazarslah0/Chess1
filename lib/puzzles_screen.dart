@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'ads_service.dart';
 import 'app_ui.dart';
 import 'board_options.dart';
 import 'board_input.dart';
@@ -10,8 +11,8 @@ import 'puzzle_storage.dart';
 import 'sound_service.dart';
 import 'uci_utils.dart';
 
-/// تمارين من مبارياتك: وضعيات فاتتك فيها نقلة قوية (يفوّتها غالبًا
-/// لاعبو مستواك بحسب Maia). تُستخرج تلقائيًا عند تحليل أي مباراة.
+/// تمارين من مبارياتك: وضعيات فاتتك فيها نقلة قوية. تُستخرج تلقائيًا
+/// عند تحليل أي مباراة.
 class PuzzlesScreen extends StatefulWidget {
   const PuzzlesScreen({super.key});
 
@@ -21,7 +22,8 @@ class PuzzlesScreen extends StatefulWidget {
 
 class _PuzzlesScreenState extends State<PuzzlesScreen> {
   final GameState _state = GameState();
-  late final BoardInput _input = BoardInput(_state);
+  late final BoardInput _input = BoardInput(_state)
+    ..onIllegal = () => _sound.playIllegal();
   final SoundService _sound = SoundService();
 
   List<PuzzleItem> _items = <PuzzleItem>[];
@@ -98,6 +100,22 @@ class _PuzzlesScreenState extends State<PuzzlesScreen> {
     });
   }
 
+  Future<void> _adAfterSolve() async {
+    await Future<void>.delayed(const Duration(milliseconds: 1200));
+
+    if (!mounted) return;
+
+    await AdsService.instance.showInterstitial();
+  }
+
+  Future<void> _nextWithAd() async {
+    await AdsService.instance.showInterstitial();
+
+    if (!mounted) return;
+
+    _go(1);
+  }
+
   void _go(int delta) {
     if (_items.isEmpty) return;
 
@@ -142,6 +160,9 @@ class _PuzzlesScreenState extends State<PuzzlesScreen> {
       });
 
       PuzzleStorage.markSolved(p.id);
+
+      // إعلان بيني بعد حل التمرين (بعد لحظة ليرى المستخدم النتيجة).
+      unawaited(_adAfterSolve());
 
       return;
     }
@@ -211,6 +232,7 @@ class _PuzzlesScreenState extends State<PuzzlesScreen> {
             ),
         ],
       ),
+      bottomNavigationBar: const SafeArea(top: false, child: AdBanner()),
       body: SafeArea(
         child: _loading
             ? const LoadingView()
@@ -232,10 +254,6 @@ class _PuzzlesScreenState extends State<PuzzlesScreen> {
   Widget _buildPuzzle(PuzzleItem p) {
     final sideName = p.turn == 'w' ? 'الأبيض' : 'الأسود';
 
-    final maiaText = (p.maiaBestProb != null && p.maiaBucket != null)
-        ? 'يجدها ${_pct(p.maiaBestProb!)} فقط من لاعبي ${p.maiaBucket}'
-        : null;
-
     final showSolution = _revealed || _solved;
 
     final best = showSolution ? parseUci(p.bestUci) : null;
@@ -244,7 +262,6 @@ class _PuzzlesScreenState extends State<PuzzlesScreen> {
       title: 'الدور على $sideName — جِد أفضل نقلة',
       subtitle: [
         if (p.label.isNotEmpty) p.label,
-        ?maiaText,
         if (p.solvedCount > 0) 'حُلّ ${p.solvedCount}×',
       ].join(' • '),
       board: AppBoard(
@@ -305,16 +322,10 @@ class _PuzzlesScreenState extends State<PuzzlesScreen> {
             child: const Text('أعد المحاولة'),
           ),
         FilledButton(
-          onPressed: _items.length > 1 ? () => _go(1) : null,
+          onPressed: _items.length > 1 ? _nextWithAd : null,
           child: const Text('التالي'),
         ),
       ],
     );
-  }
-
-  static String _pct(double p) {
-    final v = p * 100;
-
-    return v < 1 ? 'أقل من 1%' : '${v.toStringAsFixed(0)}%';
   }
 }

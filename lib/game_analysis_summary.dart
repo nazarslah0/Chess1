@@ -47,6 +47,7 @@ extension _AnalysisStageViews on _GameAnalysisScreenState {
         return Column(
           children: [
             _buildStageTopBar('مراجعة المباراة'),
+            const AdBanner(),
             const Spacer(),
             SizedBox(
               width: side,

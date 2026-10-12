@@ -1,7 +1,7 @@
 import 'models.dart';
 
 /// معالجة لمسات الرقعة (اختيار قطعة ثم وجهتها) بشكل مشترك بين
-/// شاشات اللعب (ضد Maia، التمارين...).
+/// شاشات اللعب (التمارين...).
 class BoardInput {
   final GameState state;
 
@@ -9,6 +9,10 @@ class BoardInput {
 
   /// آخر نقلة نُفِّذت عبر [tap] بصيغة UCI (مثل e7e8q)، أو null.
   String? lastUci;
+
+  /// يُستدعى عند محاولة نقلة غير قانونية (لمس قطعة خصم لا يمكن
+  /// أكلها بعد تحديد قطعة).
+  void Function()? onIllegal;
 
   BoardInput(this.state);
 
@@ -85,7 +89,11 @@ class BoardInput {
       state.tapSetupSelect(square);
       targets = state.legalTargets(square).toSet();
     } else {
+      final attempted = selected != null && piece != null;
+
       clear();
+
+      if (attempted) onIllegal?.call();
     }
 
     return false;

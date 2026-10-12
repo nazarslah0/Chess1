@@ -136,17 +136,7 @@ const PieceTheme chessComPieceTheme = PieceTheme(
 /// Piece Themes List
 /// ============================================================
 
-const List<PieceTheme> pieceThemes = [
-  PieceTheme(
-    name: 'عصري',
-    whiteFill: Color(0xFFFCFCFC),
-    whiteStroke: Color(0xFF222222),
-    blackFill: Color(0xFF161616),
-    blackStroke: Color(0xFFEAEAEA),
-    assetFolder: 'modern_svg',
-    svg: true,
-  ),
-];
+const List<PieceTheme> pieceThemes = [];
 
 /// ============================================================
 /// Move Entry
@@ -1085,7 +1075,7 @@ class GameState extends ChangeNotifier {
       if (isCheckmateNow) {
         onSound?.call('checkmate');
       } else if (isDrawNow) {
-        onSound?.call('game_over');
+        onSound?.call('draw');
       } else if (promotion != null) {
         onSound?.call('promotion');
       } else if (isCastle) {

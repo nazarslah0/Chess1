@@ -17,11 +17,6 @@ class PuzzleItem {
   /// تكملة الخط الرئيسي بصيغة SAN (للعرض بعد الحل).
   final String line;
 
-  /// مستوى Maia المستخدم، واحتمال أن يجد لاعب بهذا المستوى أفضل
-  /// نقلة (0..1) — null إن لم يُحسب.
-  final int? maiaBucket;
-  final double? maiaBestProb;
-
   /// وصف المباراة (مثل "White vs Black").
   final String label;
 
@@ -37,8 +32,6 @@ class PuzzleItem {
     required this.line,
     required this.label,
     required this.createdAt,
-    this.maiaBucket,
-    this.maiaBestProb,
     this.solvedCount = 0,
   });
 
@@ -57,8 +50,6 @@ class PuzzleItem {
         line: line,
         label: label,
         createdAt: createdAt,
-        maiaBucket: maiaBucket,
-        maiaBestProb: maiaBestProb,
         solvedCount: solvedCount ?? this.solvedCount,
       );
 
@@ -71,8 +62,6 @@ class PuzzleItem {
         'line': line,
         'label': label,
         'createdAt': createdAt,
-        'maiaBucket': maiaBucket,
-        'maiaBestProb': maiaBestProb,
         'solvedCount': solvedCount,
       };
 
@@ -93,8 +82,6 @@ class PuzzleItem {
       line: j['line']?.toString() ?? '',
       label: j['label']?.toString() ?? '',
       createdAt: (j['createdAt'] as num?)?.toInt() ?? 0,
-      maiaBucket: (j['maiaBucket'] as num?)?.toInt(),
-      maiaBestProb: (j['maiaBestProb'] as num?)?.toDouble(),
       solvedCount: (j['solvedCount'] as num?)?.toInt() ?? 0,
     );
   }

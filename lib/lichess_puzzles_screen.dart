@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:chess/chess.dart' as ch;
 import 'package:flutter/material.dart';
 
+import 'ads_service.dart';
 import 'app_ui.dart';
 import 'board_input.dart';
 import 'board_options.dart';
@@ -34,7 +35,10 @@ class LichessPuzzlesScreen extends StatefulWidget {
 
 class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
   final GameState _state = GameState();
-  late final BoardInput _input = BoardInput(_state);
+  late final BoardInput _input = BoardInput(_state)
+    ..onIllegal = () {
+      if (!_silent) _sound.playIllegal();
+    };
   final SoundService _sound = SoundService();
 
   List<LichessPuzzle> _items = <LichessPuzzle>[];
@@ -427,6 +431,22 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
     unawaited(_loadCurrent());
   }
 
+  Future<void> _nextWithAd() async {
+    await AdsService.instance.showInterstitial();
+
+    if (!mounted) return;
+
+    _goNextUnsolved();
+  }
+
+  Future<void> _adAfterSolve() async {
+    await Future<void>.delayed(const Duration(milliseconds: 1200));
+
+    if (!mounted) return;
+
+    await AdsService.instance.showInterstitial();
+  }
+
   void _goNextUnsolved() {
     if (_items.isEmpty) return;
 
@@ -569,6 +589,8 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
       if (counted) _solved = <String>{..._solved, p.id};
     });
 
+    unawaited(_adAfterSolve());
+
     if (counted) await LichessPuzzleRepository.markSolved(widget.category, p.id);
 
     // انتهى آخر لغز في المستوى: ننتقل تلقائيًا إلى المستوى التالي.
@@ -659,6 +681,7 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
     return Theme(
       data: _screenTheme(),
       child: Scaffold(
+        bottomNavigationBar: const SafeArea(top: false, child: AdBanner()),
         body: SafeArea(
           child: _loading
               ? _withBack(const LoadingView())
@@ -759,7 +782,7 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
         // لا ينتقل للتالي قبل إنهاء اللغز.
         FilledButton(
           style: _kRowBtnStyle,
-          onPressed: (_finished && _items.length > 1) ? _goNextUnsolved : null,
+          onPressed: (_finished && _items.length > 1) ? _nextWithAd : null,
           child: const _BtnLabel('التالي'),
         ),
       ],
