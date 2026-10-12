@@ -34,7 +34,12 @@ const List<MoveQuality> moveQualityDisplayOrder = [
 ];
 
 class MoveQualityInfo {
-  final String label;
+  /// المفتاح العربي للتسمية؛ تُترجم عند القراءة (وليس وقت التهيئة)
+  /// حتى يعمل داخل `const` ويتبع لغة التطبيق الحالية.
+  final String _labelAr;
+
+  String get label => tr(_labelAr);
+
   final Color color;
   final IconData icon;
 
@@ -44,71 +49,71 @@ class MoveQualityInfo {
   final IconData? badgeIcon;
 
   const MoveQualityInfo({
-    required this.label,
+    required String label,
     required this.color,
     required this.icon,
     this.symbol,
     this.badgeIcon,
-  });
+  }) : _labelAr = label;
 }
 
 const Map<MoveQuality, MoveQualityInfo> moveQualityInfo = {
   MoveQuality.brilliant: MoveQualityInfo(
-    label: tr('مدهشة'),
+    label: 'مدهشة',
     color: Color(0xFF26C2A3),
     icon: Icons.auto_awesome_rounded,
     symbol: '!!',
   ),
   MoveQuality.great: MoveQualityInfo(
-    label: tr('رائعة'),
+    label: 'رائعة',
     color: Color(0xFF5C8BB0),
     icon: Icons.priority_high_rounded,
     symbol: '!',
   ),
   MoveQuality.best: MoveQualityInfo(
-    label: tr('أفضل'),
+    label: 'أفضل',
     color: Color(0xFF81B64C),
     icon: Icons.star_rounded,
     badgeIcon: Icons.star_rounded,
   ),
   MoveQuality.excellent: MoveQualityInfo(
-    label: tr('ممتاز'),
+    label: 'ممتاز',
     color: Color(0xFF96BC4B),
     icon: Icons.thumb_up_alt_rounded,
     badgeIcon: Icons.thumb_up_alt_rounded,
   ),
   MoveQuality.good: MoveQualityInfo(
-    label: tr('جيد'),
+    label: 'جيد',
     color: Color(0xFFA3B890),
     icon: Icons.check_rounded,
     badgeIcon: Icons.check_rounded,
   ),
   MoveQuality.book: MoveQualityInfo(
-    label: tr('كتاب'),
+    label: 'كتاب',
     color: Color(0xFFA88865),
     icon: Icons.menu_book_rounded,
     badgeIcon: Icons.menu_book_rounded,
   ),
   MoveQuality.inaccuracy: MoveQualityInfo(
-    label: tr('غير دقيقة'),
+    label: 'غير دقيقة',
     color: Color(0xFFF7C631),
     icon: Icons.help_rounded,
     symbol: '?!',
   ),
   MoveQuality.mistake: MoveQualityInfo(
-    label: tr('خطأ'),
+    label: 'خطأ',
     color: Color(0xFFE58F2A),
     icon: Icons.close_rounded,
     symbol: '?',
   ),
   MoveQuality.miss: MoveQualityInfo(
-    label: tr('فرصة ضائعة'),
+    label: 'فرصة ضائعة',
     color: Color(0xFFEE6055),
     icon: Icons.visibility_off_rounded,
     badgeIcon: Icons.close_rounded,
   ),
   MoveQuality.blunder: MoveQualityInfo(
-    label: tr('خطأ فادح'),
+    label: 'خطأ فادح',
     color: Color(0xFFCA3431),
     icon: Icons.dangerous_rounded,
     symbol: '??',
