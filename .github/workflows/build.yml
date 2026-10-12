@@ -1,4 +1,4 @@
-name: Build Chess Analyzer APK
+name: Build Android (APK + AAB)
 
 # الـ APK لا يُبنى عند كل تعديل (التعديلات تُجرَّب عبر نسخة الويب).
 # يُبنى فقط عند: (1) إنشاء Tag يبدأ بـ v مثل v1.0.0، أو
@@ -51,24 +51,36 @@ jobs:
       # =========================================================
       # Android NDK
       # =========================================================
-      - name: Install Android NDK
+      - name: Install Android NDK (r28+, محاذاة 16KB افتراضيًا)
         shell: bash
         run: |
           yes | sdkmanager --licenses > /dev/null 2>&1 || true
 
-          sdkmanager \
-            "platform-tools" \
-            "ndk;27.2.12479018"
+          # NDK r28 أو أحدث يبني المكتبات محاذاة على 16KB افتراضيًا
+          # (متطلب Google Play). نختار أحدث إصدار 28.x متاح.
+          NDK_PKG=$(sdkmanager --list 2>/dev/null \
+            | grep -oE 'ndk;28\.[0-9]+\.[0-9]+' | sort -uV | tail -1)
+
+          if [ -z "$NDK_PKG" ]; then
+            echo "ERROR: لم يُعثر على NDK 28.x في sdkmanager"
+            exit 1
+          fi
+
+          NDK_VERSION="${NDK_PKG#ndk;}"
+
+          sdkmanager "platform-tools" "$NDK_PKG"
+
+          echo "NDK_VERSION=$NDK_VERSION" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$NDK_VERSION" >> "$GITHUB_ENV"
 
           echo "========================================"
-          echo "Android SDK"
+          echo "Android SDK / NDK"
           echo "========================================"
 
           echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018"
+          echo "NDK_VERSION=$NDK_VERSION"
 
-          ls -la \
-            "$ANDROID_HOME/ndk/27.2.12479018"
+          ls -la "$ANDROID_HOME/ndk/$NDK_VERSION"
 
       # =========================================================
       # Generate Android project
@@ -78,7 +90,7 @@ jobs:
         run: |
           flutter create \
             --platforms=android \
-            --org com.chessanalyzer \
+            --org com.Goldenchess \
             --project-name chess \
             .
 
@@ -86,6 +98,17 @@ jobs:
           # package:chess/main.dart و MyApp وهما غير موجودين في هذا
           # المشروع (اسم الحزمة chess_analyzer) فيفشل flutter analyze.
           rm -f test/widget_test.dart
+
+          echo "========================================"
+          echo "applicationId"
+          echo "========================================"
+
+          grep -rn "applicationId" android/app/build.gradle* || true
+
+          if ! grep -rq "com.Goldenchess.chess" android/app/build.gradle*; then
+            echo "ERROR: applicationId ليس com.Goldenchess.chess"
+            exit 1
+          fi
 
       # =========================================================
       # Configure Android native library packaging
@@ -272,6 +295,184 @@ jobs:
           fi
 
       # =========================================================
+      # Release signing (من الأسرار؛ بدونها يُوقَّع بمفتاح debug)
+      # =========================================================
+      - name: Configure release signing
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "لا توجد أسرار التوقيع: سيُوقَّع بمفتاح debug (لا يصلح للرفع إلى Google Play)."
+            echo "SIGNED=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
+
+          {
+            printf 'storePassword=%s\n' "$ANDROID_KEYSTORE_PASSWORD"
+            printf 'keyPassword=%s\n' "$ANDROID_KEY_PASSWORD"
+            printf 'keyAlias=%s\n' "$ANDROID_KEY_ALIAS"
+            printf 'storeFile=upload-keystore.jks\n'
+          } > android/key.properties
+
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          kts = Path("android/app/build.gradle.kts")
+          groovy = Path("android/app/build.gradle")
+
+          if kts.exists():
+              t = kts.read_text()
+
+              if "keystoreProperties" not in t:
+                  defs = (
+                      'val keystoreProperties = java.util.Properties()\n'
+                      'val keystorePropertiesFile = rootProject.file("key.properties")\n'
+                      'if (keystorePropertiesFile.exists()) {\n'
+                      '    keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }\n'
+                      '}\n\n'
+                  )
+                  t, n1 = re.subn(r'(?m)^android\s*\{', lambda m: defs + 'android {', t, count=1)
+
+                  signing = (
+                      '    signingConfigs {\n'
+                      '        create("release") {\n'
+                      '            if (keystorePropertiesFile.exists()) {\n'
+                      '                keyAlias = keystoreProperties["keyAlias"] as String\n'
+                      '                keyPassword = keystoreProperties["keyPassword"] as String\n'
+                      '                storeFile = file(keystoreProperties["storeFile"] as String)\n'
+                      '                storePassword = keystoreProperties["storePassword"] as String\n'
+                      '            }\n'
+                      '        }\n'
+                      '    }\n\n'
+                  )
+                  t, n2 = re.subn(r'(?m)^(\s*)buildTypes\s*\{', lambda m: signing + m.group(1) + 'buildTypes {', t, count=1)
+
+                  old = 'signingConfig = signingConfigs.getByName("debug")'
+                  new = 'signingConfig = signingConfigs.getByName("release")'
+                  n3 = t.count(old)
+                  t = t.replace(old, new)
+
+                  if not (n1 and n2 and n3):
+                      raise SystemExit("تعذّر تعديل build.gradle.kts للتوقيع: %s %s %s" % (n1, n2, n3))
+
+                  kts.write_text(t)
+                  print("Release signing configured (kts)")
+
+          elif groovy.exists():
+              t = groovy.read_text()
+
+              if "keystoreProperties" not in t:
+                  defs = (
+                      'def keystoreProperties = new Properties()\n'
+                      'def keystorePropertiesFile = rootProject.file("key.properties")\n'
+                      'if (keystorePropertiesFile.exists()) {\n'
+                      '    keystoreProperties.load(new java.io.FileInputStream(keystorePropertiesFile))\n'
+                      '}\n\n'
+                  )
+                  t, n1 = re.subn(r'(?m)^android\s*\{', lambda m: defs + 'android {', t, count=1)
+
+                  signing = (
+                      '    signingConfigs {\n'
+                      '        release {\n'
+                      "            keyAlias keystoreProperties['keyAlias']\n"
+                      "            keyPassword keystoreProperties['keyPassword']\n"
+                      "            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null\n"
+                      "            storePassword keystoreProperties['storePassword']\n"
+                      '        }\n'
+                      '    }\n\n'
+                  )
+                  t, n2 = re.subn(r'(?m)^(\s*)buildTypes\s*\{', lambda m: signing + m.group(1) + 'buildTypes {', t, count=1)
+
+                  old = 'signingConfig signingConfigs.debug'
+                  n3 = t.count(old)
+                  t = t.replace(old, 'signingConfig signingConfigs.release')
+
+                  if not (n1 and n2 and n3):
+                      raise SystemExit("تعذّر تعديل build.gradle للتوقيع: %s %s %s" % (n1, n2, n3))
+
+                  groovy.write_text(t)
+                  print("Release signing configured (groovy)")
+
+          else:
+              raise SystemExit("لا يوجد ملف Gradle للتطبيق")
+          PY
+
+          echo "SIGNED=true" >> "$GITHUB_ENV"
+
+      # =========================================================
+      # AdMob (معرّف التطبيق في المانيفست) + حد أدنى لـ minSdk
+      # =========================================================
+      - name: Configure AdMob and minSdk
+        shell: bash
+        env:
+          # بدون سر ADMOB_APP_ID تُستخدم معرّفات Google التجريبية (إعلانات
+          # تجريبية فقط، بلا أرباح).
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID || 'ca-app-pub-3940256099942544~3347511713' }}
+          ADMOB_APP_ID_SECRET: ${{ secrets.ADMOB_APP_ID }}
+        run: |
+          if [ -z "$ADMOB_APP_ID_SECRET" ]; then
+            echo "::warning::لم يُضبط ADMOB_APP_ID: سيظهر إعلان تجريبي فقط ولن تُحتسب أرباح."
+          fi
+
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          app_id = os.environ["ADMOB_APP_ID"]
+
+          m = Path("android/app/src/main/AndroidManifest.xml")
+          t = m.read_text()
+
+          if "com.google.android.gms.ads.APPLICATION_ID" not in t:
+              meta = (
+                  '\n        <meta-data'
+                  ' android:name="com.google.android.gms.ads.APPLICATION_ID"'
+                  ' android:value="' + app_id + '"/>'
+              )
+              t, n = re.subn(r'(<application\b[^>]*>)', lambda mm: mm.group(1) + meta, t, count=1)
+              if not n:
+                  raise SystemExit("لم يُعثر على وسم application في AndroidManifest.xml")
+
+          if "com.google.android.gms.permission.AD_ID" not in t:
+              t = t.replace(
+                  '</manifest>',
+                  '    <uses-permission'
+                  ' android:name="com.google.android.gms.permission.AD_ID" />\n'
+                  '</manifest>',
+              )
+
+          m.write_text(t)
+          print("AndroidManifest.xml: AdMob configured")
+
+          # google_mobile_ads يحتاج minSdk 23 على الأقل.
+          kts = Path("android/app/build.gradle.kts")
+          groovy = Path("android/app/build.gradle")
+
+          if kts.exists():
+              g = kts.read_text()
+              g2 = re.sub(r'minSdk\s*=\s*flutter\.minSdkVersion',
+                          'minSdk = maxOf(flutter.minSdkVersion, 24)', g)
+              if g2 != g:
+                  kts.write_text(g2)
+                  print("minSdk raised to >= 24 (kts)")
+          elif groovy.exists():
+              g = groovy.read_text()
+              g2 = re.sub(r'minSdkVersion\s+flutter\.minSdkVersion',
+                          'minSdkVersion Math.max(flutter.minSdkVersion, 24)', g)
+              if g2 != g:
+                  groovy.write_text(g2)
+                  print("minSdk raised to >= 24 (groovy)")
+          PY
+
+      # =========================================================
       # Configure Stockfish native bridge
       # =========================================================
       - name: Configure Stockfish native bridge
@@ -279,13 +480,13 @@ jobs:
         run: |
 
           mkdir -p \
-            android/app/src/main/kotlin/com/chessanalyzer/chess
+            android/app/src/main/kotlin/com/Goldenchess/chess
 
           cat > \
-            android/app/src/main/kotlin/com/chessanalyzer/chess/MainActivity.kt \
+            android/app/src/main/kotlin/com/Goldenchess/chess/MainActivity.kt \
             <<'EOF'
 
-          package com.chessanalyzer.chess
+          package com.Goldenchess.chess
 
           import android.os.Bundle
           import io.flutter.embedding.android.FlutterActivity
@@ -631,7 +832,7 @@ jobs:
           echo "========================================"
 
           cat \
-            android/app/src/main/kotlin/com/chessanalyzer/chess/MainActivity.kt
+            android/app/src/main/kotlin/com/Goldenchess/chess/MainActivity.kt
 
       # =========================================================
       # Download official Stockfish 19
@@ -670,7 +871,7 @@ jobs:
 
           cd stockfish/src
 
-          export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.2.12479018"
+          export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/$NDK_VERSION"
 
           export NDK_HOME="$ANDROID_NDK_HOME"
 
@@ -709,7 +910,8 @@ jobs:
           make -j2 build \
             ARCH=armv8 \
             COMP=ndk \
-            ANDROID_NDK_HOME="$ANDROID_NDK_HOME"
+            ANDROID_NDK_HOME="$ANDROID_NDK_HOME" \
+            EXTRALDFLAGS="-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384"
 
           echo "========================================"
           echo "Stockfish build result"
@@ -718,6 +920,13 @@ jobs:
           file stockfish
 
           ls -lh stockfish
+
+          echo "========================================"
+          echo "16 KB alignment check (Stockfish)"
+          echo "========================================"
+
+          READELF="$TOOLCHAIN/bin/llvm-readelf" \
+            bash "$GITHUB_WORKSPACE/tool/check_16kb.sh" stockfish
 
       # =========================================================
       # Prepare Stockfish native library
@@ -771,51 +980,95 @@ jobs:
           flutter analyze
 
       # =========================================================
-      # Build ARM64 APK
+      # Build ARM64 APK (للتجربة المباشرة على الهاتف)
       # =========================================================
       - name: Build ARM64 release APK
         shell: bash
         env:
           # اختياري: Personal API Token من Lichess (مجاني، بلا صلاحيات)
-          # لطلبات Opening Explorer. أضِفه كسر باسم LICHESS_TOKEN في
-          # Settings > Secrets. إن لم يوجد يبقى فارغًا والتطبيق يعمل.
+          # لطلبات Opening Explorer.
           LICHESS_TOKEN: ${{ secrets.LICHESS_TOKEN }}
+          # بدون سر ADMOB_BANNER_ID يُستخدم معرّف Google التجريبي.
+          ADMOB_BANNER_ID: ${{ secrets.ADMOB_BANNER_ID || 'ca-app-pub-3940256099942544/6300978111' }}
+          ADMOB_INTERSTITIAL_ID: ${{ secrets.ADMOB_INTERSTITIAL_ID || 'ca-app-pub-3940256099942544/1033173712' }}
+          ADMOB_REWARDED_ID: ${{ secrets.ADMOB_REWARDED_ID || 'ca-app-pub-3940256099942544/5224354917' }}
+          ADMOB_APPOPEN_ID: ${{ secrets.ADMOB_APPOPEN_ID || 'ca-app-pub-3940256099942544/9257395921' }}
         run: |
-
           flutter build apk \
             --release \
             --target-platform android-arm64 \
-            --dart-define=LICHESS_TOKEN="$LICHESS_TOKEN"
+            --dart-define=LICHESS_TOKEN="$LICHESS_TOKEN" \
+            --dart-define=ADMOB_BANNER_ID="$ADMOB_BANNER_ID" \
+            --dart-define=ADMOB_INTERSTITIAL_ID="$ADMOB_INTERSTITIAL_ID" \
+            --dart-define=ADMOB_REWARDED_ID="$ADMOB_REWARDED_ID" \
+            --dart-define=ADMOB_APPOPEN_ID="$ADMOB_APPOPEN_ID"
 
       # =========================================================
-      # Show APK
+      # Build AAB (الملف المطلوب لرفعه إلى Google Play)
       # =========================================================
-      - name: Show APK
+      - name: Build ARM64 release AAB
+        shell: bash
+        env:
+          LICHESS_TOKEN: ${{ secrets.LICHESS_TOKEN }}
+          ADMOB_BANNER_ID: ${{ secrets.ADMOB_BANNER_ID || 'ca-app-pub-3940256099942544/6300978111' }}
+          ADMOB_INTERSTITIAL_ID: ${{ secrets.ADMOB_INTERSTITIAL_ID || 'ca-app-pub-3940256099942544/1033173712' }}
+          ADMOB_REWARDED_ID: ${{ secrets.ADMOB_REWARDED_ID || 'ca-app-pub-3940256099942544/5224354917' }}
+          ADMOB_APPOPEN_ID: ${{ secrets.ADMOB_APPOPEN_ID || 'ca-app-pub-3940256099942544/9257395921' }}
+        run: |
+          flutter build appbundle \
+            --release \
+            --target-platform android-arm64 \
+            --dart-define=LICHESS_TOKEN="$LICHESS_TOKEN" \
+            --dart-define=ADMOB_BANNER_ID="$ADMOB_BANNER_ID" \
+            --dart-define=ADMOB_INTERSTITIAL_ID="$ADMOB_INTERSTITIAL_ID" \
+            --dart-define=ADMOB_REWARDED_ID="$ADMOB_REWARDED_ID" \
+            --dart-define=ADMOB_APPOPEN_ID="$ADMOB_APPOPEN_ID"
+
+      # =========================================================
+      # التحقق من محاذاة 16KB في كل مكتبات الـAPK والـAAB
+      # =========================================================
+      - name: Verify 16 KB alignment (APK + AAB)
         shell: bash
         run: |
-
-          echo "========================================"
-          echo "APK files"
-          echo "========================================"
-
-          ls -lh \
-            build/app/outputs/flutter-apk/
+          READELF="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf" \
+            bash tool/check_16kb.sh \
+              build/app/outputs/flutter-apk/app-release.apk \
+              build/app/outputs/bundle/release/app-release.aab
 
       # =========================================================
-      # Upload APK
+      # Show outputs
+      # =========================================================
+      - name: Show outputs
+        shell: bash
+        run: |
+          ls -lh build/app/outputs/flutter-apk/
+          ls -lh build/app/outputs/bundle/release/
+
+          if [ "${SIGNED:-false}" != "true" ]; then
+            echo "::warning::الـAAB موقَّع بمفتاح debug ولا يُقبل في Google Play. اضبط أسرار التوقيع (docs/PUBLISHING.md)."
+          fi
+
+      # =========================================================
+      # Upload
       # =========================================================
       - name: Upload ARM64 APK
         uses: actions/upload-artifact@v4
         with:
-          name: chess-analyzer-arm64-apk
+          name: goldenchess-arm64-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
 
-      # =========================================================
-      # GitHub Release
-      # =========================================================
-      - name: Attach APK to GitHub Release
+      - name: Upload AAB (Google Play)
+        uses: actions/upload-artifact@v4
+        with:
+          name: goldenchess-play-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+
+      - name: Attach APK and AAB to GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: build/app/outputs/flutter-apk/app-release.apk
+          files: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
