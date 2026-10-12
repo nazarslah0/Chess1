@@ -19,7 +19,7 @@ class AppTheme {
     );
 
     final buttonShape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
     );
 
     return base.copyWith(
@@ -30,10 +30,16 @@ class AppTheme {
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(shape: buttonShape),
+        style: FilledButton.styleFrom(
+          shape: buttonShape,
+          minimumSize: const Size(64, 46),
+        ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(shape: buttonShape),
+        style: OutlinedButton.styleFrom(
+          shape: buttonShape,
+          minimumSize: const Size(64, 46),
+        ),
       ),
       snackBarTheme: const SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
