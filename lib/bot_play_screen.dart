@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'ads_service.dart';
 import 'app_top_bar.dart';
 import 'app_ui.dart';
 import 'board_input.dart';
+import 'brand.dart';
 import 'engine_service.dart';
 import 'game_analysis_screen.dart';
 import 'l10n.dart';
@@ -16,100 +18,154 @@ import 'uci_utils.dart';
 
 /// مستوى روبوت: كلها Stockfish بإعدادات قوة مختلفة.
 ///
-/// القيم هنا هي المكان الوحيد لضبط صعوبة الروبوتات:
-/// - [options]: خيارات UCI تُرسل للمحرك قبل اللعب.
-/// - [depth]: عمق البحث (يُستخدم فقط إن كان [movetimeMs] null).
-/// - [movetimeMs]: زمن التفكير لكل نقلة بالميلي ثانية.
-/// التقييمات تقريبية (UCI_Elo معايَر على نمط CCRL).
+/// [BotLevel.fromElo] هو المكان الوحيد الذي يحوّل التقييم (100–3200)
+/// إلى إعدادات المحرك:
+/// - تحت 1320: Stockfish لا يدعم UCI_Elo أقل من ذلك، فنخفّض Skill Level
+///   وعمق البحث، ونُدخل احتمال نقلة عشوائية للمستويات الأضعف.
+/// - من 1320 إلى 3189: UCI_LimitStrength مع UCI_Elo.
+/// - 3190 فما فوق: كامل القوة.
+/// التقييمات تقريبية.
 class BotLevel {
   final String id;
   final String name;
-  final String rating;
+  final int elo;
   final String description;
-  final IconData icon;
-  final Color color;
+  final String? asset;
   final Map<String, String> options;
   final int depth;
   final int? movetimeMs;
 
+  /// احتمال أن يلعب الروبوت نقلة قانونية عشوائية بدل نقلة المحرك.
+  final double randomMoveChance;
+
   const BotLevel({
     required this.id,
     required this.name,
-    required this.rating,
+    required this.elo,
     required this.description,
-    required this.icon,
-    required this.color,
     required this.options,
+    this.asset,
     this.depth = 12,
     this.movetimeMs,
+    this.randomMoveChance = 0,
   });
+
+  factory BotLevel.fromElo({
+    required String id,
+    required String name,
+    required int elo,
+    String description = '',
+    String? asset,
+  }) {
+    final e = elo.clamp(100, 3200).toInt();
+
+    if (e < 1320) {
+      final skill = e < 1000 ? 0 : (e < 1150 ? 2 : 4);
+      final depth = e < 900 ? 1 : (e < 1100 ? 2 : (e < 1250 ? 3 : 4));
+
+      return BotLevel(
+        id: id,
+        name: name,
+        elo: e,
+        description: description,
+        asset: asset,
+        options: <String, String>{
+          'UCI_LimitStrength': 'false',
+          'Skill Level': '$skill',
+        },
+        depth: depth,
+        randomMoveChance: e < 1000 ? (1000 - e) / 1000 * 0.5 : 0,
+      );
+    }
+
+    if (e >= 3190) {
+      return BotLevel(
+        id: id,
+        name: name,
+        elo: e,
+        description: description,
+        asset: asset,
+        options: const <String, String>{
+          'UCI_LimitStrength': 'false',
+          'Skill Level': '20',
+        },
+        movetimeMs: 1500,
+      );
+    }
+
+    return BotLevel(
+      id: id,
+      name: name,
+      elo: e,
+      description: description,
+      asset: asset,
+      options: <String, String>{
+        'UCI_LimitStrength': 'true',
+        'UCI_Elo': '$e',
+      },
+      movetimeMs: 100 + ((e - 1320) * 900 / 1870).round(),
+    );
+  }
+
+  String get rating => '~$elo';
 }
 
-const List<BotLevel> botLevels = <BotLevel>[
-  BotLevel(
+final List<BotLevel> botLevels = <BotLevel>[
+  BotLevel.fromElo(
     id: 'beginner',
-    name: 'مبتدئ',
-    rating: '~800',
-    description: 'يرتكب أخطاء كثيرة ويترك قطعه — مناسب للتعلّم',
-    icon: Icons.child_care_rounded,
-    color: Color(0xFF7FA650),
-    options: <String, String>{
-      'UCI_LimitStrength': 'false',
-      'Skill Level': '0',
-    },
-    depth: 1,
+    name: 'المبتدئ',
+    elo: 400,
+    description: 'يصلح للمبتدئين لتعلم الأساسيات',
+    asset: 'assets/bots/bot_1.webp',
   ),
-  BotLevel(
+  BotLevel.fromElo(
+    id: 'easy',
+    name: 'السهل',
+    elo: 800,
+    description: 'يلعب بهدوء وأخطاء أحيانًا',
+    asset: 'assets/bots/bot_2.webp',
+  ),
+  BotLevel.fromElo(
     id: 'intermediate',
-    name: 'متوسط',
-    rating: '~1400',
-    description: 'يلعب جيدًا لكنه يخطئ أحيانًا في التكتيك',
-    icon: Icons.emoji_people_rounded,
-    color: Color(0xFF4F9DDE),
-    options: <String, String>{
-      'UCI_LimitStrength': 'true',
-      'UCI_Elo': '1400',
-    },
-    movetimeMs: 150,
+    name: 'المتوسط',
+    elo: 1200,
+    description: 'خصم متوازن',
+    asset: 'assets/bots/bot_3.webp',
   ),
-  BotLevel(
+  BotLevel.fromElo(
     id: 'advanced',
-    name: 'متقدم',
-    rating: '~1900',
-    description: 'لاعب نادٍ قوي، أخطاؤه قليلة',
-    icon: Icons.trending_up_rounded,
-    color: Color(0xFFE0A030),
-    options: <String, String>{
-      'UCI_LimitStrength': 'true',
-      'UCI_Elo': '1900',
-    },
-    movetimeMs: 300,
+    name: 'المتقدم',
+    elo: 1600,
+    description: 'يلعب بخطط جيدة',
+    asset: 'assets/bots/bot_4.webp',
   ),
-  BotLevel(
+  BotLevel.fromElo(
+    id: 'expert',
+    name: 'الخبير',
+    elo: 2000,
+    description: 'خصم قوي ويفكر بعمق',
+    asset: 'assets/bots/bot_5.webp',
+  ),
+  BotLevel.fromElo(
     id: 'master',
-    name: 'أستاذ',
-    rating: '~2500',
-    description: 'مستوى أستاذ دولي، نادرًا ما يخطئ',
-    icon: Icons.workspace_premium_rounded,
-    color: Color(0xFFD9534F),
-    options: <String, String>{
-      'UCI_LimitStrength': 'true',
-      'UCI_Elo': '2500',
-    },
-    movetimeMs: 600,
+    name: 'الأستاذ',
+    elo: 2400,
+    description: 'أسلوب متوازن وعالي الدقة',
+    asset: 'assets/bots/bot_6.webp',
   ),
-  BotLevel(
-    id: 'stockfish',
-    name: 'Stockfish',
-    rating: 'أقصى قوة',
-    description: 'المحرك بكامل قوته — لا يكاد يُهزم',
-    icon: Icons.memory_rounded,
-    color: Color(0xFF6A4FC4),
-    options: <String, String>{
-      'UCI_LimitStrength': 'false',
-      'Skill Level': '20',
-    },
-    movetimeMs: 1500,
+  BotLevel.fromElo(
+    id: 'international',
+    name: 'الأستاذ الدولي',
+    elo: 2800,
+    description: 'خصم قوي جدًا',
+    asset: 'assets/bots/bot_7.webp',
+  ),
+  BotLevel.fromElo(
+    id: 'titan',
+    name: 'العملاق',
+    elo: 3200,
+    description: 'أعلى مستوى صعوبة',
+    asset: 'assets/bots/bot_8.webp',
   ),
 ];
 
@@ -130,7 +186,9 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
 
   EngineService? _engine;
 
-  BotLevel _level = botLevels[1];
+  BotLevel _level = botLevels[0];
+  double _customElo = 1500;
+  final TextEditingController _eloCtrl = TextEditingController(text: '1500');
   String _colorChoice = 'w'; // w / b / r
 
   bool _started = false;
@@ -156,6 +214,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
   @override
   void dispose() {
     _state.removeListener(_onState);
+    _eloCtrl.dispose();
     _engine?.dispose();
     _sound.dispose();
     _state.dispose();
@@ -348,10 +407,16 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
 
     String? uci;
 
-    try {
-      uci = await _engineBestMove(_state.currentFen);
-    } catch (_) {
-      uci = null;
+    if (_level.randomMoveChance > 0 &&
+        _rng.nextDouble() < _level.randomMoveChance) {
+      // المستويات الضعيفة جدًا: نقلة عشوائية أحيانًا.
+      uci = _randomLegalUci();
+    } else {
+      try {
+        uci = await _engineBestMove(_state.currentFen);
+      } catch (_) {
+        uci = null;
+      }
     }
 
     // حدّ أدنى للتفكير حتى لا تُلعب النقلة فورًا (خصوصًا للمبتدئ).
@@ -520,6 +585,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _started ? null : _kSetupBg,
       appBar: const AppTopBar(title: 'العب ضد روبوت'),
       body: SafeArea(
         // شاشة المباراة ثابتة (بدون تمرير) حتى لا يتحرك أي شيء عند كل
@@ -527,84 +593,205 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
         child: _started
             ? _buildGame()
             : SingleChildScrollView(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  children: [
-                    _buildSetup(),
-                  ],
-                ),
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
+                child: Center(child: _buildSetup()),
               ),
       ),
     );
   }
 
+  /// يختار المستوى ثم يبدأ المباراة فورًا.
+  void _play(BotLevel lv) {
+    if (_starting) return;
+
+    setState(() => _level = lv);
+
+    _start();
+  }
+
+  BotLevel _customLevel() => BotLevel.fromElo(
+        id: 'custom',
+        name: 'مستوى مخصص',
+        elo: _customElo.round(),
+        asset: 'assets/bots/infinity.png',
+      );
+
+  void _onCustomSlide(double v) {
+    setState(() {
+      _customElo = v;
+      _eloCtrl.text = v.round().toString();
+      _level = _customLevel();
+    });
+  }
+
+  void _onCustomTyped(String s) {
+    final v = int.tryParse(s);
+
+    if (v == null || v < 100 || v > 3200) return;
+
+    setState(() {
+      _customElo = v.toDouble();
+      _level = _customLevel();
+    });
+  }
+
+  void _playCustom() {
+    final v = (int.tryParse(_eloCtrl.text) ?? _customElo.round()).clamp(100, 3200).toInt();
+
+    _customElo = v.toDouble();
+    _eloCtrl.text = '$v';
+
+    _play(_customLevel());
+  }
+
+  Widget _colorPicker() {
+    Widget chip(String key, String label, IconData icon) {
+      final sel = _colorChoice == key;
+
+      return Expanded(
+        child: GestureDetector(
+          onTap: () => setState(() => _colorChoice = key),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            height: 44,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: sel
+                  ? GoldColors.main.withValues(alpha: 0.18)
+                  : Colors.white.withValues(alpha: 0.05),
+              border: Border.all(
+                color: sel ? GoldColors.main : Colors.white12,
+                width: sel ? 1.4 : 1,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color: sel ? GoldColors.main : Colors.white60,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  tr(label),
+                  style: TextStyle(
+                    color: sel ? GoldColors.main : Colors.white70,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const TrText(
+          'ألعب بالقطع',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            chip('w', 'الأبيض', Icons.circle_outlined),
+            const SizedBox(width: 8),
+            chip('b', 'الأسود', Icons.circle),
+            const SizedBox(width: 8),
+            chip('r', 'عشوائي', Icons.shuffle_rounded),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildSetup() {
-    final scheme = Theme.of(context).colorScheme;
+    Localizations.localeOf(context);
+
+    Widget card(BotLevel lv) => _BotGridCard(
+          level: lv,
+          selected: _level.id == lv.id,
+          onSelect: () => setState(() => _level = lv),
+          onPlay: _starting ? null : () => _play(lv),
+        );
+
+    final rows = <Widget>[];
+
+    for (var i = 0; i < botLevels.length; i += 2) {
+      rows
+        ..add(
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: card(botLevels[i])),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: i + 1 < botLevels.length
+                      ? card(botLevels[i + 1])
+                      : const SizedBox.shrink(),
+                ),
+              ],
+            ),
+          ),
+        )
+        ..add(const SizedBox(height: 12));
+    }
 
     return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 480),
+      constraints: const BoxConstraints(maxWidth: 520),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const TrText(
-            'اختر الروبوت',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          _colorPicker(),
+          const SizedBox(height: 16),
+          ...rows,
+          _CustomLevelCard(
+            selected: _level.id == 'custom',
+            elo: _customElo,
+            controller: _eloCtrl,
+            onSelect: () => setState(() => _level = _customLevel()),
+            onSlide: _onCustomSlide,
+            onTyped: _onCustomTyped,
+            onPlay: _starting ? null : _playCustom,
           ),
-          const SizedBox(height: 10),
-          for (final lv in botLevels) ...[
-            _BotCard(
-              level: lv,
-              selected: lv.id == _level.id,
-              onTap: () => setState(() => _level = lv),
+          if (_starting) ...[
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: GoldColors.main,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  tr('جارٍ تشغيل المحرك...'),
+                  style: const TextStyle(color: Colors.white70),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
           ],
-          const SizedBox(height: 8),
-          const TrText(
-            'ألعب بالقطع',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              ChoiceChip(
-                label: const TrText('الأبيض'),
-                selected: _colorChoice == 'w',
-                onSelected: (_) => setState(() => _colorChoice = 'w'),
-              ),
-              ChoiceChip(
-                label: const TrText('الأسود'),
-                selected: _colorChoice == 'b',
-                onSelected: (_) => setState(() => _colorChoice = 'b'),
-              ),
-              ChoiceChip(
-                label: const TrText('عشوائي'),
-                selected: _colorChoice == 'r',
-                onSelected: (_) => setState(() => _colorChoice = 'r'),
-              ),
-            ],
-          ),
           if (_notice != null) ...[
             const SizedBox(height: 12),
-            Text(_notice!, style: TextStyle(color: scheme.error)),
-          ],
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: FilledButton.icon(
-              onPressed: _starting ? null : _start,
-              icon: _starting
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.play_arrow_rounded),
-              label: Text(_starting ? tr('جارٍ تشغيل المحرك...') : tr('ابدأ')),
+            Text(
+              _notice!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFFFF8A80)),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -643,7 +830,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
               border: Border.all(color: Colors.grey.shade500),
             ),
             child: Icon(
-              isUser ? Icons.person_rounded : _level.icon,
+              isUser ? Icons.person_rounded : Icons.smart_toy_rounded,
               size: 17,
               color: white ? Colors.black87 : Colors.white,
             ),
@@ -873,84 +1060,320 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
   }
 }
 
-class _BotCard extends StatelessWidget {
-  final BotLevel level;
-  final bool selected;
-  final VoidCallback onTap;
+const Color _kSetupBg = Color(0xFF0A0C12);
+const Color _kCardBg = Color(0xFF12151C);
+const Color _kOnGold = Color(0xFF2A1D00);
 
-  const _BotCard({
-    required this.level,
-    required this.selected,
+BoxDecoration _cardDecoration({required bool selected}) => BoxDecoration(
+      color: _kCardBg,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(
+        color: selected ? GoldColors.main : Colors.white10,
+        width: selected ? 1.6 : 1,
+      ),
+      boxShadow: selected
+          ? [
+              BoxShadow(
+                color: GoldColors.main.withValues(alpha: 0.28),
+                blurRadius: 16,
+              ),
+            ]
+          : null,
+    );
+
+/// زر «العب» الذهبي.
+class _GoldButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onTap;
+  final double height;
+
+  const _GoldButton({
+    required this.label,
     required this.onTap,
+    this.height = 40,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: level.color.withValues(alpha: selected ? 0.18 : 0.06),
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 12,
-          ),
+    return Opacity(
+      opacity: onTap == null ? 0.5 : 1,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        child: Ink(
+          height: height,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: selected ? level.color : Colors.transparent,
-              width: 2,
-            ),
+            borderRadius: BorderRadius.circular(10),
+            gradient: kGoldGradient,
           ),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: level.color.withValues(alpha: 0.25),
-                child: Icon(level.icon, color: level.color),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          tr(level.name),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          tr(level.rating),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: level.color,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      tr(level.description),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: onTap,
+            child: Center(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: _kOnGold,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
                 ),
               ),
-              if (selected)
-                Icon(Icons.check_circle_rounded, color: level.color),
-            ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// بطاقة روبوت: صورة، الاسم والتقييم، وصف، وزر لعب.
+class _BotGridCard extends StatelessWidget {
+  final BotLevel level;
+  final bool selected;
+  final VoidCallback onSelect;
+  final VoidCallback? onPlay;
+
+  const _BotGridCard({
+    required this.level,
+    required this.selected,
+    required this.onSelect,
+    required this.onPlay,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final asset = level.asset;
+
+    return GestureDetector(
+      onTap: onSelect,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        clipBehavior: Clip.antiAlias,
+        decoration: _cardDecoration(selected: selected),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AspectRatio(
+              aspectRatio: 1.25,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (asset != null)
+                    Image.asset(
+                      asset,
+                      fit: BoxFit.cover,
+                      alignment: const Alignment(0, -0.45),
+                      cacheWidth: 520,
+                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                    ),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0x00000000), _kCardBg],
+                        stops: [0.55, 1],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(
+                            tr(level.name),
+                            maxLines: 1,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${level.elo}',
+                        style: const TextStyle(
+                          color: GoldColors.light,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    height: 34,
+                    child: Text(
+                      tr(level.description),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _GoldButton(label: tr('العب'), onTap: onPlay),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// «مستوى مخصص»: منزلق تقييم من 100 إلى 3200 مع حقل رقمي وزر لعب.
+class _CustomLevelCard extends StatelessWidget {
+  final bool selected;
+  final double elo;
+  final TextEditingController controller;
+  final VoidCallback onSelect;
+  final ValueChanged<double> onSlide;
+  final ValueChanged<String> onTyped;
+  final VoidCallback? onPlay;
+
+  const _CustomLevelCard({
+    required this.selected,
+    required this.elo,
+    required this.controller,
+    required this.onSelect,
+    required this.onSlide,
+    required this.onTyped,
+    required this.onPlay,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final gold = GoldColors.main;
+
+    return GestureDetector(
+      onTap: onSelect,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+        decoration: _cardDecoration(selected: selected),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Image.asset(
+                  'assets/bots/infinity.png',
+                  width: 64,
+                  height: 40,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => const Icon(
+                    Icons.all_inclusive_rounded,
+                    color: GoldColors.main,
+                    size: 40,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const TrText(
+                        'مستوى مخصص',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const TrText(
+                        'اختر تقييم ربوت من 100 إلى 3200',
+                        style: TextStyle(color: Colors.white54, fontSize: 12.5),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                activeTrackColor: gold,
+                inactiveTrackColor: Colors.white12,
+                thumbColor: GoldColors.light,
+                overlayColor: gold.withValues(alpha: 0.15),
+                trackHeight: 4,
+                tickMarkShape: SliderTickMarkShape.noTickMark,
+              ),
+              child: Slider(
+                min: 100,
+                max: 3200,
+                divisions: 62,
+                value: elo.clamp(100, 3200).toDouble(),
+                onChanged: onSlide,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                SizedBox(
+                  width: 96,
+                  child: TextField(
+                    controller: controller,
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    textDirection: TextDirection.ltr,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(4),
+                    ],
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    cursorColor: gold,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha: 0.04),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 11),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: gold.withValues(alpha: 0.4)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: gold, width: 1.4),
+                      ),
+                    ),
+                    onChanged: onTyped,
+                    onTap: onSelect,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _GoldButton(
+                    label: tr('العب'),
+                    onTap: onPlay,
+                    height: 46,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
