@@ -160,6 +160,15 @@ jobs:
                   '</manifest>',
               )
 
+          # اسم التطبيق الظاهر على الجهاز.
+          import re
+          text = re.sub(
+              r'android:label="[^"]*"',
+              'android:label="Golden Chess"',
+              text,
+              count=1,
+          )
+
           manifest.write_text(text)
 
           print("AndroidManifest.xml fixed.")
