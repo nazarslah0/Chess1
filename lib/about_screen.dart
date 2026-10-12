@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'app_top_bar.dart';
 import 'brand.dart';
 import 'l10n.dart';
 
@@ -17,7 +18,7 @@ class AboutScreen extends StatelessWidget {
     const bold = TextStyle(fontWeight: FontWeight.bold);
 
     return Scaffold(
-      appBar: AppBar(title: Text(tr('حول التطبيق والتراخيص'))),
+      appBar: const AppTopBar(title: 'حول التطبيق والتراخيص'),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

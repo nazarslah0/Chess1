@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'ads_service.dart';
+import 'app_top_bar.dart';
 import 'app_ui.dart';
-import 'board_options.dart';
 import 'board_input.dart';
 import 'l10n.dart';
 import 'models.dart';
@@ -217,21 +217,9 @@ class _PuzzlesScreenState extends State<PuzzlesScreen> {
     final p = _current;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          p == null
-              ? tr('تمارين من مبارياتك')
-              : tr('تمرين {v} / {length}', {'v': _index + 1, 'length': _items.length}),
-        ),
-        actions: [
-          const BoardOptionsButton(),
-          if (p != null)
-            IconButton(
-              tooltip: tr('حذف التمرين'),
-              icon: const Icon(Icons.delete_outline),
-              onPressed: _delete,
-            ),
-        ],
+      appBar: AppTopBar(
+        title: p == null ? 'تمارين من مبارياتك' : 'تمرين {v} / {length}',
+        args: p == null ? null : {'v': _index + 1, 'length': _items.length},
       ),
       bottomNavigationBar: const SafeArea(top: false, child: AdBanner()),
       body: SafeArea(
@@ -327,6 +315,11 @@ class _PuzzlesScreenState extends State<PuzzlesScreen> {
         FilledButton(
           onPressed: _items.length > 1 ? _nextWithAd : null,
           child: const TrText('التالي'),
+        ),
+        OutlinedButton.icon(
+          onPressed: _delete,
+          icon: const Icon(Icons.delete_outline),
+          label: const TrText('حذف التمرين'),
         ),
       ],
     );

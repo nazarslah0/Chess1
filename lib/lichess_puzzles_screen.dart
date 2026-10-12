@@ -4,9 +4,9 @@ import 'package:chess/chess.dart' as ch;
 import 'package:flutter/material.dart';
 
 import 'ads_service.dart';
+import 'app_top_bar.dart';
 import 'app_ui.dart';
 import 'board_input.dart';
-import 'board_options.dart';
 import 'board_widget.dart' show BoardLabel;
 import 'l10n.dart';
 import 'lichess_puzzles.dart';
@@ -682,6 +682,13 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
     return Theme(
       data: _screenTheme(),
       child: Scaffold(
+        appBar: AppTopBar(
+          title: switch (widget.category) {
+            PuzzleCategory.brilliant => 'ألغاز بريليانت',
+            PuzzleCategory.mate => 'ألغاز كش مات',
+            PuzzleCategory.training => 'ألغاز',
+          },
+        ),
         bottomNavigationBar: const SafeArea(top: false, child: AdBanner()),
         body: SafeArea(
           child: _loading
@@ -849,28 +856,6 @@ class _LevelInfo {
   double get fill => need == 0 ? 0 : (done / need).clamp(0.0, 1.0);
 }
 
-String _prefixFor(PuzzleCategory c) {
-  switch (c) {
-    case PuzzleCategory.mate:
-      return '# ';
-    case PuzzleCategory.brilliant:
-      return '!! ';
-    case PuzzleCategory.training:
-      return '♟ ';
-  }
-}
-
-String _suffixFor(PuzzleCategory c) {
-  switch (c) {
-    case PuzzleCategory.mate:
-      return 'Checkmate';
-    case PuzzleCategory.brilliant:
-      return 'Brilliant';
-    case PuzzleCategory.training:
-      return 'Puzzles';
-  }
-}
-
 /// ترويسة صفحة الألغاز: العنوان + بطاقة المستوى الحالي + مسار من
 /// سبعة مقاطع (مقطع لكل مستوى) يمكن لمس أي مقطع مفتوح للانتقال إليه.
 class _LevelHeader extends StatelessWidget {
@@ -905,48 +890,9 @@ class _LevelHeader extends StatelessWidget {
       hint = cur.complete ? tr('المستوى التالي مفتوح ✓') : tr('للمستوى التالي');
     }
 
-    const titleStyle = TextStyle(
-      fontSize: 26,
-      fontWeight: FontWeight.w800,
-      height: 1.2,
-    );
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // الصف العلوي: رجوع (يمين) — العنوان — خيارات (يسار).
-        Row(
-          children: [
-            IconButton(
-              tooltip: tr('رجوع'),
-              icon: const Icon(Icons.arrow_back_rounded),
-              onPressed: () => Navigator.of(context).maybePop(),
-            ),
-            Expanded(
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text: _prefixFor(category),
-                      style: titleStyle.copyWith(color: accent),
-                    ),
-                    TextSpan(
-                      text: tr('ألغاز '),
-                      style: titleStyle.copyWith(color: Colors.white),
-                    ),
-                    TextSpan(
-                      text: _suffixFor(category),
-                      style: titleStyle.copyWith(color: accent),
-                    ),
-                  ],
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const BoardOptionsButton(),
-          ],
-        ),
-        const SizedBox(height: 12),
         Material(
           color: const Color(0xFF161A24),
           borderRadius: BorderRadius.circular(20),

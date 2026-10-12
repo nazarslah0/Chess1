@@ -67,7 +67,7 @@ const Map<String, List<String>> kTranslations = <String, List<String>>{
   'تحليل سريع': <String>['Quick analysis', 'Análisis rápido', 'Analyse rapide'],
   'سريع ودقيق لمعظم المباريات': <String>['Fast and accurate for most games', 'Rápido y preciso para la mayoría de las partidas', 'Rapide et précis pour la plupart des parties'],
   'موصى به': <String>['Recommended', 'Recomendado', 'Recommandé'],
-  'تحليل أعمق وأدق بتقييمات عميقة جاهزة، دون إرهاق جهازك (يحتاج إنترنت)': <String>['Deeper, more accurate analysis with ready-made deep evaluations, without straining your device (needs internet)', 'Análisis más profundo y preciso con evaluaciones profundas ya listas, sin cargar tu dispositivo (requiere internet)', 'Analyse plus profonde et plus précise avec des évaluations approfondies prêtes, sans fatiguer votre appareil (Internet requis)'],
+  'تحليل أعمق وأدق بتقييمات عميقة': <String>['Deeper, more accurate analysis with deep evaluations', 'Análisis más profundo y preciso con evaluaciones profundas', 'Analyse plus profonde et plus précise avec des évaluations approfondies'],
   'تعذّر تشغيل Stockfish على هذا الجهاز.': <String>['Could not start Stockfish on this device.', 'No se pudo iniciar Stockfish en este dispositivo.', 'Impossible de démarrer Stockfish sur cet appareil.'],
   'اختر قطعة الترقية': <String>['Choose promotion piece', 'Elige la pieza de coronación', 'Choisissez la pièce de promotion'],
   'تعذّر الحصول على نقلة من المحرك؛ لُعبت نقلة عشوائية.': <String>['Could not get a move from the engine; a random move was played.', 'No se pudo obtener una jugada del motor; se jugó una al azar.', 'Impossible d’obtenir un coup du moteur ; un coup aléatoire a été joué.'],

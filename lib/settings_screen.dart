@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'about_screen.dart';
 import 'ads_service.dart';
 import 'app_settings.dart';
+import 'app_top_bar.dart';
 import 'board_widget.dart';
 import 'l10n.dart';
 import 'models.dart';
@@ -41,7 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(tr('الإعدادات'))),
+      appBar: const AppTopBar(title: 'الإعدادات', isSettings: true),
       body: SafeArea(
         child: ListenableBuilder(
           listenable: Listenable.merge([_s, LocaleController.instance]),

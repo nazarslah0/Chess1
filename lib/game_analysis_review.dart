@@ -2,52 +2,18 @@ part of 'game_analysis_screen.dart';
 
 /// شاشة المراجعة: الشريط العلوي، النقلات، الرقعة، اللاعبون، الأزرار.
 extension _AnalysisReviewView on _GameAnalysisScreenState {
+  /// شريط نتيجة المباراة (الاسم والرجوع في الشريط العلوي الموحّد).
   Widget _buildTopBar() {
+    if (_resultText.isEmpty) return const SizedBox.shrink();
+
     return Container(
-      height: 52,
+      height: 30,
       color: _bg,
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => Navigator.of(context).maybePop(),
-            icon: const Icon(
-              Icons.arrow_back_rounded,
-              textDirection: TextDirection.ltr,
-              color: Colors.white70,
-              size: 30,
-            ),
-          ),
-          Expanded(
-            child: Center(
-              child: Text(
-                widget.sourceLabel.isEmpty
-                    ? tr('تحليل المباراة')
-                    : widget.sourceLabel,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                ),
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 48,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                _resultText,
-                textDirection: TextDirection.ltr,
-                style: const TextStyle(
-                  color: Colors.white54,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ),
-        ],
+      alignment: Alignment.center,
+      child: Text(
+        _resultText,
+        textDirection: TextDirection.ltr,
+        style: const TextStyle(color: Colors.white54, fontSize: 13),
       ),
     );
   }

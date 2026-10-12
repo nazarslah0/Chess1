@@ -8,6 +8,7 @@ import 'ads_service.dart';
 import 'analysis_controller.dart';
 import 'analysis_result.dart';
 import 'analysis_rules.dart';
+import 'app_top_bar.dart';
 import 'app_ui.dart';
 import 'analysis_mode.dart';
 import 'board_options.dart';
@@ -421,9 +422,7 @@ class _GameAnalysisScreenState
       return Theme(
         data: _darkTheme(),
         child: Scaffold(
-          appBar: AppBar(
-            title: const TrText('تحليل المباراة'),
-          ),
+          appBar: const AppTopBar(title: 'تحليل المباراة'),
           body: Center(
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -442,6 +441,7 @@ class _GameAnalysisScreenState
         data: _darkTheme(),
         child: Scaffold(
           backgroundColor: _bg,
+          appBar: const AppTopBar(title: 'مراجعة المباراة'),
           body: SafeArea(
             child: _analyzing
                 ? _buildAnalyzingView()
@@ -458,12 +458,17 @@ class _GameAnalysisScreenState
       data: _darkTheme(),
       child: Scaffold(
         backgroundColor: _bg,
+        appBar: AppTopBar(
+          title: widget.sourceLabel.isEmpty
+              ? 'تحليل المباراة'
+              : widget.sourceLabel,
+        ),
         body: SafeArea(
           child: LayoutBuilder(
             builder: (context, c) {
               // الأجزاء الثابتة: الشريط العلوي + النقلات + التقييم
               // + لاعبان + الشريط السفلي + حد أدنى للمعلومات.
-              const fixed = 52 + 46 + 16 + 120 + 78 + 70;
+              const fixed = 30 + 46 + 16 + 120 + 78 + 70;
 
               final side = math.min(
                 c.maxWidth,

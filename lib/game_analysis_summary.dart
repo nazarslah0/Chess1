@@ -2,39 +2,6 @@ part of 'game_analysis_screen.dart';
 
 /// شاشتا «جاري التحليل» و«ملخص ما قبل المراجعة».
 extension _AnalysisStageViews on _GameAnalysisScreenState {
-  Widget _buildStageTopBar(String title) {
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => Navigator.of(context).maybePop(),
-            icon: const Icon(
-              Icons.arrow_back_rounded,
-              textDirection: TextDirection.ltr,
-              color: Colors.white70,
-              size: 30,
-            ),
-          ),
-          Expanded(
-            child: Center(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 48),
-        ],
-      ),
-    );
-  }
-
   /// أثناء التحليل: الرقعة بلا أسهم ولا علامات + شريط تقدّم.
   Widget _buildAnalyzingView() {
     return LayoutBuilder(
@@ -46,7 +13,6 @@ extension _AnalysisStageViews on _GameAnalysisScreenState {
 
         return Column(
           children: [
-            _buildStageTopBar(tr('مراجعة المباراة')),
             const AdBanner(),
             const Spacer(),
             SizedBox(
@@ -197,7 +163,6 @@ extension _AnalysisStageViews on _GameAnalysisScreenState {
 
     return Column(
       children: [
-        _buildStageTopBar(tr('مراجعة المباراة')),
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),

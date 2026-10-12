@@ -4,8 +4,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'ads_service.dart';
+import 'app_top_bar.dart';
 import 'app_ui.dart';
-import 'board_options.dart';
 import 'board_input.dart';
 import 'engine_service.dart';
 import 'game_analysis_screen.dart';
@@ -520,10 +520,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const TrText('العب ضد روبوت'),
-        actions: const [BoardOptionsButton()],
-      ),
+      appBar: const AppTopBar(title: 'العب ضد روبوت'),
       body: SafeArea(
         // شاشة المباراة ثابتة (بدون تمرير) حتى لا يتحرك أي شيء عند كل
         // نقلة؛ شاشة الإعداد وحدها قابلة للتمرير.

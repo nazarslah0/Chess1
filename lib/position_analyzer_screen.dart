@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:chess/chess.dart' as ch;
 
 import 'app_settings.dart';
+import 'app_top_bar.dart';
 import 'app_ui.dart';
-import 'board_options.dart';
 import 'engine_service.dart';
 import 'l10n.dart';
 import 'models.dart';
@@ -808,10 +808,7 @@ class _PositionAnalyzerScreenState extends State<PositionAnalyzerScreen> {
     return Theme(
       data: _screenTheme(),
       child: Scaffold(
-        appBar: AppBar(
-          title: const TrText('وضعية خاصة'),
-          actions: const [BoardOptionsButton()],
-        ),
+        appBar: const AppTopBar(title: 'وضعية خاصة'),
         body: SafeArea(
           child: Center(
             child: ConstrainedBox(

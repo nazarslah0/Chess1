@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'app_top_bar.dart';
+
 /// نمط شاشات المصادر (Chess.com / Lichess / PGN): داكن بلمسة خضراء،
 /// مأخوذ من شاشة Chess.com ومطبَّق بالتساوي على كل المصادر.
 class SourceStyle {
@@ -56,27 +58,23 @@ class SourceStyle {
 
 /// هيكل الشاشة بنمط المصادر (خلفية داكنة وشريط علوي داكن).
 class SourceScaffold extends StatelessWidget {
+  /// مفتاح الترجمة (النص العربي) لاسم الشاشة.
   final String title;
-  final List<Widget> actions;
+  final Map<String, Object?>? titleArgs;
   final Widget body;
 
   const SourceScaffold({
     super.key,
     required this.title,
     required this.body,
-    this.actions = const [],
+    this.titleArgs,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: SourceStyle.bg,
-      appBar: AppBar(
-        backgroundColor: SourceStyle.panel,
-        foregroundColor: Colors.white,
-        title: Text(title),
-        actions: actions,
-      ),
+      appBar: AppTopBar(title: title, args: titleArgs),
       body: SafeArea(child: body),
     );
   }

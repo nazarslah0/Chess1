@@ -173,15 +173,8 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
   @override
   Widget build(BuildContext context) {
     return SourceScaffold(
-      title: tr('تحليل مباريات {name}', {'name': _source.name}),
-      actions: [
-        if (_savedUsername != null)
-          IconButton(
-            tooltip: tr('تبديل الحساب'),
-            onPressed: _loadingGames ? null : _switchAccount,
-            icon: const Icon(Icons.swap_horiz_rounded),
-          ),
-      ],
+      title: 'تحليل مباريات {name}',
+      titleArgs: {'name': _source.name},
       body: Column(
         children: [
           _buildAccountHeader(),

@@ -62,7 +62,7 @@ class _PgnImportScreenState extends State<PgnImportScreen> {
   @override
   Widget build(BuildContext context) {
     return SourceScaffold(
-      title: tr('استيراد مباراة (PGN)'),
+      title: 'استيراد مباراة (PGN)',
       body: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(

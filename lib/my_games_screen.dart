@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'app_top_bar.dart';
 import 'app_ui.dart';
 import 'game_source.dart';
 import 'game_source_screen.dart';
@@ -36,6 +37,7 @@ class AnalyzeGameScreen extends StatelessWidget {
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
         backgroundColor: _page,
+        appBar: const AppTopBar(title: 'حلل مباراة'),
         body: LayoutBuilder(
           builder: (context, c) {
             final w = c.maxWidth;

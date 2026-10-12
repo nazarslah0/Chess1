@@ -4,8 +4,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'app_settings.dart';
+import 'app_top_bar.dart';
 import 'app_ui.dart';
-import 'board_options.dart';
 import 'board_input.dart';
 import 'game_analysis_screen.dart';
 import 'l10n.dart';
@@ -410,10 +410,7 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const TrText('العب ضد Maia'),
-        actions: const [BoardOptionsButton()],
-      ),
+      appBar: const AppTopBar(title: 'العب ضد Maia'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(12),

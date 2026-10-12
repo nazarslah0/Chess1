@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import 'ads_service.dart';
+import 'app_top_bar.dart';
 import 'game_analysis_screen.dart';
 import 'l10n.dart';
 import 'menu_card.dart';
@@ -139,15 +140,7 @@ class AnalysisModeScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFF1A1E34),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1E34),
-        foregroundColor: Colors.white,
-        title: const TrText('تحليل المباراة'),
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
+      appBar: const AppTopBar(title: 'تحليل المباراة'),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -196,8 +189,7 @@ class AnalysisModeScreen extends StatelessWidget {
                   AppMenuCard(
                     icon: Icons.biotech_rounded,
                     label: 'Deep Analysis',
-                    subtitle: tr('تحليل أعمق وأدق بتقييمات عميقة جاهزة، '
-                        'دون إرهاق جهازك (يحتاج إنترنت)'),
+                    subtitle: tr('تحليل أعمق وأدق بتقييمات عميقة'),
                     color: amber,
                     badge: const _Pill(
                       text: 'PRO',
