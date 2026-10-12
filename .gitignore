@@ -9,3 +9,8 @@ ios/
 .idea/
 .vscode/
 pubspec.lock
+
+# Android signing / secrets
+*.jks
+*.keystore
+key.properties

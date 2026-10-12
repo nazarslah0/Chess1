@@ -1,3 +1,5 @@
+> **تحديث:** هذا الملف تاريخي. أُزيل Maia/lc0 بالكامل (رخصة GPL)، والأصوات الآن 10 ملفات WAV من إنشائك في `assets/sounds/`، والحزمة `com.Goldenchess.chess`، وأُضيف AdMob (انظر `docs/PUBLISHING.md`). تجاهل أي إشارة أدناه إلى mp3 أو Maia.
+
 # Chess2 – Chess.com style update
 
 تم تحديث المشروع وفق الطلب:

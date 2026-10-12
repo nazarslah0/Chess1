@@ -4,7 +4,7 @@ publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.9.0 <4.0.0"
+  sdk: ">=3.10.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -15,8 +15,8 @@ dependencies:
   http: ^1.2.2
   shared_preferences: ^2.5.3
   path_provider: ^2.1.5
-  lc0: ^0.1.0
   flutter_svg: ^2.0.17
+  google_mobile_ads: ^9.1.0
 
 dev_dependencies:
   flutter_test:
@@ -29,13 +29,6 @@ flutter:
   assets:
     # Chess pieces
     - assets/pieces/classic_svg/
-    - assets/pieces/modern_svg/
-
-    # Maia weights (lc0 .pb.gz) - see assets/maia/README.txt
-    - assets/maia/
-
-    # Source logos (optional: chesscom.png, lichess.png)
-    - assets/logos/
 
     # شاشة «حلل مباراة»: الخلفية وأيقونات المصادر
     - assets/analyze/
@@ -46,9 +39,5 @@ flutter:
     # رقع SVG (متجهة)
     - assets/boards_svg/
 
-    # New chess sounds only
-    - assets/sounds/move.mp3
-    - assets/sounds/take.mp3
-    - assets/sounds/snap.mp3
-    - assets/sounds/swap.mp3
-    - assets/sounds/rewind.mp3
+    # أصوات الشطرنج (WAV)
+    - assets/sounds/
