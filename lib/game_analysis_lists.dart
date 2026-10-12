@@ -9,7 +9,7 @@ extension _AnalysisListTabs on _GameAnalysisScreenState {
   Widget _buildMovesTab() {
     if (_plies.isEmpty) {
       return const Center(
-        child: Text('لا توجد نقلات.'),
+        child: TrText('لا توجد نقلات.'),
       );
     }
 
@@ -145,7 +145,7 @@ extension _AnalysisListTabs on _GameAnalysisScreenState {
   Widget _buildMistakesTab() {
     if (_analyzing) {
       return const Center(
-        child: Text('التحليل جارٍ...'),
+        child: TrText('التحليل جارٍ...'),
       );
     }
 
@@ -199,7 +199,7 @@ extension _AnalysisListTabs on _GameAnalysisScreenState {
             padding: EdgeInsets.symmetric(
               vertical: 24,
             ),
-            child: Text(
+            child: TrText(
               'لا توجد أخطاء أو عدم دقة تُذكر — أداء ممتاز!',
               textAlign: TextAlign.center,
             ),
@@ -233,16 +233,19 @@ extension _AnalysisListTabs on _GameAnalysisScreenState {
           child: Icon(info.icon, color: info.color),
         ),
         title: Text(
-          'النقلة $moveNumber'
-          '${ply.color == 'w' ? '.' : '...'} '
-          '${ply.san}${_sanSuffix(q)}',
+          tr('النقلة {moveNumber}'
+          '{v} '
+          '{san}{v2}', {'moveNumber': moveNumber, 'v': ply.color == 'w' ? '.' : '...', 'san': ply.san, 'v2': _sanSuffix(q)}),
         ),
         subtitle: Text(
-          '${info.label} • خسارة تقييم'
-          ' ${(loss / 100).toStringAsFixed(2)}'
-          '${parseUci(bestUci) != null ? ' • الأفضل: '
-              '${parseUci(bestUci)!.from}'
-              '${parseUci(bestUci)!.to}' : ''}',
+          tr('{label} • خسارة تقييم'
+          ' {v}'
+          '{v2}', {'label': info.label, 'v': (loss / 100).toStringAsFixed(2), 'v2': parseUci(bestUci) != null
+              ? tr(' • الأفضل: {from}{to}', {
+                  'from': parseUci(bestUci)!.from,
+                  'to': parseUci(bestUci)!.to,
+                })
+              : ''}),
         ),
         onTap: () =>
             _jumpAndShowBoard(i + 1),
@@ -257,7 +260,7 @@ extension _AnalysisListTabs on _GameAnalysisScreenState {
   Widget _buildCriticalMomentsTab() {
     if (_analyzing) {
       return const Center(
-        child: Text('التحليل جارٍ...'),
+        child: TrText('التحليل جارٍ...'),
       );
     }
 
@@ -265,7 +268,7 @@ extension _AnalysisListTabs on _GameAnalysisScreenState {
 
     if (moments.isEmpty) {
       return const Center(
-        child: Text(
+        child: TrText(
           'لا توجد لحظات حرجة بارزة في هذه المباراة.',
         ),
       );
@@ -297,18 +300,18 @@ extension _AnalysisListTabs on _GameAnalysisScreenState {
               ),
             ),
             title: Text(
-              'النقلة $moveNumber'
-              '${ply.color == 'w' ? '.' : '...'} '
-              '${ply.san}${_sanSuffix(m.quality)}',
+              tr('النقلة {moveNumber}'
+              '{v} '
+              '{san}{v2}', {'moveNumber': moveNumber, 'v': ply.color == 'w' ? '.' : '...', 'san': ply.san, 'v2': _sanSuffix(m.quality)}),
             ),
             subtitle: Text(
               m.kind == 'only_move'
-                  ? '${info.label} • نقلة وحيدة أُدّيت بدقة'
+                  ? tr('{label} • نقلة وحيدة أُدّيت بدقة', {'label': info.label})
                   : (m.kind == 'tablebase'
-                      ? '${info.label} • تغيّرت النتيجة المضمونة '
-                          '(Tablebase)'
-                      : '${info.label} • خسارة تقييم'
-                          ' ${(m.lossCp / 100).toStringAsFixed(2)}'),
+                      ? tr('{label} • تغيّرت النتيجة المضمونة '
+                          '(Tablebase)', {'label': info.label})
+                      : tr('{label} • خسارة تقييم'
+                          ' {v}', {'label': info.label, 'v': (m.lossCp / 100).toStringAsFixed(2)})),
             ),
             onTap: () => _jumpAndShowBoard(
               m.plyIndex + 1,

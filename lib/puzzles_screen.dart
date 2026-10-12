@@ -6,6 +6,7 @@ import 'ads_service.dart';
 import 'app_ui.dart';
 import 'board_options.dart';
 import 'board_input.dart';
+import 'l10n.dart';
 import 'models.dart';
 import 'puzzle_storage.dart';
 import 'sound_service.dart';
@@ -155,7 +156,7 @@ class _PuzzlesScreenState extends State<PuzzlesScreen> {
     if (_isBest(p, uci)) {
       setState(() {
         _solved = true;
-        _feedback = 'صحيح! هذه أفضل نقلة ✅';
+        _feedback = tr('صحيح! هذه أفضل نقلة ✅');
         _feedbackColor = AppColors.success;
       });
 
@@ -168,7 +169,7 @@ class _PuzzlesScreenState extends State<PuzzlesScreen> {
     }
 
     setState(() {
-      _feedback = 'ليست الأفضل — حاول مرة أخرى';
+      _feedback = tr('ليست الأفضل — حاول مرة أخرى');
       _feedbackColor = AppColors.error;
     });
 
@@ -219,14 +220,14 @@ class _PuzzlesScreenState extends State<PuzzlesScreen> {
       appBar: AppBar(
         title: Text(
           p == null
-              ? 'تمارين من مبارياتك'
-              : 'تمرين ${_index + 1} / ${_items.length}',
+              ? tr('تمارين من مبارياتك')
+              : tr('تمرين {v} / {length}', {'v': _index + 1, 'length': _items.length}),
         ),
         actions: [
           const BoardOptionsButton(),
           if (p != null)
             IconButton(
-              tooltip: 'حذف التمرين',
+              tooltip: tr('حذف التمرين'),
               icon: const Icon(Icons.delete_outline),
               onPressed: _delete,
             ),
@@ -242,27 +243,29 @@ class _PuzzlesScreenState extends State<PuzzlesScreen> {
   }
 
   Widget _buildEmpty() {
-    return const CenteredMessage(
-      'لا توجد تمارين بعد.\n\n'
-      'حلّل بعض مبارياتك، وستظهر هنا تلقائيًا الوضعيات التي '
-      'فاتتك فيها نقلة قوية.\n'
-      'تأكد من كتابة اسمك في الإعدادات ليعرف التطبيق أي لاعب '
-      'أنت.',
+    return CenteredMessage(
+      tr(
+        'لا توجد تمارين بعد.\n\n'
+        'حلّل بعض مبارياتك، وستظهر هنا تلقائيًا الوضعيات التي '
+        'فاتتك فيها نقلة قوية.\n'
+        'تأكد من كتابة اسمك في الإعدادات ليعرف التطبيق أي لاعب '
+        'أنت.',
+      ),
     );
   }
 
   Widget _buildPuzzle(PuzzleItem p) {
-    final sideName = p.turn == 'w' ? 'الأبيض' : 'الأسود';
+    final sideName = p.turn == 'w' ? tr('الأبيض') : tr('الأسود');
 
     final showSolution = _revealed || _solved;
 
     final best = showSolution ? parseUci(p.bestUci) : null;
 
     return PuzzleLayout(
-      title: 'الدور على $sideName — جِد أفضل نقلة',
+      title: tr('الدور على {sideName} — جِد أفضل نقلة', {'sideName': sideName}),
       subtitle: [
         if (p.label.isNotEmpty) p.label,
-        if (p.solvedCount > 0) 'حُلّ ${p.solvedCount}×',
+        if (p.solvedCount > 0) tr('حُلّ {solvedCount}×', {'solvedCount': p.solvedCount}),
       ].join(' • '),
       board: AppBoard(
         state: _state,
@@ -277,7 +280,7 @@ class _PuzzlesScreenState extends State<PuzzlesScreen> {
           ? SolutionCard(
               children: [
                 Text(
-                  'الحل: ${p.bestSan}',
+                  tr('الحل: {bestSan}', {'bestSan': p.bestSan}),
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -287,7 +290,7 @@ class _PuzzlesScreenState extends State<PuzzlesScreen> {
                 if (p.playedSan.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
-                    'في المباراة لُعبت: ${p.playedSan}',
+                    tr('في المباراة لُعبت: {playedSan}', {'playedSan': p.playedSan}),
                     style: const TextStyle(color: AppColors.muted),
                     textDirection: TextDirection.ltr,
                   ),
@@ -295,7 +298,7 @@ class _PuzzlesScreenState extends State<PuzzlesScreen> {
                 if (p.line.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
-                    'الخط: ${p.line}',
+                    tr('الخط: {line}', {'line': p.line}),
                     style: const TextStyle(
                       color: AppColors.muted,
                       fontSize: 12,
@@ -309,21 +312,21 @@ class _PuzzlesScreenState extends State<PuzzlesScreen> {
       actions: [
         OutlinedButton(
           onPressed: _items.length > 1 ? () => _go(-1) : null,
-          child: const Text('السابق'),
+          child: const TrText('السابق'),
         ),
         if (!showSolution)
           FilledButton.tonal(
             onPressed: _reveal,
-            child: const Text('أرني الحل'),
+            child: const TrText('أرني الحل'),
           ),
         if (_revealed || _solved)
           OutlinedButton(
             onPressed: _loadCurrent,
-            child: const Text('أعد المحاولة'),
+            child: const TrText('أعد المحاولة'),
           ),
         FilledButton(
           onPressed: _items.length > 1 ? _nextWithAd : null,
-          child: const Text('التالي'),
+          child: const TrText('التالي'),
         ),
       ],
     );

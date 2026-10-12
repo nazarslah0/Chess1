@@ -8,6 +8,7 @@ import 'app_ui.dart';
 import 'board_options.dart';
 import 'board_input.dart';
 import 'game_analysis_screen.dart';
+import 'l10n.dart';
 import 'maia_service.dart';
 import 'models.dart';
 import 'sound_service.dart';
@@ -105,7 +106,7 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
     if (_session == null) {
       setState(() {
         _starting = false;
-        _notice = 'تعذّر تشغيل Maia على هذا الجهاز.';
+        _notice = tr('تعذّر تشغيل Maia على هذا الجهاز.');
       });
 
       return;
@@ -140,7 +141,7 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
     return showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('اختر قطعة الترقية'),
+        title: const TrText('اختر قطعة الترقية'),
         content: Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -153,7 +154,7 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
             }.entries)
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, e.key),
-                child: Text(e.value),
+                child: Text(tr(e.value)),
               ),
           ],
         ),
@@ -268,7 +269,7 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
 
       if (mounted) {
         setState(() {
-          _notice = 'تعذّر الحصول على نقلة من Maia؛ لُعبت نقلة عشوائية.';
+          _notice = tr('تعذّر الحصول على نقلة من Maia؛ لُعبت نقلة عشوائية.');
         });
       }
     }
@@ -312,13 +313,13 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
         final whiteWins = _turn == 'b';
 
         res = whiteWins ? '1-0' : '0-1';
-        text = 'كش مات — فاز ${whiteWins ? 'الأبيض' : 'الأسود'}';
+        text = tr('كش مات — فاز {v}', {'v': whiteWins ? tr('الأبيض') : tr('الأسود')});
       } else if (c.in_stalemate) {
         res = '1/2-1/2';
-        text = 'تعادل (ستاليمايت)';
+        text = tr('تعادل (ستاليمايت)');
       } else if (c.in_draw) {
         res = '1/2-1/2';
-        text = 'تعادل';
+        text = tr('تعادل');
       }
     } catch (_) {}
 
@@ -337,7 +338,7 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
 
     setState(() {
       _result = whiteWins ? '1-0' : '0-1';
-      _resultText = 'استسلمت — فازت Maia';
+      _resultText = tr('استسلمت — فازت Maia');
     });
   }
 
@@ -346,15 +347,15 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
   // ------------------------------------------------------------
 
   String _buildPgn() {
-    final user = 'أنت';
+    final user = tr('أنت');
     final maia = 'Maia $_bucket';
 
     final white = _userColor == 'w' ? user : maia;
     final black = _userColor == 'w' ? maia : user;
 
     final b = StringBuffer()
-      ..writeln('[Event "Chess2 vs Maia"]')
-      ..writeln('[Site "Chess2"]')
+      ..writeln('[Event "Golden Chess vs Maia"]')
+      ..writeln('[Site "Golden Chess"]')
       ..writeln('[White "$white"]')
       ..writeln('[Black "$black"]')
       ..writeln('[Result "${_result ?? '*'}"]');
@@ -387,8 +388,8 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
   void _openAnalysis() {
     if (_state.history.isEmpty) return;
 
-    final white = _userColor == 'w' ? 'أنت' : 'Maia $_bucket';
-    final black = _userColor == 'w' ? 'Maia $_bucket' : 'أنت';
+    final white = _userColor == 'w' ? tr('أنت') : 'Maia $_bucket';
+    final black = _userColor == 'w' ? 'Maia $_bucket' : tr('أنت');
 
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -396,7 +397,7 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
           pgn: _buildPgn(),
           whiteLabel: white,
           blackLabel: black,
-          sourceLabel: 'ضد Maia',
+          sourceLabel: tr('ضد Maia'),
         ),
       ),
     );
@@ -410,7 +411,7 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('العب ضد Maia'),
+        title: const TrText('العب ضد Maia'),
         actions: const [BoardOptionsButton()],
       ),
       body: SafeArea(
@@ -438,7 +439,7 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(16),
-          child: Text(
+          child: TrText(
             'لم يتم العثور على أوزان Maia في التطبيق.\n'
             'ضع ملفات maia-1100.pb.gz و maia-1500.pb.gz و '
             'maia-1900.pb.gz في assets/maia/ ثم أعد بناء التطبيق '
@@ -454,7 +455,7 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            const TrText(
               'مستوى Maia',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
@@ -471,7 +472,7 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            const Text(
+            const TrText(
               'ألعب بالقطع',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
@@ -480,17 +481,17 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
               spacing: 8,
               children: [
                 ChoiceChip(
-                  label: const Text('الأبيض'),
+                  label: const TrText('الأبيض'),
                   selected: _colorChoice == 'w',
                   onSelected: (_) => setState(() => _colorChoice = 'w'),
                 ),
                 ChoiceChip(
-                  label: const Text('الأسود'),
+                  label: const TrText('الأسود'),
                   selected: _colorChoice == 'b',
                   onSelected: (_) => setState(() => _colorChoice = 'b'),
                 ),
                 ChoiceChip(
-                  label: const Text('عشوائي'),
+                  label: const TrText('عشوائي'),
                   selected: _colorChoice == 'r',
                   onSelected: (_) => setState(() => _colorChoice = 'r'),
                 ),
@@ -512,7 +513,7 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.play_arrow_rounded),
-                label: Text(_starting ? 'جارٍ تحميل Maia...' : 'ابدأ'),
+                label: Text(_starting ? tr('جارٍ تحميل Maia...') : tr('ابدأ')),
               ),
             ),
           ],
@@ -525,10 +526,10 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
     final myTurn = _result == null && !_thinking && _turn == _userColor;
 
     final status = _result != null
-        ? (_resultText ?? 'انتهت المباراة')
+        ? (_resultText ?? tr('انتهت المباراة'))
         : (_thinking
-            ? 'Maia $_bucket تفكّر...'
-            : (myTurn ? 'دورك' : 'دور Maia'));
+            ? tr('Maia {bucket} تفكّر...', {'bucket': _bucket})
+            : (myTurn ? tr('دورك') : tr('دور Maia')));
 
     return Column(
       children: [
@@ -571,17 +572,17 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
             if (_result == null)
               OutlinedButton(
                 onPressed: _thinking ? null : _resign,
-                child: const Text('استسلام'),
+                child: const TrText('استسلام'),
               ),
             OutlinedButton(
               onPressed: _state.flipBoard,
-              child: const Text('قلب الرقعة'),
+              child: const TrText('قلب الرقعة'),
             ),
             if (_state.history.isNotEmpty)
               FilledButton.icon(
                 onPressed: _thinking ? null : _openAnalysis,
                 icon: const Icon(Icons.query_stats_rounded),
-                label: const Text('تحليل المباراة'),
+                label: const TrText('تحليل المباراة'),
               ),
             FilledButton.tonal(
               onPressed: _thinking
@@ -591,7 +592,7 @@ class _MaiaPlayScreenState extends State<MaiaPlayScreen> {
                         _result = null;
                         _resultText = null;
                       }),
-              child: const Text('مباراة جديدة'),
+              child: const TrText('مباراة جديدة'),
             ),
           ],
         ),

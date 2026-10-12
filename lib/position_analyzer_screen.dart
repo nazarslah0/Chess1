@@ -5,6 +5,7 @@ import 'app_settings.dart';
 import 'app_ui.dart';
 import 'board_options.dart';
 import 'engine_service.dart';
+import 'l10n.dart';
 import 'models.dart';
 import 'panels.dart';
 import 'position_insights.dart';
@@ -40,7 +41,7 @@ class _PositionAnalyzerScreenState extends State<PositionAnalyzerScreen> {
       SoundService();
 
   String engineStatus =
-      '🟡 جاري تشغيل Stockfish 19...';
+      tr('🟡 جاري تشغيل Stockfish 19...');
 
   bool engineReady = false;
 
@@ -407,7 +408,7 @@ class _PositionAnalyzerScreenState extends State<PositionAnalyzerScreen> {
     }
 
     if (!engineReady) {
-      showAppSnack(context, 'Stockfish 19 لم يصبح جاهزًا بعد');
+      showAppSnack(context, tr('Stockfish 19 لم يصبح جاهزًا بعد'));
 
       return;
     }
@@ -434,7 +435,7 @@ class _PositionAnalyzerScreenState extends State<PositionAnalyzerScreen> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text(
+          title: const TrText(
             'اختر قطعة الترقية',
           ),
           content: Wrap(
@@ -457,10 +458,10 @@ class _PositionAnalyzerScreenState extends State<PositionAnalyzerScreen> {
                   },
                   child: Text(
                     <String, String>{
-                      'q': 'وزير',
-                      'r': 'رخ',
-                      'b': 'فيل',
-                      'n': 'حصان',
+                      'q': tr('وزير'),
+                      'r': tr('رخ'),
+                      'b': tr('فيل'),
+                      'n': tr('حصان'),
                     }[p]!,
                   ),
                 ),
@@ -714,17 +715,17 @@ class _PositionAnalyzerScreenState extends State<PositionAnalyzerScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('مسح الرقعة؟'),
-        content: const Text('ستُزال كل القطع من الرقعة.'),
+        title: const TrText('مسح الرقعة؟'),
+        content: const TrText('ستُزال كل القطع من الرقعة.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('إلغاء'),
+            child: const TrText('إلغاء'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('مسح'),
+            child: const TrText('مسح'),
           ),
         ],
       ),
@@ -741,12 +742,12 @@ class _PositionAnalyzerScreenState extends State<PositionAnalyzerScreen> {
         ButtonSegment<String>(
           value: 'play',
           icon: Icon(Icons.sports_esports_rounded),
-          label: Text('وضع اللعب'),
+          label: TrText('وضع اللعب'),
         ),
         ButtonSegment<String>(
           value: 'setup',
           icon: Icon(Icons.tune_rounded),
-          label: Text('إعداد الوضعية'),
+          label: TrText('إعداد الوضعية'),
         ),
       ],
       selected: <String>{state.mode == 'setup' ? 'setup' : 'play'},
@@ -808,7 +809,7 @@ class _PositionAnalyzerScreenState extends State<PositionAnalyzerScreen> {
       data: _screenTheme(),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('وضعية خاصة'),
+          title: const TrText('وضعية خاصة'),
           actions: const [BoardOptionsButton()],
         ),
         body: SafeArea(
@@ -845,19 +846,19 @@ class _PositionAnalyzerScreenState extends State<PositionAnalyzerScreen> {
                       children: [
                         _toolTile(
                           icon: Icons.flip_rounded,
-                          label: 'قلب الرقعة',
+                          label: tr('قلب الرقعة'),
                           onTap: state.flipBoard,
                         ),
                         const SizedBox(width: 8),
                         _toolTile(
                           icon: Icons.restart_alt_rounded,
-                          label: 'الوضعية الابتدائية',
+                          label: tr('الوضعية الابتدائية'),
                           onTap: state.startPosition,
                         ),
                         const SizedBox(width: 8),
                         _toolTile(
                           icon: Icons.delete_outline_rounded,
-                          label: 'مسح الرقعة',
+                          label: tr('مسح الرقعة'),
                           color: Colors.redAccent,
                           onTap: _confirmClear,
                         ),

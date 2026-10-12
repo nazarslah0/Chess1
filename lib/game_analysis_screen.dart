@@ -13,6 +13,7 @@ import 'analysis_mode.dart';
 import 'board_options.dart';
 import 'board_widget.dart';
 import 'game_review_models.dart';
+import 'l10n.dart';
 import 'lichess_data_service.dart';
 import 'models.dart';
 import 'piece_painter.dart';
@@ -176,10 +177,10 @@ class _GameAnalysisScreenState
   }
 
   String get _whiteName =>
-      widget.whiteLabel ?? _headers['White'] ?? 'أبيض';
+      widget.whiteLabel ?? _headers['White'] ?? tr('أبيض');
 
   String get _blackName =>
-      widget.blackLabel ?? _headers['Black'] ?? 'أسود';
+      widget.blackLabel ?? _headers['Black'] ?? tr('أسود');
 
   String get _resultText =>
       widget.resultLabel ?? _headers['Result'] ?? '';
@@ -199,8 +200,8 @@ class _GameAnalysisScreenState
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        'أُضيف $_puzzlesAdded تمرين من هذه المباراة إلى «تمارين '
-        'من مبارياتك».',
+        tr('أُضيف {puzzlesAdded} تمرين من هذه المباراة إلى «تمارين '
+        'من مبارياتك».', {'puzzlesAdded': _puzzlesAdded}),
         style: const TextStyle(fontSize: 12),
       ),
     );
@@ -220,22 +221,22 @@ class _GameAnalysisScreenState
     final sign = _plies[k].color == 'w' ? 1 : -1;
 
     String name(int v) =>
-        v > 0 ? 'فوز' : (v < 0 ? 'خسارة' : 'تعادل');
+        v > 0 ? tr('فوز') : (v < 0 ? tr('خسارة') : tr('تعادل'));
 
     final ma = after * sign;
     final beforeRaw = _tbWdlWhite[k];
 
     if (beforeRaw == null) {
-      return 'Tablebase: النتيجة بعد النقلة مضمونة — ${name(ma)}';
+      return tr('Tablebase: النتيجة بعد النقلة مضمونة — {v}', {'v': name(ma)});
     }
 
     final mb = beforeRaw * sign;
 
     if (mb == ma) {
-      return 'Tablebase: النتيجة لم تتغير (${name(mb)} مضمون)';
+      return tr('Tablebase: النتيجة لم تتغير ({v} مضمون)', {'v': name(mb)});
     }
 
-    return 'Tablebase: ${name(mb)} ← ${name(ma)} (نتيجة مضمونة)';
+    return tr('Tablebase: {v} ← {v2} (نتيجة مضمونة)', {'v': name(mb), 'v2': name(ma)});
   }
 
   String? _bookNoteAt(int k) {
@@ -251,8 +252,8 @@ class _GameAnalysisScreenState
       final pct = info.mastersPercent;
 
       parts.add(
-        'لُعبت في ${info.mastersGames} مباراة أساتذة'
-        '${pct != null ? ' (${pct.toStringAsFixed(0)}%)' : ''}',
+        tr('لُعبت في {mastersGames} مباراة أساتذة'
+        '{v}', {'mastersGames': info.mastersGames, 'v': pct != null ? ' (${pct.toStringAsFixed(0)}%)' : ''}),
       );
     }
 
@@ -260,13 +261,13 @@ class _GameAnalysisScreenState
 
     if (lp != null && (info.lichessGames ?? 0) > 0) {
       parts.add(
-        'يلعبها ${lp.toStringAsFixed(0)}% من لاعبي Lichess',
+        tr('يلعبها {v}% من لاعبي Lichess', {'v': lp.toStringAsFixed(0)}),
       );
     }
 
     if (parts.isEmpty) return null;
 
-    return '${info.isBook ? 'كتاب: ' : ''}${parts.join(' · ')}';
+    return '${info.isBook ? tr('كتاب: ') : ''}${parts.join(' · ')}';
   }
 
   /// لاحقة تقليدية (?, ??, ?!, !!) تُضاف لنص SAN، بنفس أسلوب
@@ -421,7 +422,7 @@ class _GameAnalysisScreenState
         data: _darkTheme(),
         child: Scaffold(
           appBar: AppBar(
-            title: const Text('تحليل المباراة'),
+            title: const TrText('تحليل المباراة'),
           ),
           body: Center(
             child: Padding(

@@ -7,8 +7,8 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
       return Center(
         child: Text(
           _analyzing
-              ? 'جارٍ تحليل المباراة...'
-              : 'لا توجد نتائج تحليل بعد.',
+              ? tr('جارٍ تحليل المباراة...')
+              : tr('لا توجد نتائج تحليل بعد.'),
           style: const TextStyle(color: Colors.white70),
         ),
       );
@@ -47,7 +47,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
           crossAxisAlignment:
               CrossAxisAlignment.start,
           children: [
-            const Text(
+            const TrText(
               'الوضعية الابتدائية',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
@@ -56,7 +56,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
             if (pv.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
-                'الخط المقترح: $pv',
+                tr('الخط المقترح: {pv}', {'pv': pv}),
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 13,
@@ -114,9 +114,9 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
             CrossAxisAlignment.start,
         children: [
           Text(
-            'النقلة الحالية:  $moveNumber'
-            '${ply.color == 'w' ? '.' : '...'} '
-            '${ply.san}${_sanSuffix(q)}',
+            tr('النقلة الحالية:  {moveNumber}'
+            '{v} '
+            '{san}{v2}', {'moveNumber': moveNumber, 'v': ply.color == 'w' ? '.' : '...', 'san': ply.san, 'v2': _sanSuffix(q)}),
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 15,
@@ -140,8 +140,8 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
               ),
               const Spacer(),
               Text(
-                'خسارة تقييم: '
-                '${(loss / 100).toStringAsFixed(2)}',
+                tr('خسارة تقييم: '
+                '{v}', {'v': (loss / 100).toStringAsFixed(2)}),
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 12,
@@ -173,7 +173,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
               bestSan.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
-              'أفضل نقلة: $bestSan',
+              tr('أفضل نقلة: {bestSan}', {'bestSan': bestSan}),
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
               ),
@@ -182,7 +182,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
           if (pv.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
-              'الخط الرئيسي: $pv',
+              tr('الخط الرئيسي: {pv}', {'pv': pv}),
               style: TextStyle(
                 color: Colors.white70,
                 fontSize: 12,
@@ -226,8 +226,8 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
             ],
           ),
           const SizedBox(height: 6),
-          Text(
-            'دقة Chess2 — مقياس خاص بالتطبيق، ليس مطابقًا'
+          TrText(
+            'دقة Golden Chess — مقياس خاص بالتطبيق، ليس مطابقًا'
             ' لدقة Chess.com',
             style: TextStyle(
               fontSize: 10,
@@ -255,7 +255,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
         ),
         const SizedBox(height: 2),
         Text(
-          'دقة Chess2 — $label',
+          tr('دقة Golden Chess — {label}', {'label': label}),
           style: TextStyle(
             fontSize: 12,
             color: Colors.white60,
@@ -316,16 +316,16 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
         crossAxisAlignment:
             CrossAxisAlignment.start,
         children: [
-          const Text(
+          const TrText(
             'مراحل المباراة',
             style: TextStyle(
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 6),
-          row('الافتتاح', 'opening'),
-          row('وسط اللعبة', 'middlegame'),
-          row('النهايات', 'endgame'),
+          row(tr('الافتتاح'), 'opening'),
+          row(tr('وسط اللعبة'), 'middlegame'),
+          row(tr('النهايات'), 'endgame'),
         ],
       ),
     );
@@ -390,8 +390,8 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Text(
-            'التقرير يظهر بعد اكتمال تحليل المباراة...\n'
-            '${(_progress * 100).round()}%',
+            tr('التقرير يظهر بعد اكتمال تحليل المباراة...\n'
+            '{v}%', {'v': (_progress * 100).round()}),
             textAlign: TextAlign.center,
           ),
         ),
@@ -400,7 +400,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
 
     if (_plies.isEmpty) {
       return const Center(
-        child: Text('لا توجد بيانات كافية للتقرير.'),
+        child: TrText('لا توجد بيانات كافية للتقرير.'),
       );
     }
 
@@ -431,7 +431,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
             crossAxisAlignment:
                 CrossAxisAlignment.start,
             children: [
-              const Text(
+              const TrText(
                 'تقرير المباراة',
                 style: TextStyle(
                   fontSize: 18,
@@ -439,16 +439,16 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
                 ),
               ),
               const SizedBox(height: 8),
-              Text('الأبيض: $_whiteName'),
-              Text('الأسود: $_blackName'),
+              Text(tr('الأبيض: {whiteName}', {'whiteName': _whiteName})),
+              Text(tr('الأسود: {blackName}', {'blackName': _blackName})),
               if (_resultText.isNotEmpty)
-                Text('النتيجة: $_resultText'),
-              Text('عدد النقلات: ${_plies.length}'),
+                Text(tr('النتيجة: {resultText}', {'resultText': _resultText})),
+              Text(tr('عدد النقلات: {length}', {'length': _plies.length})),
               if (opening != null)
-                Text('الافتتاح: $opening'
-                    '${eco != null ? ' ($eco)' : ''}')
+                Text(tr('الافتتاح: {opening}'
+                    '{v}', {'opening': opening, 'v': eco != null ? ' ($eco)' : ''}))
               else if (eco != null)
-                Text('رمز الافتتاح (ECO): $eco'),
+                Text(tr('رمز الافتتاح (ECO): {eco}', {'eco': eco})),
             ],
           ),
         ),
@@ -473,7 +473,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
               crossAxisAlignment:
                   CrossAxisAlignment.start,
               children: [
-                const Text(
+                const TrText(
                   'ملخص المباراة',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
@@ -490,7 +490,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
         // --------------------------------------------------
         // إحصائيات الأبيض والأسود
         // --------------------------------------------------
-        const Text(
+        const TrText(
           'إحصائيات اللاعبين',
           style: TextStyle(
             fontWeight: FontWeight.bold,
@@ -523,7 +523,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
         // --------------------------------------------------
         // الرسم البياني للتقييم
         // --------------------------------------------------
-        const Text(
+        const TrText(
           'تقييم المباراة',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -550,27 +550,27 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
           children: [
             Expanded(
               child: _bestWorstCard(
-                title: 'أفضل نقلة',
+                title: tr('أفضل نقلة'),
                 icon: Icons.star_rounded,
                 color: const Color(0xFF2AA876),
                 plyIndex: bestEngineIdx,
                 emptyText:
-                    'لم يتم تحديد أفضل نقلة بارزة في'
-                    ' هذه المباراة.',
-                buttonText: 'عرض النقلة',
+                    tr('لم يتم تحديد أفضل نقلة بارزة في'
+                    ' هذه المباراة.'),
+                buttonText: tr('عرض النقلة'),
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: _bestWorstCard(
-                title: 'أسوأ نقلة',
+                title: tr('أسوأ نقلة'),
                 icon: Icons.dangerous_rounded,
                 color: const Color(0xFFD9483D),
                 plyIndex: worstIdx,
                 emptyText:
-                    'لا توجد أخطاء كبيرة في هذه'
-                    ' المباراة.',
-                buttonText: 'عرض على الرقعة',
+                    tr('لا توجد أخطاء كبيرة في هذه'
+                    ' المباراة.'),
+                buttonText: tr('عرض على الرقعة'),
               ),
             ),
           ],
@@ -578,12 +578,12 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
         if (brilliantIdx != null) ...[
           const SizedBox(height: 10),
           _bestWorstCard(
-            title: 'نقلة مدهشة!! (Brilliant)',
+            title: tr('نقلة مدهشة!! (Brilliant)'),
             icon: Icons.auto_awesome_rounded,
             color: const Color(0xFF1BADA6),
             plyIndex: brilliantIdx,
             emptyText: '',
-            buttonText: 'عرض النقلة',
+            buttonText: tr('عرض النقلة'),
           ),
         ],
         const SizedBox(height: 16),
@@ -591,7 +591,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
         // --------------------------------------------------
         // أهم الأخطاء (أعلى خسارة تقييم)
         // --------------------------------------------------
-        const Text(
+        const TrText(
           'أهم الأخطاء',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -601,7 +601,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
             padding: EdgeInsets.symmetric(
               vertical: 8,
             ),
-            child: Text('لا توجد أخطاء بارزة تُذكر.'),
+            child: TrText('لا توجد أخطاء بارزة تُذكر.'),
           )
         else
           for (final m in _criticalMoments.take(5))
@@ -611,7 +611,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
         // --------------------------------------------------
         // الفرص الضائعة
         // --------------------------------------------------
-        const Text(
+        const TrText(
           'الفرص الضائعة',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -621,7 +621,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
             padding: EdgeInsets.symmetric(
               vertical: 8,
             ),
-            child: Text(
+            child: TrText(
               'لا توجد فرص ضائعة واضحة حسب تحليل'
               ' Stockfish.',
             ),
@@ -633,16 +633,16 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
         // --------------------------------------------------
         // مراحل المباراة
         // --------------------------------------------------
-        const Text(
+        const TrText(
           'مراحل المباراة',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        _phaseDetailCard('الافتتاح', 'opening'),
+        _phaseDetailCard(tr('الافتتاح'), 'opening'),
         const SizedBox(height: 8),
-        _phaseDetailCard('وسط اللعبة', 'middlegame'),
+        _phaseDetailCard(tr('وسط اللعبة'), 'middlegame'),
         const SizedBox(height: 8),
-        _phaseDetailCard('النهايات', 'endgame'),
+        _phaseDetailCard(tr('النهايات'), 'endgame'),
         const SizedBox(height: 20),
       ],
     );
@@ -707,8 +707,8 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const Text(
-            'دقة Chess2',
+          const TrText(
+            'دقة Golden Chess',
             style: TextStyle(
               fontSize: 11,
               color: Colors.grey,
@@ -783,8 +783,8 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
               ),
             ),
             Text(
-              'خسارة تقييم: '
-              '${(_lossAt(plyIndex) / 100).toStringAsFixed(2)}',
+              tr('خسارة تقييم: '
+              '{v}', {'v': (_lossAt(plyIndex) / 100).toStringAsFixed(2)}),
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.white70,
@@ -814,7 +814,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
 
     if (results.isEmpty || k < 0 || k >= results.length) {
       return Text(
-        'اضغط على الرسم لاختيار نقلة.',
+        tr('اضغط على الرسم لاختيار نقلة.'),
         style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
       );
     }
@@ -838,9 +838,9 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'النقلة ${r.moveNumber}${r.side == 'w' ? '.' : '...'} '
-            '${r.san}  •  ${info.label}'
-            '${r.isCritical ? '  •  لحظة حرجة' : ''}',
+            tr('النقلة {moveNumber}{v} '
+            '{san}  •  {label}'
+            '{v2}', {'moveNumber': r.moveNumber, 'v': r.side == 'w' ? '.' : '...', 'san': r.san, 'label': info.label, 'v2': r.isCritical ? tr('  •  لحظة حرجة') : ''}),
             style: TextStyle(
               color: info.color,
               fontWeight: FontWeight.bold,
@@ -849,13 +849,13 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
           ),
           const SizedBox(height: 4),
           Text(
-            'التقييم قبل: ${_evalLabels[k]}   بعد: ${_evalLabels[k + 1]}   '
-            'الخسارة: ${loss(r.evaluationLossCp)}',
+            tr('التقييم قبل: {v}   بعد: {v2}   '
+            'الخسارة: {v3}', {'v': _evalLabels[k], 'v2': _evalLabels[k + 1], 'v3': loss(r.evaluationLossCp)}),
             style: const TextStyle(fontSize: 12),
           ),
           if (r.bestMoveSan.isNotEmpty && !r.isBestMove)
             Text(
-              'الأفضل: ${r.bestMoveSan}',
+              tr('الأفضل: {bestMoveSan}', {'bestMoveSan': r.bestMoveSan}),
               style: const TextStyle(fontSize: 12),
               textDirection: TextDirection.ltr,
             ),
@@ -902,7 +902,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
           ),
           Expanded(
             child: Text(
-              '${stat.moveCount} نقلة',
+              tr('{moveCount} نقلة', {'moveCount': stat.moveCount}),
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white70,
@@ -914,7 +914,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
             child: Column(
               children: [
                 Text(
-                  'دقة ${stat.accuracy.toStringAsFixed(0)}%',
+                  tr('دقة {v}%', {'v': stat.accuracy.toStringAsFixed(0)}),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
@@ -934,7 +934,7 @@ extension _AnalysisReportTabs on _GameAnalysisScreenState {
           ),
           Expanded(
             child: Text(
-              'أخطاء: ${stat.errorCount}',
+              tr('أخطاء: {errorCount}', {'errorCount': stat.errorCount}),
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: stat.errorCount > 0

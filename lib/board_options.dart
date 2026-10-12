@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'app_settings.dart';
+import 'l10n.dart';
 import 'models.dart';
 import 'piece_painter.dart';
 
@@ -15,7 +16,7 @@ class BoardOptionsButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      tooltip: 'خيارات الرقعة',
+      tooltip: tr('خيارات الرقعة'),
       icon: Icon(Icons.tune_rounded, color: color),
       onPressed: () => showBoardThemeSheet(context),
     );
@@ -68,13 +69,16 @@ class _ThemeSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 14),
-              const Text(
-                'خيارات الرقعة',
+              Text(
+                tr('خيارات الرقعة'),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 16),
-              const _SectionTitle('ثيم القطع'),
+              _SectionTitle(tr('ثيم القطع')),
               const SizedBox(height: 8),
               SizedBox(
                 height: 98,
@@ -83,7 +87,7 @@ class _ThemeSheet extends StatelessWidget {
                   itemCount: AppSettings.allPieceThemes.length,
                   separatorBuilder: (_, _) => const SizedBox(width: 10),
                   itemBuilder: (_, i) => _Tile(
-                    name: AppSettings.allPieceThemes[i].name,
+                    name: tr(AppSettings.allPieceThemes[i].name),
                     selected: i == s.pieceThemeIndex,
                     onTap: () => s.setPieceTheme(i),
                     preview: _PiecePreview(
@@ -93,7 +97,7 @@ class _ThemeSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 18),
-              const _SectionTitle('ثيم الرقعة'),
+              _SectionTitle(tr('ثيم الرقعة')),
               const SizedBox(height: 8),
               SizedBox(
                 height: 98,
@@ -102,7 +106,7 @@ class _ThemeSheet extends StatelessWidget {
                   itemCount: AppSettings.allBoardThemes.length,
                   separatorBuilder: (_, _) => const SizedBox(width: 10),
                   itemBuilder: (_, i) => _Tile(
-                    name: AppSettings.allBoardThemes[i].name,
+                    name: tr(AppSettings.allBoardThemes[i].name),
                     selected: i == s.boardThemeIndex,
                     onTap: () => s.setBoardTheme(i),
                     preview: _BoardPreview(

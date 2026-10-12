@@ -1,5 +1,6 @@
 import 'account_storage.dart';
 import 'chesscom_service.dart';
+import 'l10n.dart';
 import 'lichess_service.dart';
 
 /// مباراة من أي مصدر بصيغة موحّدة، تكفي شاشة المصدر وشاشة التحليل.
@@ -74,7 +75,7 @@ class ChessComSource extends GameSource {
   @override
   String errorMessage(Object error) => error is ChessComException
       ? error.message
-      : 'حدث خطأ أثناء الاتصال بـ Chess.com.';
+      : tr('حدث خطأ أثناء الاتصال بـ Chess.com.');
 }
 
 class ChessComSourceGame implements SourceGame {
@@ -152,7 +153,7 @@ class LichessSource extends GameSource {
   @override
   String errorMessage(Object error) => error is LichessException
       ? error.message
-      : 'حدث خطأ غير متوقع أثناء الاتصال بـ Lichess.';
+      : tr('حدث خطأ غير متوقع أثناء الاتصال بـ Lichess.');
 }
 
 class LichessSourceGame implements SourceGame {

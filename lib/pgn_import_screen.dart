@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'analysis_mode.dart';
+import 'l10n.dart';
 import 'pgn_utils.dart';
 import 'source_style.dart';
 
@@ -29,7 +30,7 @@ class _PgnImportScreenState extends State<PgnImportScreen> {
     final pgn = _pgnCtrl.text.trim();
 
     if (pgn.isEmpty) {
-      setState(() => _error = 'الصق نص PGN أولًا.');
+      setState(() => _error = tr('الصق نص PGN أولًا.'));
 
       return;
     }
@@ -38,7 +39,7 @@ class _PgnImportScreenState extends State<PgnImportScreen> {
 
     if (plies == null || plies.isEmpty) {
       setState(() {
-        _error = 'تعذر قراءة نقلات هذا الـ PGN. تحقق من صحة الصيغة.';
+        _error = tr('تعذر قراءة نقلات هذا الـ PGN. تحقق من صحة الصيغة.');
       });
 
       return;
@@ -50,7 +51,7 @@ class _PgnImportScreenState extends State<PgnImportScreen> {
       MaterialPageRoute(
         builder: (_) => AnalysisModeScreen(
           pgn: pgn,
-          sourceLabel: 'PGN مستورد',
+          sourceLabel: tr('PGN مستورد'),
         ),
       ),
     );
@@ -61,13 +62,13 @@ class _PgnImportScreenState extends State<PgnImportScreen> {
   @override
   Widget build(BuildContext context) {
     return SourceScaffold(
-      title: 'استيراد مباراة (PGN)',
+      title: tr('استيراد مباراة (PGN)'),
       body: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
+            const TrText(
               'الصق نص PGN كاملًا (يشمل الرؤوس مثل [White "..."] '
               'إن وُجدت والنقلات).',
               style: TextStyle(color: Colors.white54),
@@ -110,7 +111,7 @@ class _PgnImportScreenState extends State<PgnImportScreen> {
                 style: SourceStyle.primaryButton(color: _blue),
                 onPressed: _analyze,
                 icon: const Icon(Icons.query_stats_rounded),
-                label: const Text('تحليل المباراة'),
+                label: const TrText('تحليل المباراة'),
               ),
             ),
           ],

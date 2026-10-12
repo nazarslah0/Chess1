@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'l10n.dart';
 
 /// خطأ مفهوم للمستخدم عند التعامل مع Lichess.
 class LichessException implements Exception {
@@ -75,13 +76,9 @@ class LichessService {
         },
       ).timeout(_timeout);
     } on TimeoutException {
-      throw const LichessException(
-        'انتهت مهلة الاتصال بـ Lichess. حاول مرة أخرى.',
-      );
+      throw LichessException(tr('انتهت مهلة الاتصال بـ Lichess. حاول مرة أخرى.'));
     } catch (_) {
-      throw const LichessException(
-        'تعذر الاتصال بـ Lichess. تحقق من الإنترنت.',
-      );
+      throw LichessException(tr('تعذر الاتصال بـ Lichess. تحقق من الإنترنت.'));
     }
   }
 
@@ -91,18 +88,16 @@ class LichessService {
     final res = await _get('$_base/user/$u');
 
     if (res.statusCode == 404) {
-      throw const LichessException('اسم المستخدم غير موجود على Lichess.');
+      throw LichessException(tr('اسم المستخدم غير موجود على Lichess.'));
     }
 
     if (res.statusCode == 429) {
-      throw const LichessException(
-        'عدد الطلبات كبير على Lichess. انتظر قليلًا ثم أعد المحاولة.',
-      );
+      throw LichessException(tr('عدد الطلبات كبير على Lichess. انتظر قليلًا ثم أعد المحاولة.'));
     }
 
     if (res.statusCode != 200) {
       throw LichessException(
-        'تعذر التحقق من الحساب (رمز ${res.statusCode}).',
+        tr('تعذر التحقق من الحساب (رمز {statusCode}).', {'statusCode': res.statusCode}),
       );
     }
   }
@@ -120,18 +115,16 @@ class LichessService {
     final res = await _get(url, accept: 'application/x-ndjson');
 
     if (res.statusCode == 404) {
-      throw const LichessException('اسم المستخدم غير موجود على Lichess.');
+      throw LichessException(tr('اسم المستخدم غير موجود على Lichess.'));
     }
 
     if (res.statusCode == 429) {
-      throw const LichessException(
-        'عدد الطلبات كبير على Lichess. انتظر قليلًا ثم أعد المحاولة.',
-      );
+      throw LichessException(tr('عدد الطلبات كبير على Lichess. انتظر قليلًا ثم أعد المحاولة.'));
     }
 
     if (res.statusCode != 200) {
       throw LichessException(
-        'تعذر جلب المباريات (رمز ${res.statusCode}).',
+        tr('تعذر جلب المباريات (رمز {statusCode}).', {'statusCode': res.statusCode}),
       );
     }
 

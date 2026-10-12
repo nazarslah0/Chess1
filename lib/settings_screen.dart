@@ -4,6 +4,7 @@ import 'about_screen.dart';
 import 'ads_service.dart';
 import 'app_settings.dart';
 import 'board_widget.dart';
+import 'l10n.dart';
 import 'models.dart';
 
 /// الإعدادات العامة: ثيم الرقعة والقطع (تنطبق على كل رقع التطبيق)
@@ -40,17 +41,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('الإعدادات')),
+      appBar: AppBar(title: Text(tr('الإعدادات'))),
       body: SafeArea(
         child: ListenableBuilder(
-          listenable: _s,
+          listenable: Listenable.merge([_s, LocaleController.instance]),
           builder: (context, _) {
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                const Text(
-                  'المظهر (لكل رقع التطبيق)',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                Text(
+                  tr('اللغة'),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.language_rounded),
+                    labelText: tr('لغة التطبيق'),
+                  ),
+                  initialValue: LocaleController.instance.selection,
+                  isExpanded: true,
+                  items: [
+                    DropdownMenuItem<String>(
+                      value: kSystemLanguage,
+                      child: Text(tr('تلقائي (لغة الجهاز)')),
+                    ),
+                    for (final code in kSupportedLanguageCodes)
+                      DropdownMenuItem<String>(
+                        value: code,
+                        child: Text(kLanguageNativeNames[code] ?? code),
+                      ),
+                  ],
+                  onChanged: (v) {
+                    if (v != null) LocaleController.instance.setLanguage(v);
+                  },
+                ),
+                const Divider(height: 32),
+                Text(
+                  tr('المظهر (لكل رقع التطبيق)'),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
                 Center(
@@ -69,7 +98,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 12),
                 DropdownButtonFormField<int>(
                   decoration:
-                      const InputDecoration(labelText: 'ثيم الرقعة'),
+                      InputDecoration(labelText: tr('ثيم الرقعة')),
                   initialValue: _s.boardThemeIndex,
                   isExpanded: true,
                   items: [
@@ -78,7 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         i++)
                       DropdownMenuItem<int>(
                         value: i,
-                        child: Text(AppSettings.allBoardThemes[i].name),
+                        child: Text(tr(AppSettings.allBoardThemes[i].name)),
                       ),
                   ],
                   onChanged: (v) {
@@ -88,7 +117,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 10),
                 DropdownButtonFormField<int>(
                   decoration:
-                      const InputDecoration(labelText: 'ثيم القطع'),
+                      InputDecoration(labelText: tr('ثيم القطع')),
                   initialValue: _s.pieceThemeIndex,
                   isExpanded: true,
                   items: [
@@ -97,7 +126,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         i++)
                       DropdownMenuItem<int>(
                         value: i,
-                        child: Text(AppSettings.allPieceThemes[i].name),
+                        child: Text(tr(AppSettings.allPieceThemes[i].name)),
                       ),
                   ],
                   onChanged: (v) {
@@ -105,14 +134,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   },
                 ),
                 const Divider(height: 32),
-                const Text(
-                  'اسمك في المباريات',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                Text(
+                  tr('اسمك في المباريات'),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'اسم مستخدمك في Chess.com أو Lichess. يُستخدم لمعرفة أي '
-                  'لاعب هو أنت عند استخراج التمارين من أخطائك.',
+                  tr(
+                    'اسم مستخدمك في Chess.com أو Lichess. يُستخدم لمعرفة أي '
+                    'لاعب هو أنت عند استخراج التمارين من أخطائك.',
+                  ),
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey.shade600,
@@ -122,9 +153,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 TextField(
                   controller: _nameCtrl,
                   textDirection: TextDirection.ltr,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'اسم المستخدم',
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    labelText: tr('اسم المستخدم'),
                   ),
                   onChanged: _s.setPlayerName,
                 ),
@@ -137,7 +168,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const Icon(Icons.privacy_tip_outlined),
-                      title: const Text('خيارات الخصوصية'),
+                      title: Text(tr('خيارات الخصوصية')),
                       onTap: AdsService.instance.showPrivacyOptions,
                     );
                   },
@@ -145,7 +176,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.info_outline),
-                  title: const Text('حول التطبيق والتراخيص'),
+                  title: Text(tr('حول التطبيق والتراخيص')),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => const AboutScreen(),

@@ -46,7 +46,7 @@ extension _AnalysisStageViews on _GameAnalysisScreenState {
 
         return Column(
           children: [
-            _buildStageTopBar('مراجعة المباراة'),
+            _buildStageTopBar(tr('مراجعة المباراة')),
             const AdBanner(),
             const Spacer(),
             SizedBox(
@@ -67,9 +67,9 @@ extension _AnalysisStageViews on _GameAnalysisScreenState {
             ),
             const SizedBox(height: 12),
             Text(
-              'جارٍ تحليل المباراة... '
-              '$_analyzedCount من ${_fens.length}'
-              ' (${(_progress * 100).round()}%)',
+              tr('جارٍ تحليل المباراة... '
+              '{analyzedCount} من {length}'
+              ' ({v}%)', {'analyzedCount': _analyzedCount, 'length': _fens.length, 'v': (_progress * 100).round()}),
               style: const TextStyle(
                 color: Colors.white70,
                 fontSize: 14,
@@ -77,7 +77,7 @@ extension _AnalysisStageViews on _GameAnalysisScreenState {
             ),
             TextButton(
               onPressed: _cancelAnalysis,
-              child: const Text('إلغاء التحليل'),
+              child: const TrText('إلغاء التحليل'),
             ),
             const Spacer(),
           ],
@@ -197,7 +197,7 @@ extension _AnalysisStageViews on _GameAnalysisScreenState {
 
     return Column(
       children: [
-        _buildStageTopBar('مراجعة المباراة'),
+        _buildStageTopBar(tr('مراجعة المباراة')),
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
@@ -241,7 +241,7 @@ extension _AnalysisStageViews on _GameAnalysisScreenState {
 
                 // ---------------- اللاعبان ----------------
                 row(
-                  label: labelText('اللاعبَين'),
+                  label: labelText(tr('اللاعبَين')),
                   black: cell(
                     playerHead(
                       name: _blackName,
@@ -262,7 +262,7 @@ extension _AnalysisStageViews on _GameAnalysisScreenState {
 
                 // ---------------- الدقة ----------------
                 row(
-                  label: labelText('الدقة'),
+                  label: labelText(tr('الدقة')),
                   black: cell(accBox(accB, blackHigher)),
                   mid: const SizedBox(),
                   white: cell(accBox(accW, whiteHigher)),
@@ -305,9 +305,9 @@ extension _AnalysisStageViews on _GameAnalysisScreenState {
                   Padding(
                     padding: const EdgeInsets.only(top: 12),
                     child: Text(
-                      'تم إلغاء التحليل عند النقلة $_analyzedCount'
-                      ' من ${_fens.length}، فالإحصائيات تخص النقلات'
-                      ' المحلَّلة فقط.',
+                      tr('تم إلغاء التحليل عند النقلة {analyzedCount}'
+                      ' من {length}، فالإحصائيات تخص النقلات'
+                      ' المحلَّلة فقط.', {'analyzedCount': _analyzedCount, 'length': _fens.length}),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.orange.shade300,
@@ -334,7 +334,7 @@ extension _AnalysisStageViews on _GameAnalysisScreenState {
                 width: double.infinity,
                 height: 60,
                 child: Center(
-                  child: Text(
+                  child: TrText(
                     'متابعة المراجعة',
                     style: TextStyle(
                       color: Colors.white,

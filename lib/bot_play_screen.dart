@@ -9,6 +9,7 @@ import 'board_options.dart';
 import 'board_input.dart';
 import 'engine_service.dart';
 import 'game_analysis_screen.dart';
+import 'l10n.dart';
 import 'models.dart';
 import 'sound_service.dart';
 import 'uci_utils.dart';
@@ -227,7 +228,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
     if (!ok) {
       setState(() {
         _starting = false;
-        _notice = 'تعذّر تشغيل Stockfish على هذا الجهاز.';
+        _notice = tr('تعذّر تشغيل Stockfish على هذا الجهاز.');
       });
 
       return;
@@ -262,7 +263,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
     return showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('اختر قطعة الترقية'),
+        title: const TrText('اختر قطعة الترقية'),
         content: Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -275,7 +276,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
             }.entries)
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, e.key),
-                child: Text(e.value),
+                child: Text(tr(e.value)),
               ),
           ],
         ),
@@ -373,7 +374,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
 
       if (mounted) {
         setState(() {
-          _notice = 'تعذّر الحصول على نقلة من المحرك؛ لُعبت نقلة عشوائية.';
+          _notice = tr('تعذّر الحصول على نقلة من المحرك؛ لُعبت نقلة عشوائية.');
         });
       }
     }
@@ -409,13 +410,13 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
         final whiteWins = _turn == 'b';
 
         res = whiteWins ? '1-0' : '0-1';
-        text = 'كش مات — فاز ${whiteWins ? 'الأبيض' : 'الأسود'}';
+        text = tr('كش مات — فاز {v}', {'v': whiteWins ? tr('الأبيض') : tr('الأسود')});
       } else if (c.in_stalemate) {
         res = '1/2-1/2';
-        text = 'تعادل (ستاليمايت)';
+        text = tr('تعادل (ستاليمايت)');
       } else if (c.in_draw) {
         res = '1/2-1/2';
-        text = 'تعادل';
+        text = tr('تعادل');
       }
     } catch (_) {}
 
@@ -436,7 +437,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
 
     setState(() {
       _result = whiteWins ? '1-0' : '0-1';
-      _resultText = 'استسلمت — فاز الروبوت (${_level.name})';
+      _resultText = tr('استسلمت — فاز الروبوت ({name})', {'name': tr(_level.name)});
     });
 
     _sound.playGameOver();
@@ -448,15 +449,15 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
   // تحليل المباراة
   // ------------------------------------------------------------
 
-  String get _botLabel => 'روبوت ${_level.name}';
+  String get _botLabel => tr('روبوت {name}', {'name': tr(_level.name)});
 
   String _buildPgn() {
-    final white = _userColor == 'w' ? 'أنت' : _botLabel;
-    final black = _userColor == 'w' ? _botLabel : 'أنت';
+    final white = _userColor == 'w' ? tr('أنت') : _botLabel;
+    final black = _userColor == 'w' ? _botLabel : tr('أنت');
 
     final b = StringBuffer()
-      ..writeln('[Event "Chess2 vs Bot"]')
-      ..writeln('[Site "Chess2"]')
+      ..writeln('[Event "Golden Chess vs Bot"]')
+      ..writeln('[Site "Golden Chess"]')
       ..writeln('[White "$white"]')
       ..writeln('[Black "$black"]')
       ..writeln('[Result "${_result ?? '*'}"]')
@@ -492,8 +493,8 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
 
     if (!mounted) return;
 
-    final white = _userColor == 'w' ? 'أنت' : _botLabel;
-    final black = _userColor == 'w' ? _botLabel : 'أنت';
+    final white = _userColor == 'w' ? tr('أنت') : _botLabel;
+    final black = _userColor == 'w' ? _botLabel : tr('أنت');
 
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -501,7 +502,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
           pgn: _buildPgn(),
           whiteLabel: white,
           blackLabel: black,
-          sourceLabel: 'ضد روبوت',
+          sourceLabel: tr('ضد روبوت'),
         ),
       ),
     );
@@ -520,7 +521,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('العب ضد روبوت'),
+        title: const TrText('العب ضد روبوت'),
         actions: const [BoardOptionsButton()],
       ),
       body: SafeArea(
@@ -548,7 +549,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          const TrText(
             'اختر الروبوت',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
@@ -562,7 +563,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
             const SizedBox(height: 8),
           ],
           const SizedBox(height: 8),
-          const Text(
+          const TrText(
             'ألعب بالقطع',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
@@ -571,17 +572,17 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
             spacing: 8,
             children: [
               ChoiceChip(
-                label: const Text('الأبيض'),
+                label: const TrText('الأبيض'),
                 selected: _colorChoice == 'w',
                 onSelected: (_) => setState(() => _colorChoice = 'w'),
               ),
               ChoiceChip(
-                label: const Text('الأسود'),
+                label: const TrText('الأسود'),
                 selected: _colorChoice == 'b',
                 onSelected: (_) => setState(() => _colorChoice = 'b'),
               ),
               ChoiceChip(
-                label: const Text('عشوائي'),
+                label: const TrText('عشوائي'),
                 selected: _colorChoice == 'r',
                 onSelected: (_) => setState(() => _colorChoice = 'r'),
               ),
@@ -604,7 +605,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.play_arrow_rounded),
-              label: Text(_starting ? 'جارٍ تشغيل المحرك...' : 'ابدأ'),
+              label: Text(_starting ? tr('جارٍ تشغيل المحرك...') : tr('ابدأ')),
             ),
           ),
         ],
@@ -653,7 +654,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              isUser ? 'أنت' : '$_botLabel (${_level.rating})',
+              isUser ? tr('أنت') : '$_botLabel (${tr(_level.rating)})',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
@@ -676,10 +677,10 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
     final myTurn = _result == null && !_thinking && _turn == _userColor;
 
     final status = _result != null
-        ? (_resultText ?? 'انتهت المباراة')
+        ? (_resultText ?? tr('انتهت المباراة'))
         : (_thinking
-            ? '${_level.name} يفكّر...'
-            : (myTurn ? 'دورك' : 'دور الروبوت'));
+            ? tr('{name} يفكّر...', {'name': tr(_level.name)})
+            : (myTurn ? tr('دورك') : tr('دور الروبوت')));
 
     final showNotice = _notice != null && _result == null;
 
@@ -785,24 +786,24 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
         children: [
           _actionButton(
             icon: Icons.flag_outlined,
-            label: 'استسلام',
+            label: tr('استسلام'),
             onTap: (_result != null || _thinking) ? null : _resign,
           ),
           _actionButton(
             icon: Icons.flip_rounded,
-            label: 'قلب الرقعة',
+            label: tr('قلب الرقعة'),
             onTap: _state.flipBoard,
           ),
           _actionButton(
             icon: Icons.query_stats_rounded,
-            label: 'تحليل',
+            label: tr('تحليل'),
             onTap: (_thinking || _state.history.isEmpty)
                 ? null
                 : _openAnalysis,
           ),
           _actionButton(
             icon: Icons.refresh_rounded,
-            label: 'مباراة جديدة',
+            label: tr('مباراة جديدة'),
             onTap: _thinking
                 ? null
                 : () => setState(() {
@@ -921,7 +922,7 @@ class _BotCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          level.name,
+                          tr(level.name),
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -929,7 +930,7 @@ class _BotCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          level.rating,
+                          tr(level.rating),
                           style: TextStyle(
                             fontSize: 12,
                             color: level.color,
@@ -940,7 +941,7 @@ class _BotCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      level.description,
+                      tr(level.description),
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,

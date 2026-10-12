@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'app_ui.dart';
 import 'game_source.dart';
 import 'game_source_screen.dart';
+import 'l10n.dart';
 import 'pgn_import_screen.dart';
 
 /// شاشة «حلل مباراة»: اختيار مصدر المباراة
@@ -83,7 +84,7 @@ class AnalyzeGameScreen extends StatelessWidget {
                           left: 0,
                           right: 0,
                           child: Text(
-                            'اختر مصدر المباراة لبدء التحليل',
+                            tr('اختر مصدر المباراة لبدء التحليل'),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: const Color(0xFFA9AEBB),
@@ -110,7 +111,7 @@ class AnalyzeGameScreen extends StatelessWidget {
                                 width: cardW,
                                 icon: _chessComIcon,
                                 title: 'Chess.com',
-                                subtitle: 'استيراد من موقع\nChess.com',
+                                subtitle: tr('استيراد من موقع\nChess.com'),
                                 accent: const Color(0xFF63C13F),
                                 border: const Color(0x8C4FB02E),
                                 colors: const [
@@ -127,7 +128,7 @@ class AnalyzeGameScreen extends StatelessWidget {
                                 width: cardW,
                                 icon: _lichessIcon,
                                 title: 'Lichess',
-                                subtitle: 'استيراد من موقع\nLichess',
+                                subtitle: tr('استيراد من موقع\nLichess'),
                                 accent: const Color(0xFFE5A93B),
                                 border: const Color(0x66E0A33A),
                                 colors: const [
@@ -143,8 +144,8 @@ class AnalyzeGameScreen extends StatelessWidget {
                               _SourceCard(
                                 width: cardW,
                                 icon: _pgnIcon,
-                                title: 'لصق PGN',
-                                subtitle: 'الصق نص PGN مباشرة',
+                                title: tr('لصق PGN'),
+                                subtitle: tr('الصق نص PGN مباشرة'),
                                 accent: const Color(0xFF3D6BFF),
                                 border: const Color(0x803F5BFF),
                                 colors: const [
@@ -188,11 +189,11 @@ class AnalyzeGameScreen extends StatelessWidget {
       TextSpan(
         children: [
           TextSpan(
-            text: 'حلل ',
+            text: tr('حلل '),
             style: style.copyWith(color: Colors.white),
           ),
           TextSpan(
-            text: 'مباراة',
+            text: tr('مباراة'),
             style: style.copyWith(color: _gold),
           ),
         ],

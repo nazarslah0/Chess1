@@ -8,6 +8,7 @@ import 'app_ui.dart';
 import 'board_input.dart';
 import 'board_options.dart';
 import 'board_widget.dart' show BoardLabel;
+import 'l10n.dart';
 import 'lichess_puzzles.dart';
 import 'models.dart';
 import 'sound_service.dart';
@@ -202,7 +203,7 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
   List<_LevelInfo> _infos() => <_LevelInfo>[
         for (var i = 0; i < _levels.length; i++)
           _LevelInfo(
-            name: _kLevelNames[i],
+            name: tr(_kLevelNames[i]),
             range: _ranges[i],
             done: _doneIn(_levels[i], _solved),
             need: _needFor(_levels[i]),
@@ -216,8 +217,8 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
     if (!_unlocked(i)) {
       showAppSnack(
         context,
-        'أنهِ ${_needFor(_levels[i - 1])} ألغاز من مستوى '
-        '${_kLevelNames[i - 1]} لفتح هذا المستوى',
+        tr('أنهِ {v} ألغاز من مستوى '
+        '{v2} لفتح هذا المستوى', {'v': _needFor(_levels[i - 1]), 'v2': tr(_kLevelNames[i - 1])}),
       );
 
       return;
@@ -266,14 +267,14 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              const Text(
+              const TrText(
                 'مسار المستويات',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 4),
               Text(
-                'أنهِ $_kNeedPerLevel ألغاز في كل مستوى لفتح الذي يليه',
+                tr('أنهِ {kNeedPerLevel} ألغاز في كل مستوى لفتح الذي يليه', {'kNeedPerLevel': _kNeedPerLevel}),
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.white54, fontSize: 12),
               ),
@@ -288,7 +289,7 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
                     info: infos[i],
                     current: i == _level,
                     accent: _accent,
-                    previousName: i > 0 ? _kLevelNames[i - 1] : '',
+                    previousName: i > 0 ? tr(_kLevelNames[i - 1]) : '',
                     onTap: () {
                       Navigator.of(ctx).pop();
                       _selectLevel(i);
@@ -369,12 +370,12 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
     return showDialog<String>(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: const Text('الترقية إلى'),
+        title: const TrText('الترقية إلى'),
         children: [
           for (final o in options)
             SimpleDialogOption(
               onPressed: () => Navigator.of(ctx).pop(o.key),
-              child: Text(o.value),
+              child: Text(tr(o.value)),
             ),
         ],
       ),
@@ -521,7 +522,7 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
       setState(() {
         _hintUci = null;
         _busy = true;
-        _feedback = 'صحيح ✅ تابع';
+        _feedback = tr('صحيح ✅ تابع');
         _feedbackColor = AppColors.success;
       });
 
@@ -543,7 +544,7 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
     // نقلة خاطئة: نُظهر الرسالة ثم نعيد الوضعية قبل النقلة الخاطئة.
     setState(() {
       _busy = true;
-      _feedback = 'ليست النقلة الصحيحة — حاول مرة أخرى';
+      _feedback = tr('ليست النقلة الصحيحة — حاول مرة أخرى');
       _feedbackColor = AppColors.error;
     });
 
@@ -567,15 +568,15 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
     final need = _needFor(_items);
 
     var message =
-        _mateMode(p) ? 'كش مات! أحسنت ✅' : 'أحسنت! حللت اللغز ✅';
+        _mateMode(p) ? tr('كش مات! أحسنت ✅') : tr('أحسنت! حللت اللغز ✅');
 
     if (counted && !_solved.contains(p.id)) {
       final after = before + 1;
 
       if (before < need && after >= need) {
         message = _level < _levels.length - 1
-            ? 'أحسنت! فتحت مستوى ${_kLevelNames[_level + 1]} 🎉'
-            : 'أكملت المسار كله! 👑';
+            ? tr('أحسنت! فتحت مستوى {v} 🎉', {'v': tr(_kLevelNames[_level + 1])})
+            : tr('أكملت المسار كله! 👑');
       }
     }
 
@@ -601,8 +602,8 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
       final gen = _gen;
 
       setState(() {
-        _feedback = 'أنهيت مستوى ${_kLevelNames[_level]} 🎉 '
-            'ننتقل إلى ${_kLevelNames[_level + 1]}…';
+        _feedback = tr('أنهيت مستوى {v} 🎉 '
+            'ننتقل إلى {v2}…', {'v': tr(_kLevelNames[_level]), 'v2': tr(_kLevelNames[_level + 1])});
       });
 
       await Future<void>.delayed(const Duration(milliseconds: 1600));
@@ -697,7 +698,7 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
           Align(
             alignment: AlignmentDirectional.centerStart,
             child: IconButton(
-              tooltip: 'رجوع',
+              tooltip: tr('رجوع'),
               icon: const Icon(Icons.arrow_back_rounded),
               onPressed: () => Navigator.of(context).maybePop(),
             ),
@@ -706,19 +707,19 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
         ],
       );
 
-  Widget _buildEmpty() => const CenteredMessage('تعذّر تحميل الألغاز.');
+  Widget _buildEmpty() => CenteredMessage(tr('تعذّر تحميل الألغاز.'));
 
   Widget _buildPuzzle(LichessPuzzle p) {
-    final sideName = p.solverSide == 'w' ? 'الأبيض' : 'الأسود';
+    final sideName = p.solverSide == 'w' ? tr('الأبيض') : tr('الأسود');
 
     final String goal;
 
     if (_mateMode(p)) {
-      goal = 'أنهِ المباراة بكش مات';
+      goal = tr('أنهِ المباراة بكش مات');
     } else if (_brilliantMode(p)) {
-      goal = 'اعثر على النقلة البريليانت';
+      goal = tr('اعثر على النقلة البريليانت');
     } else {
-      goal = 'اعثر على أفضل نقلة';
+      goal = tr('اعثر على أفضل نقلة');
     }
 
     final arrow = parseUci(_hintUci);
@@ -726,7 +727,7 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
     final line = _solutionText;
 
     return PuzzleLayout(
-      title: 'الدور على $sideName — $goal',
+      title: tr('الدور على {sideName} — {goal}', {'sideName': sideName, 'goal': goal}),
       header: _LevelHeader(
         category: widget.category,
         accent: _accent,
@@ -752,7 +753,7 @@ class _LichessPuzzlesScreenState extends State<LichessPuzzlesScreen> {
           ? SolutionCard(
               children: [
                 Text(
-                  'الحل: $line',
+                  tr('الحل: {line}', {'line': line}),
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
@@ -807,7 +808,7 @@ class _BtnLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => FittedBox(
         fit: BoxFit.scaleDown,
-        child: Text(text, maxLines: 1),
+        child: Text(tr(text), maxLines: 1),
       );
 }
 
@@ -899,9 +900,9 @@ class _LevelHeader extends StatelessWidget {
     final String hint;
 
     if (last) {
-      hint = cur.complete ? 'أكملت المسار 👑' : 'لإكمال المسار';
+      hint = cur.complete ? tr('أكملت المسار 👑') : tr('لإكمال المسار');
     } else {
-      hint = cur.complete ? 'المستوى التالي مفتوح ✓' : 'للمستوى التالي';
+      hint = cur.complete ? tr('المستوى التالي مفتوح ✓') : tr('للمستوى التالي');
     }
 
     const titleStyle = TextStyle(
@@ -917,7 +918,7 @@ class _LevelHeader extends StatelessWidget {
         Row(
           children: [
             IconButton(
-              tooltip: 'رجوع',
+              tooltip: tr('رجوع'),
               icon: const Icon(Icons.arrow_back_rounded),
               onPressed: () => Navigator.of(context).maybePop(),
             ),
@@ -930,7 +931,7 @@ class _LevelHeader extends StatelessWidget {
                       style: titleStyle.copyWith(color: accent),
                     ),
                     TextSpan(
-                      text: 'ألغاز ',
+                      text: tr('ألغاز '),
                       style: titleStyle.copyWith(color: Colors.white),
                     ),
                     TextSpan(
@@ -981,7 +982,7 @@ class _LevelHeader extends StatelessWidget {
                             ),
                             if (cur.range.isNotEmpty)
                               Text(
-                                'تقييم ${cur.range}',
+                                tr('تقييم {range}', {'range': cur.range}),
                                 style: const TextStyle(
                                   color: Colors.white54,
                                   fontSize: 12,
@@ -1171,8 +1172,8 @@ class _LevelRow extends StatelessWidget {
     }
 
     final subtitle = locked
-        ? 'أنهِ ${info.need} ألغاز من $previousName'
-        : (info.range.isEmpty ? '' : 'تقييم ${info.range}');
+        ? tr('أنهِ {need} ألغاز من {previousName}', {'need': info.need, 'previousName': previousName})
+        : (info.range.isEmpty ? '' : tr('تقييم {range}', {'range': info.range}));
 
     return Opacity(
       opacity: locked ? 0.5 : 1,

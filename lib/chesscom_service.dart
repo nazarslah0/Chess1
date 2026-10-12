@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'l10n.dart';
 
 /// خطأ مفهوم للمستخدم عند التعامل مع Chess.com.
 class ChessComException implements Exception {
@@ -81,13 +82,9 @@ class ChessComService {
           .get(Uri.parse(url), headers: _headers)
           .timeout(_timeout);
     } on TimeoutException {
-      throw const ChessComException(
-        'انتهت مهلة الاتصال بـ Chess.com. حاول مرة أخرى.',
-      );
+      throw ChessComException(tr('انتهت مهلة الاتصال بـ Chess.com. حاول مرة أخرى.'));
     } catch (_) {
-      throw const ChessComException(
-        'تعذر الاتصال بـ Chess.com. تحقق من الإنترنت.',
-      );
+      throw ChessComException(tr('تعذر الاتصال بـ Chess.com. تحقق من الإنترنت.'));
     }
   }
 
@@ -97,18 +94,16 @@ class ChessComService {
     final res = await _get('$_base/player/$u');
 
     if (res.statusCode == 404) {
-      throw const ChessComException('اسم المستخدم غير موجود على Chess.com.');
+      throw ChessComException(tr('اسم المستخدم غير موجود على Chess.com.'));
     }
 
     if (res.statusCode == 429) {
-      throw const ChessComException(
-        'عدد الطلبات كبير على Chess.com. انتظر قليلًا ثم أعد المحاولة.',
-      );
+      throw ChessComException(tr('عدد الطلبات كبير على Chess.com. انتظر قليلًا ثم أعد المحاولة.'));
     }
 
     if (res.statusCode != 200) {
       throw ChessComException(
-        'تعذر التحقق من الحساب (رمز ${res.statusCode}).',
+        tr('تعذر التحقق من الحساب (رمز {statusCode}).', {'statusCode': res.statusCode}),
       );
     }
   }
@@ -124,7 +119,7 @@ class ChessComService {
 
     if (archivesRes.statusCode != 200) {
       throw ChessComException(
-        'تعذر جلب أرشيف المباريات (رمز ${archivesRes.statusCode}).',
+        tr('تعذر جلب أرشيف المباريات (رمز {statusCode}).', {'statusCode': archivesRes.statusCode}),
       );
     }
 

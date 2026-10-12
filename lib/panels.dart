@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'l10n.dart';
 import 'models.dart';
 import 'piece_painter.dart';
 
@@ -119,15 +120,15 @@ class SetupPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            const TrText(
               'إعداد الوضعية',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             Text(
               eraseMode
-                  ? 'وضع المسح: اضغط على مربع لإزالة القطعة.'
-                  : 'اختر قطعة ثم اضغط على المربع لوضعها.',
+                  ? tr('وضع المسح: اضغط على مربع لإزالة القطعة.')
+                  : tr('اختر قطعة ثم اضغط على المربع لوضعها.'),
               style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
             ),
             const SizedBox(height: 10),
@@ -140,12 +141,12 @@ class SetupPanel extends StatelessWidget {
               child: FilterChip(
                 selected: eraseMode,
                 avatar: const Icon(Icons.backspace_outlined, size: 18),
-                label: const Text('ممحاة'),
+                label: const TrText('ممحاة'),
                 onSelected: (_) => onToggleErase(),
               ),
             ),
             const Divider(height: 24),
-            const Text(
+            const TrText(
               'الدور',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
@@ -154,7 +155,7 @@ class SetupPanel extends StatelessWidget {
               spacing: 8,
               children: [
                 ChoiceChip(
-                  label: const Text('دور الأبيض'),
+                  label: const TrText('دور الأبيض'),
                   selected: state.setupTurn == 'w',
                   onSelected: (_) {
                     state.setupTurn = 'w';
@@ -163,7 +164,7 @@ class SetupPanel extends StatelessWidget {
                   },
                 ),
                 ChoiceChip(
-                  label: const Text('دور الأسود'),
+                  label: const TrText('دور الأسود'),
                   selected: state.setupTurn == 'b',
                   onSelected: (_) {
                     state.setupTurn = 'b';
@@ -174,7 +175,7 @@ class SetupPanel extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            const Text(
+            const TrText(
               'حقوق التبييت',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
@@ -183,10 +184,10 @@ class SetupPanel extends StatelessWidget {
               spacing: 8,
               runSpacing: 4,
               children: [
-                _castleChip('O-O أبيض', state.ck, (v) => state.ck = v),
-                _castleChip('O-O-O أبيض', state.cq, (v) => state.cq = v),
-                _castleChip('O-O أسود', state.ckb, (v) => state.ckb = v),
-                _castleChip('O-O-O أسود', state.cqb, (v) => state.cqb = v),
+                _castleChip(tr('O-O أبيض'), state.ck, (v) => state.ck = v),
+                _castleChip(tr('O-O-O أبيض'), state.cq, (v) => state.cq = v),
+                _castleChip(tr('O-O أسود'), state.ckb, (v) => state.ckb = v),
+                _castleChip(tr('O-O-O أسود'), state.cqb, (v) => state.cqb = v),
               ],
             ),
             const SizedBox(height: 10),
@@ -291,7 +292,7 @@ class AnalysisPanel extends StatelessWidget {
               children: [
                 SizedBox(
                   width: 92,
-                  child: Text('الخطوط: $multiPv'),
+                  child: Text(tr('الخطوط: {multiPv}', {'multiPv': multiPv})),
                 ),
                 Expanded(
                   child: Slider(
@@ -314,14 +315,14 @@ class AnalysisPanel extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: engineReady && !analyzing ? onAnalyze : null,
                     icon: const Icon(Icons.analytics_rounded),
-                    label: const Text('تحليل الوضعية'),
+                    label: const TrText('تحليل الوضعية'),
                   ),
                 ),
                 const SizedBox(width: 8),
                 OutlinedButton.icon(
                   onPressed: analyzing ? onStop : null,
                   icon: const Icon(Icons.stop_rounded),
-                  label: const Text('إيقاف'),
+                  label: const TrText('إيقاف'),
                 ),
               ],
             ),
@@ -380,7 +381,7 @@ class AnalysisPanel extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'خط $index • عمق ${line.depth}',
+                      tr('خط {index} • عمق {depth}', {'index': index, 'depth': line.depth}),
                       style: TextStyle(
                         color: Colors.grey.shade600,
                         fontSize: 11,
@@ -417,13 +418,13 @@ class MoveListPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            const TrText(
               'سجل النقلات',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             if (history.isEmpty)
-              Text(
+              TrText(
                 'لا توجد نقلات بعد.',
                 style: TextStyle(color: Colors.grey.shade600),
               )

@@ -22,7 +22,7 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
             child: Center(
               child: Text(
                 widget.sourceLabel.isEmpty
-                    ? 'تحليل المباراة'
+                    ? tr('تحليل المباراة')
                     : widget.sourceLabel,
                 style: const TextStyle(
                   color: Colors.white,
@@ -352,7 +352,7 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const Text(
+                const TrText(
                   'الدقة',
                   style: TextStyle(
                     color: Colors.white54,
@@ -379,9 +379,9 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
               children: [
                 Expanded(
                   child: Text(
-                    'جارٍ تحليل المباراة... '
-                    '$_analyzedCount من ${_fens.length}'
-                    ' (${(_progress * 100).round()}%)',
+                    tr('جارٍ تحليل المباراة... '
+                    '{analyzedCount} من {length}'
+                    ' ({v}%)', {'analyzedCount': _analyzedCount, 'length': _fens.length, 'v': (_progress * 100).round()}),
                     style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 12,
@@ -390,7 +390,7 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
                 ),
                 TextButton(
                   onPressed: _cancelAnalysis,
-                  child: const Text('إلغاء'),
+                  child: const TrText('إلغاء'),
                 ),
               ],
             ),
@@ -405,9 +405,9 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(
-                'تم إلغاء التحليل عند النقلة $_analyzedCount'
-                ' من ${_fens.length}. النتائج قبل هذه النقطة'
-                ' محفوظة، والباقي غير محلَّل.',
+                tr('تم إلغاء التحليل عند النقلة {analyzedCount}'
+                ' من {length}. النتائج قبل هذه النقطة'
+                ' محفوظة، والباقي غير محلَّل.', {'analyzedCount': _analyzedCount, 'length': _fens.length}),
                 style: TextStyle(
                   color: Colors.orange.shade300,
                   fontSize: 12,
@@ -426,7 +426,7 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
                   ),
                   const SizedBox(width: 6),
                   Expanded(
-                    child: Text(
+                    child: TrText(
                       'نتائج محفوظة من تحليل سابق لهذه المباراة.',
                       style: TextStyle(
                         fontSize: 11,
@@ -458,7 +458,7 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
           Expanded(
             child: _BarButton(
               icon: Icons.format_list_bulleted_rounded,
-              label: 'الخيارات',
+              label: tr('الخيارات'),
               onTap: _openOptions,
             ),
           ),
@@ -487,7 +487,7 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
           Expanded(
             child: _BarButton(
               icon: Icons.chevron_left_rounded,
-              label: 'رجوع',
+              label: tr('رجوع'),
               enabled: !atStart,
               repeat: true,
               onTap: () => _goTo(_currentIndex - 1),
@@ -496,7 +496,7 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
           Expanded(
             child: _BarButton(
               icon: Icons.chevron_right_rounded,
-              label: 'تقدّم',
+              label: tr('تقدّم'),
               enabled: !atEnd,
               repeat: true,
               onTap: () => _goTo(_currentIndex + 1),
@@ -525,7 +525,7 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
                     const SizedBox(height: 8),
                     ListTile(
                       leading: const Icon(Icons.swap_vert_rounded),
-                      title: const Text('قلب الرقعة'),
+                      title: const TrText('قلب الرقعة'),
                       onTap: () {
                         Navigator.pop(ctx);
                         _update(() {
@@ -536,7 +536,7 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
                     SwitchListTile(
                       secondary:
                           const Icon(Icons.arrow_right_alt_rounded),
-                      title: const Text('إظهار الأسهم'),
+                      title: const TrText('إظهار الأسهم'),
                       value: _showArrows,
                       onChanged: (v) {
                         setSheet(() {});
@@ -547,7 +547,7 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
                     ),
                     SwitchListTile(
                       secondary: const Icon(Icons.stars_rounded),
-                      title: const Text('إظهار علامات النقلات'),
+                      title: const TrText('إظهار علامات النقلات'),
                       value: _showBadges,
                       onChanged: (v) {
                         setSheet(() {});
@@ -558,7 +558,7 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
                     ),
                     SwitchListTile(
                       secondary: const Icon(Icons.align_vertical_center),
-                      title: const Text('إظهار شريط التقييم'),
+                      title: const TrText('إظهار شريط التقييم'),
                       value: _showEval,
                       onChanged: (v) {
                         setSheet(() {});
@@ -569,7 +569,7 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
                     ),
                     SwitchListTile(
                       secondary: const Icon(Icons.grid_on_rounded),
-                      title: const Text('إظهار إحداثيات الرقعة'),
+                      title: const TrText('إظهار إحداثيات الرقعة'),
                       value: _showCoords,
                       onChanged: (v) {
                         setSheet(() {});
@@ -580,7 +580,7 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
                     ),
                     ListTile(
                       leading: const Icon(Icons.palette_outlined),
-                      title: const Text('ثيم القطع والرقعة'),
+                      title: const TrText('ثيم القطع والرقعة'),
                       onTap: () {
                         Navigator.pop(ctx);
                         showBoardThemeSheet(context);
@@ -588,19 +588,19 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
                     ),
                     ListTile(
                       leading: const Icon(Icons.copy_rounded),
-                      title: const Text('نسخ PGN'),
+                      title: const TrText('نسخ PGN'),
                       onTap: () {
                         Clipboard.setData(
                           ClipboardData(text: widget.pgn),
                         );
                         Navigator.pop(ctx);
-                        showAppSnack(context, 'تم نسخ PGN');
+                        showAppSnack(context, tr('تم نسخ PGN'));
                       },
                     ),
                     if (_analyzing)
                       ListTile(
                         leading: const Icon(Icons.cancel_outlined),
-                        title: const Text('إلغاء التحليل'),
+                        title: const TrText('إلغاء التحليل'),
                         onTap: () {
                           Navigator.pop(ctx);
                           _cancelAnalysis();
@@ -660,11 +660,11 @@ extension _AnalysisReviewView on _GameAnalysisScreenState {
                       unselectedLabelColor: Colors.white70,
                       indicatorColor: _green,
                       tabs: const [
-                        Tab(text: 'ملخص'),
-                        Tab(text: 'تقرير المباراة'),
-                        Tab(text: 'النقلات'),
-                        Tab(text: 'الأخطاء'),
-                        Tab(text: 'اللحظات الحرجة'),
+                        Tab(child: TrText('ملخص')),
+                        Tab(child: TrText('تقرير المباراة')),
+                        Tab(child: TrText('النقلات')),
+                        Tab(child: TrText('الأخطاء')),
+                        Tab(child: TrText('اللحظات الحرجة')),
                       ],
                     ),
                     Expanded(

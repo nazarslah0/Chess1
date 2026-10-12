@@ -237,9 +237,9 @@ extension _AnalysisStats on _GameAnalysisScreenState {
     final parts = <String>[];
 
     parts.add(
-      'دقة $_whiteName ${(acc['w'] ?? 0).toStringAsFixed(0)}%'
-      ' مقابل دقة $_blackName'
-      ' ${(acc['b'] ?? 0).toStringAsFixed(0)}%.',
+      tr('دقة {whiteName} {v}%'
+      ' مقابل دقة {blackName}'
+      ' {v2}%.', {'whiteName': _whiteName, 'v': (acc['w'] ?? 0).toStringAsFixed(0), 'blackName': _blackName, 'v2': (acc['b'] ?? 0).toStringAsFixed(0)}),
     );
 
     if (worst != null) {
@@ -251,11 +251,11 @@ extension _AnalysisStats on _GameAnalysisScreenState {
           (_lossAt(worst) / 100).toStringAsFixed(1);
 
       parts.add(
-        'أكبر خطأ في المباراة كان من $mover عند النقلة'
-        ' $moveNumber'
-        '${ply.color == 'w' ? '.' : '...'} '
-        '${ply.san}${_sanSuffix(_qualities[worst])}'
-        ' (خسارة تقييم $lossPawns بيدق تقريبًا).',
+        tr('أكبر خطأ في المباراة كان من {mover} عند النقلة'
+        ' {moveNumber}'
+        '{v} '
+        '{san}{v2}'
+        ' (خسارة تقييم {lossPawns} بيدق تقريبًا).', {'mover': mover, 'moveNumber': moveNumber, 'v': ply.color == 'w' ? '.' : '...', 'san': ply.san, 'v2': _sanSuffix(_qualities[worst]), 'lossPawns': lossPawns}),
       );
     }
 
@@ -263,8 +263,8 @@ extension _AnalysisStats on _GameAnalysisScreenState {
 
     if (missed.isNotEmpty) {
       parts.add(
-        'هناك ${missed.length} فرصة/فرص لم تُستغل بالكامل'
-        ' خلال المباراة.',
+        tr('هناك {length} فرصة/فرص لم تُستغل بالكامل'
+        ' خلال المباراة.', {'length': missed.length}),
       );
     }
 

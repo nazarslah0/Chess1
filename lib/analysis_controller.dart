@@ -10,6 +10,7 @@ import 'analysis_rules.dart';
 import 'app_settings.dart';
 import 'engine_service.dart';
 import 'game_review_models.dart';
+import 'l10n.dart';
 import 'lichess_data_service.dart';
 import 'models.dart';
 import 'pgn_utils.dart';
@@ -158,8 +159,8 @@ class GameAnalysisController extends ChangeNotifier {
   int get analyzedCount => _analyzedCount;
   String get cacheKey => _cacheKey;
 
-  String get whiteName => whiteLabel ?? _headers['White'] ?? 'أبيض';
-  String get blackName => blackLabel ?? _headers['Black'] ?? 'أسود';
+  String get whiteName => whiteLabel ?? _headers['White'] ?? tr('أبيض');
+  String get blackName => blackLabel ?? _headers['Black'] ?? tr('أسود');
 
   void _notify() {
     if (!_disposed) notifyListeners();
@@ -175,7 +176,7 @@ class GameAnalysisController extends ChangeNotifier {
     final plies = parsePgnMoves(pgn);
 
     if (plies == null || plies.isEmpty) {
-      _parseError = 'تعذر قراءة نقلات هذه المباراة (PGN غير مدعوم).';
+      _parseError = tr('تعذر قراءة نقلات هذه المباراة (PGN غير مدعوم).');
       return;
     }
 

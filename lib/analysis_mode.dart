@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import 'ads_service.dart';
 import 'game_analysis_screen.dart';
+import 'l10n.dart';
 import 'menu_card.dart';
 
 /// نوع تحليل المباراة.
@@ -82,7 +83,7 @@ class AnalysisModeScreen extends StatelessWidget {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
+          content: TrText(
             'Deep Analysis يحتاج اتصالًا بالإنترنت (يعتمد على تحليل '
             'Lichess). تحقق من اتصالك وحاول مجددًا.',
           ),
@@ -98,17 +99,17 @@ class AnalysisModeScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Deep Analysis (PRO)'),
-        content: const Text(
+        content: const TrText(
           'شاهد إعلانًا قصيرًا لفتح التحليل العميق لهذه المباراة.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('إلغاء'),
+            child: const TrText('إلغاء'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('شاهد الإعلان'),
+            child: const TrText('شاهد الإعلان'),
           ),
         ],
       ),
@@ -125,7 +126,7 @@ class AnalysisModeScreen extends StatelessWidget {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('أكمل مشاهدة الإعلان لفتح التحليل العميق.'),
+          content: TrText('أكمل مشاهدة الإعلان لفتح التحليل العميق.'),
         ),
       );
     }
@@ -141,7 +142,7 @@ class AnalysisModeScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1E34),
         foregroundColor: Colors.white,
-        title: const Text('تحليل المباراة'),
+        title: const TrText('تحليل المباراة'),
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
           onPressed: () => Navigator.of(context).pop(),
@@ -169,7 +170,7 @@ class AnalysisModeScreen extends StatelessWidget {
                     color: Colors.white38,
                   ),
                   const SizedBox(height: 18),
-                  const Text(
+                  const TrText(
                     'اختر نوع التحليل',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -181,13 +182,13 @@ class AnalysisModeScreen extends StatelessWidget {
                   const SizedBox(height: 26),
                   AppMenuCard(
                     icon: Icons.bolt_rounded,
-                    label: 'تحليل سريع',
-                    subtitle: 'سريع ودقيق لمعظم المباريات',
+                    label: tr('تحليل سريع'),
+                    subtitle: tr('سريع ودقيق لمعظم المباريات'),
                     color: green,
-                    badge: const _Pill(
-                      text: 'موصى به',
-                      background: Color(0x335CB946),
-                      foreground: Color(0xFF8FDB7E),
+                    badge: _Pill(
+                      text: tr('موصى به'),
+                      background: const Color(0x335CB946),
+                      foreground: const Color(0xFF8FDB7E),
                     ),
                     onTap: () => _start(context, AnalysisMode.quick),
                   ),
@@ -195,8 +196,8 @@ class AnalysisModeScreen extends StatelessWidget {
                   AppMenuCard(
                     icon: Icons.biotech_rounded,
                     label: 'Deep Analysis',
-                    subtitle: 'تحليل أعمق وأدق بتقييمات عميقة جاهزة، '
-                        'دون إرهاق جهازك (يحتاج إنترنت)',
+                    subtitle: tr('تحليل أعمق وأدق بتقييمات عميقة جاهزة، '
+                        'دون إرهاق جهازك (يحتاج إنترنت)'),
                     color: amber,
                     badge: const _Pill(
                       text: 'PRO',

@@ -60,7 +60,7 @@ class _EvalGraph extends StatelessWidget {
       return const SizedBox(
         height: 120,
         child: Center(
-          child: Text('لا توجد بيانات كافية للرسم.'),
+          child: TrText('لا توجد بيانات كافية للرسم.'),
         ),
       );
     }

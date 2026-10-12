@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'engine_transport.dart';
+import 'l10n.dart';
 
 /// نتيجة سطر واحد من MultiPV صادر من Stockfish.
 ///
@@ -138,7 +139,7 @@ class EngineService {
     }
 
     if (ready) {
-      onStatus?.call('🟢 Stockfish جاهز');
+      onStatus?.call(tr('🟢 Stockfish جاهز'));
       return;
     }
 
@@ -148,7 +149,7 @@ class EngineService {
 
     _starting = true;
 
-    onStatus?.call('🟡 جاري تشغيل Stockfish 19...');
+    onStatus?.call(tr('🟡 جاري تشغيل Stockfish 19...'));
 
     try {
       await _outputSubscription?.cancel();
@@ -166,7 +167,7 @@ class EngineService {
             completer.completeError(error);
           }
 
-          onStatus?.call('🔴 خطأ في اتصال Stockfish: $error');
+          onStatus?.call(tr('🔴 خطأ في اتصال Stockfish: {error}', {'error': error}));
         },
         onDone: () {
           if (!_disposed) {
@@ -174,7 +175,7 @@ class EngineService {
             analyzing = false;
             _current = null;
 
-            onStatus?.call('🟡 تم إغلاق Stockfish');
+            onStatus?.call(tr('🟡 تم إغلاق Stockfish'));
           }
         },
         cancelOnError: false,
@@ -186,7 +187,7 @@ class EngineService {
         ready = false;
         _starting = false;
 
-        onStatus?.call('🔴 فشل تشغيل Stockfish 19');
+        onStatus?.call(tr('🔴 فشل تشغيل Stockfish 19'));
 
         return;
       }
@@ -202,7 +203,7 @@ class EngineService {
       analyzing = false;
       _starting = false;
 
-      onStatus?.call('🔴 فشل تشغيل Stockfish 19: $e');
+      onStatus?.call(tr('🔴 فشل تشغيل Stockfish 19: {e}', {'e': e}));
     }
   }
 
@@ -218,7 +219,7 @@ class EngineService {
     try {
       await _transport.send(command);
     } catch (e) {
-      onStatus?.call('🔴 فشل إرسال أمر Stockfish: $e');
+      onStatus?.call(tr('🔴 فشل إرسال أمر Stockfish: {e}', {'e': e}));
     }
   }
 
@@ -285,7 +286,7 @@ class EngineService {
   }
 
   void _onUciReady() {
-    onStatus?.call('🟡 Stockfish 19 متصل...');
+    onStatus?.call(tr('🟡 Stockfish 19 متصل...'));
 
     // بعد uciok يجب انتظار readyok قبل إرسال position/go.
     _readyCompleter ??= Completer<void>();
@@ -313,7 +314,7 @@ class EngineService {
       completer.complete();
     }
 
-    onStatus?.call('🟢 Stockfish 19 جاهز');
+    onStatus?.call(tr('🟢 Stockfish 19 جاهز'));
   }
 
   Future<bool> _waitUntilReady({
@@ -358,14 +359,14 @@ class EngineService {
     _current = null;
 
     if (bestMove.isEmpty || bestMove == '(none)') {
-      onStatus?.call('🟡 لا توجد نقلة');
+      onStatus?.call(tr('🟡 لا توجد نقلة'));
       return;
     }
 
     onBestMove?.call(bestMove);
     onBestMoveFor?.call(request, bestMove);
 
-    onStatus?.call('🟢 اكتمل التحليل');
+    onStatus?.call(tr('🟢 اكتمل التحليل'));
   }
 
   // ============================================================
@@ -509,18 +510,18 @@ class EngineService {
     final cleanFen = fen.trim();
 
     if (cleanFen.isEmpty) {
-      onStatus?.call('🔴 FEN فارغ');
+      onStatus?.call(tr('🔴 FEN فارغ'));
 
       return null;
     }
 
     if (!ready) {
-      onStatus?.call('🟡 Stockfish لم يصبح جاهزًا بعد');
+      onStatus?.call(tr('🟡 Stockfish لم يصبح جاهزًا بعد'));
 
       await init();
 
       if (!await _waitUntilReady()) {
-        onStatus?.call('🔴 Stockfish لم يرسل readyok خلال المهلة');
+        onStatus?.call(tr('🔴 Stockfish لم يرسل readyok خلال المهلة'));
 
         return null;
       }
@@ -549,7 +550,7 @@ class EngineService {
       await _send('stop');
     }
 
-    onStatus?.call('🔵 جاري تحليل الوضعية...');
+    onStatus?.call(tr('🔵 جاري تحليل الوضعية...'));
 
     // مهم للوضعيات الخاصة: لعبة UCI جديدة ثم FEN كامل.
     await _send('ucinewgame');
@@ -567,7 +568,7 @@ class EngineService {
       analyzing = false;
       _current = null;
 
-      onStatus?.call('🔴 Stockfish لم يصبح جاهزًا للتحليل');
+      onStatus?.call(tr('🔴 Stockfish لم يصبح جاهزًا للتحليل'));
 
       return null;
     }
@@ -625,7 +626,7 @@ class EngineService {
       await _send('stop');
     }
 
-    onStatus?.call('🟡 تم إيقاف التحليل');
+    onStatus?.call(tr('🟡 تم إيقاف التحليل'));
   }
 
   // ============================================================

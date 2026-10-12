@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'ads_service.dart';
 import 'app_ui.dart';
 import 'bot_play_screen.dart';
+import 'brand.dart';
+import 'home_banner.dart';
+import 'l10n.dart';
 import 'lichess_puzzles.dart' show PuzzleCategory;
 import 'lichess_puzzles_screen.dart';
 import 'menu_card.dart';
@@ -19,37 +22,40 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // اشتراك في تغيّر اللغة ليُعاد بناء الشاشة عند تبديلها.
+    Localizations.localeOf(context);
+
     final hero = _MenuEntry(
       icon: Icons.query_stats_rounded,
-      label: 'حلل مباراة',
+      label: tr('حلل مباراة'),
       color: const Color(0xFF5CB946),
-      subtitle: 'من Chess.com و Lichess',
-      badge: 'ابدأ من هنا',
+      subtitle: tr('من Chess.com و Lichess'),
+      badge: tr('ابدأ من هنا'),
       builder: () => const AnalyzeGameScreen(),
     );
 
     final position = _MenuEntry(
       icon: Icons.grid_view_rounded,
-      label: 'وضعية خاصة',
+      label: tr('وضعية خاصة'),
       color: const Color(0xFF4169FF),
-      subtitle: 'أنشئ أي وضعية وحلّلها: Stockfish والكتاب وTablebase',
+      subtitle: tr('أنشئ أي وضعية وحلّلها: Stockfish والكتاب وTablebase'),
       builder: () => const PositionAnalyzerScreen(),
     );
 
     final myPuzzles = _MenuEntry(
       icon: Icons.extension_rounded,
-      label: 'تمارين من مبارياتك',
+      label: tr('تمارين من مبارياتك'),
       color: const Color(0xFF9B5CF6),
-      subtitle: 'وضعيات فاتتك فيها نقلة قوية',
+      subtitle: tr('وضعيات فاتتك فيها نقلة قوية'),
       builder: () => const PuzzlesScreen(),
     );
 
     final brilliant = _MenuEntry(
       icon: Icons.auto_awesome_rounded,
-      label: 'ألغاز بريليانت',
+      label: tr('ألغاز بريليانت'),
       color: const Color(0xFF2EC4C4),
-      subtitle: 'اعثر على التضحية الفائزة',
-      badge: 'جديد',
+      subtitle: tr('اعثر على التضحية الفائزة'),
+      badge: tr('جديد'),
       builder: () => const LichessPuzzlesScreen(
         category: PuzzleCategory.brilliant,
       ),
@@ -57,10 +63,10 @@ class HomeScreen extends StatelessWidget {
 
     final mate = _MenuEntry(
       icon: Icons.flag_rounded,
-      label: 'ألغاز كش مات',
+      label: tr('ألغاز كش مات'),
       color: const Color(0xFFE5534B),
-      subtitle: 'أنهِ المباراة بكش مات',
-      badge: 'جديد',
+      subtitle: tr('أنهِ المباراة بكش مات'),
+      badge: tr('جديد'),
       builder: () => const LichessPuzzlesScreen(
         category: PuzzleCategory.mate,
       ),
@@ -68,9 +74,9 @@ class HomeScreen extends StatelessWidget {
 
     final training = _MenuEntry(
       icon: Icons.psychology_alt_rounded,
-      label: 'ألغاز',
+      label: tr('ألغاز'),
       color: const Color(0xFFF2A93B),
-      subtitle: 'حل ألغاز بلا حدود وحسّن مستواك',
+      subtitle: tr('حل ألغاز بلا حدود وحسّن مستواك'),
       builder: () => const LichessPuzzlesScreen(
         category: PuzzleCategory.training,
       ),
@@ -78,9 +84,9 @@ class HomeScreen extends StatelessWidget {
 
     final bot = _MenuEntry(
       icon: Icons.smart_toy_rounded,
-      label: 'العب ضد روبوت',
+      label: tr('العب ضد روبوت'),
       color: const Color(0xFF4F8DF7),
-      subtitle: 'مبتدئ، متوسط، متقدم، أستاذ، وStockfish',
+      subtitle: tr('مبتدئ، متوسط، متقدم، أستاذ، وStockfish'),
       builder: () => const BotPlayScreen(),
     );
 
@@ -140,15 +146,55 @@ class HomeScreen extends StatelessWidget {
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                       children: [
                         _header(context),
+                        const SizedBox(height: 16),
+                        HomeBanner(
+                          slides: [
+                            BannerSlide(
+                              icon: Icons.query_stats_rounded,
+                              title: tr('حلّل مبارياتك بقوة Stockfish 19'),
+                              subtitle:
+                                  tr('اكتشف أخطاءك وفرصك الضائعة في ثوانٍ'),
+                              cta: tr('ابدأ التحليل'),
+                              onTap: () => pushScreen(
+                                context,
+                                const AnalyzeGameScreen(),
+                              ),
+                            ),
+                            BannerSlide(
+                              icon: Icons.auto_awesome_rounded,
+                              title: tr('ألغاز بريليانت'),
+                              subtitle: tr('اعثر على التضحية الفائزة'),
+                              cta: tr('جرّب الآن'),
+                              onTap: () => pushScreen(
+                                context,
+                                const LichessPuzzlesScreen(
+                                  category: PuzzleCategory.brilliant,
+                                ),
+                              ),
+                            ),
+                            BannerSlide(
+                              icon: Icons.smart_toy_rounded,
+                              title: tr('تحدَّ الروبوت'),
+                              subtitle: tr(
+                                'من مستوى مبتدئ حتى أقوى Stockfish',
+                              ),
+                              cta: tr('العب الآن'),
+                              onTap: () => pushScreen(
+                                context,
+                                const BotPlayScreen(),
+                              ),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 18),
                         card(hero),
-                        section('تحليل'),
+                        section(tr('تحليل')),
                         pair(position, myPuzzles),
-                        section('ألغاز'),
+                        section(tr('ألغاز')),
                         pair(brilliant, mate),
                         const SizedBox(height: 12),
                         card(training),
-                        section('العب'),
+                        section(tr('العب')),
                         card(bot),
                       ],
                     ),
@@ -170,24 +216,16 @@ class HomeScreen extends StatelessWidget {
         Row(
           children: [
             const SizedBox(width: 48),
-            Expanded(
-              child: ShaderMask(
-                shaderCallback: (r) => const LinearGradient(
-                  colors: [Color(0xFFFF8A9B), Color(0xFF4FD1C5)],
-                ).createShader(r),
-                child: const Text(
-                  'محلل الشطرنج ♟️',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                  ),
+            const Expanded(
+              child: Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: GoldenChessTitle(fontSize: 30),
                 ),
               ),
             ),
             IconButton(
-              tooltip: 'الإعدادات',
+              tooltip: tr('الإعدادات'),
               style: IconButton.styleFrom(
                 backgroundColor: Colors.white12,
                 foregroundColor: Colors.white,
@@ -199,9 +237,9 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 6),
-        const Text(
-          'حلّل، تمرّن، والعب بذكاء',
-          style: TextStyle(color: Colors.white60, fontSize: 14),
+        Text(
+          tr('حلّل، تمرّن، والعب بذكاء'),
+          style: const TextStyle(color: Colors.white60, fontSize: 14),
         ),
       ],
     );

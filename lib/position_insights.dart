@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'l10n.dart';
 import 'lichess_data_service.dart';
 import 'uci_utils.dart';
 
@@ -214,26 +215,26 @@ class _PositionInsightsPanelState extends State<PositionInsightsPanel> {
     } else if (_bookFailed) {
       body = _hint(
         OpeningExplorerService.instance.lastError == 'unauthorized'
-            ? 'رفض Lichess الطلب — يلزم توكن شخصي مجاني '
-                '(LICHESS_TOKEN، انظر README).'
-            : 'تعذّر جلب إحصائيات الكتاب.',
+            ? tr('رفض Lichess الطلب — يلزم توكن شخصي مجاني '
+                '(LICHESS_TOKEN، انظر README).')
+            : tr('تعذّر جلب إحصائيات الكتاب.'),
       );
     } else if (data == null || data.total == 0 || data.moves.isEmpty) {
-      body = _hint('الوضعية خارج الكتاب في هذه القاعدة.');
+      body = _hint(tr('الوضعية خارج الكتاب في هذه القاعدة.'));
     } else {
       final top = data.moves.take(6).toList();
 
       body = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _hint('${data.total} مباراة في هذه الوضعية'),
+          _hint(tr('{total} مباراة في هذه الوضعية', {'total': data.total})),
           const SizedBox(height: 6),
           for (final m in top) _bookRow(m, data.total),
         ],
       );
     }
 
-    return _card('الكتاب', body);
+    return _card(tr('الكتاب'), body);
   }
 
   Widget _bookRow(ExplorerMoveStat m, int positionTotal) {
@@ -320,38 +321,38 @@ class _PositionInsightsPanelState extends State<PositionInsightsPanel> {
     if (_tbLoading) {
       body = const LinearProgressIndicator();
     } else if (d == null) {
-      body = _hint('تعذّر جلب نتيجة Tablebase.');
+      body = _hint(tr('تعذّر جلب نتيجة Tablebase.'));
     } else {
       final turnWhite = widget.fen.split(' ').length > 1 &&
           widget.fen.split(' ')[1] == 'w';
 
-      final side = turnWhite ? 'الأبيض' : 'الأسود';
+      final side = turnWhite ? tr('الأبيض') : tr('الأسود');
 
       String headline;
       Color color;
 
       if (d.checkmate) {
-        headline = 'كش مات';
+        headline = tr('كش مات');
         color = Colors.red;
       } else if (d.stalemate) {
-        headline = 'ستاليمايت — تعادل';
+        headline = tr('ستاليمايت — تعادل');
         color = Colors.grey;
       } else if (d.result == 1) {
-        headline = 'فوز مضمون لـ$side';
+        headline = tr('فوز مضمون لـ{side}', {'side': side});
         color = Colors.green;
       } else if (d.result == -1) {
-        headline = 'خسارة مضمونة لـ$side';
+        headline = tr('خسارة مضمونة لـ{side}', {'side': side});
         color = Colors.red;
       } else if (d.result == 0) {
-        headline = 'تعادل مضمون';
+        headline = tr('تعادل مضمون');
         color = Colors.grey;
       } else {
-        headline = 'نتيجة غير حاسمة';
+        headline = tr('نتيجة غير حاسمة');
         color = Colors.grey;
       }
 
       final extra = <String>[
-        if (d.dtm != null) 'مات خلال ${d.dtm!.abs()} نقلة (DTM)',
+        if (d.dtm != null) tr('مات خلال {v} نقلة (DTM)', {'v': d.dtm!.abs()}),
         if (d.dtm == null && d.dtz != null) 'DTZ ${d.dtz!.abs()}',
       ];
 
@@ -373,7 +374,7 @@ class _PositionInsightsPanelState extends State<PositionInsightsPanel> {
       );
     }
 
-    return _card('Tablebase (نتيجة مضمونة)', body);
+    return _card(tr('Tablebase (نتيجة مضمونة)'), body);
   }
 
   Widget _tbRow(TablebaseMove m) {
@@ -385,22 +386,22 @@ class _PositionInsightsPanelState extends State<PositionInsightsPanel> {
       case 1:
         icon = Icons.emoji_events_rounded;
         color = Colors.green;
-        label = 'فوز';
+        label = tr('فوز');
         break;
       case 0:
         icon = Icons.balance_rounded;
         color = Colors.grey;
-        label = 'تعادل';
+        label = tr('تعادل');
         break;
       case -1:
         icon = Icons.close_rounded;
         color = Colors.red;
-        label = 'خسارة';
+        label = tr('خسارة');
         break;
       default:
         icon = Icons.help_outline_rounded;
         color = Colors.grey;
-        label = '؟';
+        label = tr('؟');
     }
 
     final dist = m.dtm != null

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'l10n.dart';
 
 /// تصنيف جودة النقلة، بنفس روح تصنيفات chess.com
 /// (الخوارزمية الدقيقة لدى chess.com غير منشورة، هذا تقريب
@@ -53,61 +54,61 @@ class MoveQualityInfo {
 
 const Map<MoveQuality, MoveQualityInfo> moveQualityInfo = {
   MoveQuality.brilliant: MoveQualityInfo(
-    label: 'مدهشة',
+    label: tr('مدهشة'),
     color: Color(0xFF26C2A3),
     icon: Icons.auto_awesome_rounded,
     symbol: '!!',
   ),
   MoveQuality.great: MoveQualityInfo(
-    label: 'رائعة',
+    label: tr('رائعة'),
     color: Color(0xFF5C8BB0),
     icon: Icons.priority_high_rounded,
     symbol: '!',
   ),
   MoveQuality.best: MoveQualityInfo(
-    label: 'أفضل',
+    label: tr('أفضل'),
     color: Color(0xFF81B64C),
     icon: Icons.star_rounded,
     badgeIcon: Icons.star_rounded,
   ),
   MoveQuality.excellent: MoveQualityInfo(
-    label: 'ممتاز',
+    label: tr('ممتاز'),
     color: Color(0xFF96BC4B),
     icon: Icons.thumb_up_alt_rounded,
     badgeIcon: Icons.thumb_up_alt_rounded,
   ),
   MoveQuality.good: MoveQualityInfo(
-    label: 'جيد',
+    label: tr('جيد'),
     color: Color(0xFFA3B890),
     icon: Icons.check_rounded,
     badgeIcon: Icons.check_rounded,
   ),
   MoveQuality.book: MoveQualityInfo(
-    label: 'كتاب',
+    label: tr('كتاب'),
     color: Color(0xFFA88865),
     icon: Icons.menu_book_rounded,
     badgeIcon: Icons.menu_book_rounded,
   ),
   MoveQuality.inaccuracy: MoveQualityInfo(
-    label: 'غير دقيقة',
+    label: tr('غير دقيقة'),
     color: Color(0xFFF7C631),
     icon: Icons.help_rounded,
     symbol: '?!',
   ),
   MoveQuality.mistake: MoveQualityInfo(
-    label: 'خطأ',
+    label: tr('خطأ'),
     color: Color(0xFFE58F2A),
     icon: Icons.close_rounded,
     symbol: '?',
   ),
   MoveQuality.miss: MoveQualityInfo(
-    label: 'فرصة ضائعة',
+    label: tr('فرصة ضائعة'),
     color: Color(0xFFEE6055),
     icon: Icons.visibility_off_rounded,
     badgeIcon: Icons.close_rounded,
   ),
   MoveQuality.blunder: MoveQualityInfo(
-    label: 'خطأ فادح',
+    label: tr('خطأ فادح'),
     color: Color(0xFFCA3431),
     icon: Icons.dangerous_rounded,
     symbol: '??',

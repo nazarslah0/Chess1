@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'brand.dart';
+import 'l10n.dart';
+
 /// رابط سياسة الخصوصية (استبدله برابط صفحتك المنشورة قبل النشر).
 const String kPrivacyPolicyUrl = 'https://example.com/privacy';
 
@@ -9,25 +12,31 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(context);
+
+    const bold = TextStyle(fontWeight: FontWeight.bold);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('حول التطبيق والتراخيص')),
+      appBar: AppBar(title: Text(tr('حول التطبيق والتراخيص'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            'Golden Chess',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: GoldenChessTitle(
+              fontSize: 24,
+              chessColor: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'محرك Stockfish',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
+          Text(tr('محرك Stockfish'), style: bold),
           const SizedBox(height: 4),
-          const Text(
-            'يستخدم هذا التطبيق محرك الشطرنج Stockfish (الإصدار 19) المرخّص '
-            'برخصة GNU GPL v3، ويعمل كبرنامج منفصل داخل التطبيق دون تعديل. '
-            'الكود المصدري للإصدار المستخدم متاح على:',
+          Text(
+            tr(
+              'يستخدم هذا التطبيق محرك الشطرنج Stockfish (الإصدار 19) المرخّص '
+              'برخصة GNU GPL v3، ويعمل كبرنامج منفصل داخل التطبيق دون تعديل. '
+              'الكود المصدري للإصدار المستخدم متاح على:',
+            ),
           ),
           const SizedBox(height: 4),
           const SelectableText(
@@ -35,25 +44,21 @@ class AboutScreen extends StatelessWidget {
             textDirection: TextDirection.ltr,
           ),
           const SizedBox(height: 4),
-          const SelectableText(
-            'نص الرخصة: https://www.gnu.org/licenses/gpl-3.0.html',
+          SelectableText(
+            '${tr('نص الرخصة:')} https://www.gnu.org/licenses/gpl-3.0.html',
             textDirection: TextDirection.ltr,
           ),
           const Divider(height: 32),
-          const Text(
-            'تمارين الشطرنج',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
+          Text(tr('تمارين الشطرنج'), style: bold),
           const SizedBox(height: 4),
-          const Text(
-            'تمارين مستخرجة من قاعدة بيانات تمارين Lichess '
-            '(database.lichess.org) المتاحة في الملك العام CC0.',
+          Text(
+            tr(
+              'تمارين مستخرجة من قاعدة بيانات تمارين Lichess '
+              '(database.lichess.org) المتاحة في الملك العام CC0.',
+            ),
           ),
           const Divider(height: 32),
-          const Text(
-            'سياسة الخصوصية',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
+          Text(tr('سياسة الخصوصية'), style: bold),
           const SizedBox(height: 4),
           const SelectableText(
             kPrivacyPolicyUrl,
@@ -63,10 +68,10 @@ class AboutScreen extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: () => showLicensePage(
               context: context,
-              applicationName: 'Golden Chess',
+              applicationName: kAppName,
             ),
             icon: const Icon(Icons.description_outlined),
-            label: const Text('تراخيص المكتبات'),
+            label: Text(tr('تراخيص المكتبات')),
           ),
         ],
       ),

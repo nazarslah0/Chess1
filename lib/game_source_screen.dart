@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'analysis_mode.dart';
 import 'game_analysis_screen.dart';
 import 'game_source.dart';
+import 'l10n.dart';
 import 'source_style.dart';
 
 /// شاشة البحث والتحليل لحسابات المصادر (Chess.com / Lichess) — شاشة
@@ -99,7 +100,7 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
         _loadingGames = false;
 
         if (games.isEmpty) {
-          _error = 'لا توجد مباريات ظاهرة لهذا الحساب.';
+          _error = tr('لا توجد مباريات ظاهرة لهذا الحساب.');
         }
       });
     } catch (e) {
@@ -118,14 +119,14 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
     final username = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('تبديل حساب ${_source.name}'),
+        title: Text(tr('تبديل حساب {name}', {'name': _source.name})),
         content: TextField(
           controller: controller,
           autofocus: true,
           textInputAction: TextInputAction.search,
           decoration: InputDecoration(
-            labelText: 'اسم المستخدم',
-            hintText: 'مثال: ${_source.usernameHint}',
+            labelText: tr('اسم المستخدم'),
+            hintText: tr('مثال: {usernameHint}', {'usernameHint': _source.usernameHint}),
             prefixIcon: const Icon(Icons.person_search_rounded),
           ),
           onSubmitted: (value) => Navigator.pop(context, value.trim()),
@@ -133,12 +134,12 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
+            child: const TrText('إلغاء'),
           ),
           FilledButton.icon(
             onPressed: () => Navigator.pop(context, controller.text.trim()),
             icon: const Icon(Icons.swap_horiz_rounded),
-            label: const Text('تبديل'),
+            label: const TrText('تبديل'),
           ),
         ],
       ),
@@ -172,11 +173,11 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
   @override
   Widget build(BuildContext context) {
     return SourceScaffold(
-      title: 'تحليل مباريات ${_source.name}',
+      title: tr('تحليل مباريات {name}', {'name': _source.name}),
       actions: [
         if (_savedUsername != null)
           IconButton(
-            tooltip: 'تبديل الحساب',
+            tooltip: tr('تبديل الحساب'),
             onPressed: _loadingGames ? null : _switchAccount,
             icon: const Icon(Icons.swap_horiz_rounded),
           ),
@@ -214,8 +215,8 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
               style: const TextStyle(color: Colors.white),
               textInputAction: TextInputAction.search,
               decoration: SourceStyle.input(
-                label: 'اسم مستخدم ${_source.name}',
-                hint: 'مثال: ${_source.usernameHint}',
+                label: tr('اسم مستخدم {name}', {'name': _source.name}),
+                hint: tr('مثال: {usernameHint}', {'usernameHint': _source.usernameHint}),
                 icon: Icons.person_outline,
                 accent: _accent,
               ),
@@ -240,7 +241,7 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
                         color: _onAccent,
                       ),
                     )
-                  : const Text('بحث'),
+                  : const TrText('بحث'),
             ),
           ),
         ],
@@ -255,9 +256,9 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
         children: [
           const Icon(Icons.history_rounded, color: Colors.white70, size: 20),
           const SizedBox(width: 8),
-          const Text(
-            'آخر $_limit مباراة',
-            style: TextStyle(
+          Text(
+            tr('آخر {limit} مباراة', {'limit': _limit}),
+            style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w800,
             ),
@@ -265,7 +266,7 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
           const Spacer(),
           if (_games.isNotEmpty)
             Text(
-              '${_games.length} مباراة',
+              tr('{length} مباراة', {'length': _games.length}),
               style: const TextStyle(color: Colors.white54, fontSize: 12),
             ),
         ],
@@ -282,17 +283,17 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
                 children: [
                   CircularProgressIndicator(color: _accent),
                   const SizedBox(height: 12),
-                  const Text(
-                    'جاري تحميل آخر $_limit مباراة...',
-                    style: TextStyle(color: Colors.white70),
+                  Text(
+                    tr('جاري تحميل آخر {limit} مباراة...', {'limit': _limit}),
+                    style: const TextStyle(color: Colors.white70),
                   ),
                 ],
               )
             : Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'أدخل اسم حسابك على ${_source.name} ثم سيتم تحميل آخر '
-                  '$_limit مباراة تلقائيًا وحفظ الحساب.',
+                  tr('أدخل اسم حسابك على {name} ثم سيتم تحميل آخر '
+                  '{limit} مباراة تلقائيًا وحفظ الحساب.', {'name': _source.name, 'limit': _limit}),
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Colors.white54),
                 ),
@@ -333,12 +334,12 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                const TrText(
                   'الحساب المحفوظ',
                   style: TextStyle(color: Colors.white54, fontSize: 11),
                 ),
                 Text(
-                  _savedUsername ?? 'لم يتم اختيار حساب',
+                  _savedUsername ?? tr('لم يتم اختيار حساب'),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
@@ -352,7 +353,7 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
             TextButton.icon(
               onPressed: _loadingGames ? null : _switchAccount,
               icon: const Icon(Icons.swap_horiz_rounded, size: 18),
-              label: const Text('تبديل'),
+              label: const TrText('تبديل'),
               style: TextButton.styleFrom(
                 foregroundColor: _accent,
               ),
@@ -373,15 +374,15 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
     switch (outcome) {
       case 'win':
         color = SourceStyle.green;
-        label = 'فوز';
+        label = tr('فوز');
         icon = Icons.emoji_events_rounded;
       case 'draw':
         color = SourceStyle.draw;
-        label = 'تعادل';
+        label = tr('تعادل');
         icon = Icons.horizontal_rule_rounded;
       default:
         color = SourceStyle.loss;
-        label = 'خسارة';
+        label = tr('خسارة');
         icon = Icons.close_rounded;
     }
 
@@ -421,7 +422,7 @@ class _GameSourceScreenState extends State<GameSourceScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'ضد $opponent',
+                      tr('ضد {opponent}', {'opponent': opponent}),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(

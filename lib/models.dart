@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:chess/chess.dart' as ch;
+import 'l10n.dart';
 
 /// ============================================================
 /// Board Themes
@@ -206,7 +207,7 @@ class GameState extends ChangeNotifier {
 
   /// حالة الوضعية.
   String legalMessage =
-      'وضعية قانونية';
+      tr('وضعية قانونية');
 
   bool legal = true;
 
@@ -387,7 +388,7 @@ class GameState extends ChangeNotifier {
         legal = false;
 
         legalMessage =
-            'الوضعية غير صالحة';
+            tr('الوضعية غير صالحة');
 
         notifyListeners();
 
@@ -397,7 +398,7 @@ class GameState extends ChangeNotifier {
       legal = false;
 
       legalMessage =
-          'تعذر تحميل الوضعية';
+          tr('تعذر تحميل الوضعية');
 
       notifyListeners();
 
@@ -433,7 +434,7 @@ class GameState extends ChangeNotifier {
     if (clean.isEmpty) {
       legal = false;
       legalMessage =
-          'FEN فارغ';
+          tr('FEN فارغ');
 
       notifyListeners();
 
@@ -451,7 +452,7 @@ class GameState extends ChangeNotifier {
         legal = false;
 
         legalMessage =
-            'FEN غير صالح';
+            tr('FEN غير صالح');
 
         notifyListeners();
 
@@ -461,7 +462,7 @@ class GameState extends ChangeNotifier {
       legal = false;
 
       legalMessage =
-          'FEN غير صالح';
+          tr('FEN غير صالح');
 
       notifyListeners();
 
@@ -1116,22 +1117,22 @@ class GameState extends ChangeNotifier {
 
         if (chess.in_checkmate) {
           legalMessage =
-              'كش مات';
+              tr('كش مات');
         } else if (chess.in_check) {
           legalMessage =
-              'كش';
+              tr('كش');
         } else if (chess.in_stalemate) {
           legalMessage =
-              'تعادل — Stalemate';
+              tr('تعادل — Stalemate');
         } else {
           legalMessage =
-              'وضعية قانونية';
+              tr('وضعية قانونية');
         }
       } catch (_) {
         legal = false;
 
         legalMessage =
-            'تعذر التحقق من الوضعية';
+            tr('تعذر التحقق من الوضعية');
       }
 
       return;
@@ -1162,7 +1163,7 @@ class GameState extends ChangeNotifier {
       legal = false;
 
       legalMessage =
-          'يجب وضع ملك أبيض وملك أسود واحد';
+          tr('يجب وضع ملك أبيض وملك أسود واحد');
 
       return;
     }
@@ -1182,13 +1183,13 @@ class GameState extends ChangeNotifier {
 
       legalMessage =
           legal
-              ? 'وضعية قانونية'
-              : 'الوضعية غير قانونية';
+              ? tr('وضعية قانونية')
+              : tr('الوضعية غير قانونية');
     } catch (_) {
       legal = false;
 
       legalMessage =
-          'الوضعية غير قانونية';
+          tr('الوضعية غير قانونية');
     }
   }
 
