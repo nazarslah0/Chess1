@@ -1,5 +1,5 @@
 name: chess_analyzer
-description: "Chess position analyzer with a real Stockfish 19 engine."
+description: "Golden Chess - chess game analysis, puzzles and play with a real Stockfish 19 engine."
 publish_to: "none"
 version: 1.0.0+1
 
@@ -8,6 +8,8 @@ environment:
 
 dependencies:
   flutter:
+    sdk: flutter
+  flutter_localizations:
     sdk: flutter
   cupertino_icons: ^1.0.9
   chess: ^0.8.1
