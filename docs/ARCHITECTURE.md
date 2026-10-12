@@ -22,7 +22,7 @@
 | تحليل وضعية | `position_analyzer_screen.dart` |
 | حلل مباراة (مصادر) | `my_games_screen.dart` → `game_source_screen.dart` (Chess.com وLichess بنمط واحد عبر `game_source.dart`) / `pgn_import_screen.dart` |
 | تحليل/مراجعة مباراة | `game_analysis_screen.dart` (الحالة والتنقل) + أجزاء `game_analysis_*.dart` |
-| العب ضد روبوت / Maia | `bot_play_screen.dart` / `maia_play_screen.dart` |
+| العب ضد روبوت | `bot_play_screen.dart` |
 | تمارين من مبارياتك | `puzzles_screen.dart` (`puzzle_storage.dart`) |
 | ألغاز بريليانت / جيك ميت | `lichess_puzzles_screen.dart` (`lichess_puzzles.dart`، بيانات `assets/puzzles/`) |
 | الإعدادات | `settings_screen.dart` |
