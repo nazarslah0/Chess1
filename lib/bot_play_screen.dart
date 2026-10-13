@@ -110,62 +110,53 @@ class BotLevel {
   String get rating => '~$elo';
 }
 
+/// حدود شريط «المستوى المخصص» (الحد الأقصى = أعلى UCI_Elo في Stockfish).
+const int kBotCustomMin = 1100;
+const int kBotCustomMax = 3190;
+
+/// ستة مستويات موزّعة بالتساوي من 850 إلى 3200.
 final List<BotLevel> botLevels = <BotLevel>[
   BotLevel.fromElo(
     id: 'beginner',
     name: 'المبتدئ',
-    elo: 400,
+    elo: 850,
     description: 'يصلح للمبتدئين لتعلم الأساسيات',
     asset: 'assets/bots/bot_1.webp',
   ),
   BotLevel.fromElo(
-    id: 'easy',
-    name: 'السهل',
-    elo: 800,
-    description: 'يلعب بهدوء وأخطاء أحيانًا',
-    asset: 'assets/bots/bot_2.webp',
-  ),
-  BotLevel.fromElo(
     id: 'intermediate',
     name: 'المتوسط',
-    elo: 1200,
+    elo: 1320,
     description: 'خصم متوازن',
     asset: 'assets/bots/bot_3.webp',
   ),
   BotLevel.fromElo(
     id: 'advanced',
     name: 'المتقدم',
-    elo: 1600,
+    elo: 1790,
     description: 'يلعب بخطط جيدة',
     asset: 'assets/bots/bot_4.webp',
   ),
   BotLevel.fromElo(
     id: 'expert',
     name: 'الخبير',
-    elo: 2000,
+    elo: 2260,
     description: 'خصم قوي ويفكر بعمق',
     asset: 'assets/bots/bot_5.webp',
   ),
   BotLevel.fromElo(
     id: 'master',
     name: 'الأستاذ',
-    elo: 2400,
+    elo: 2730,
     description: 'أسلوب متوازن وعالي الدقة',
     asset: 'assets/bots/bot_6.webp',
   ),
   BotLevel.fromElo(
     id: 'international',
     name: 'الأستاذ الدولي',
-    elo: 2800,
-    description: 'خصم قوي جدًا',
-    asset: 'assets/bots/bot_7.webp',
-  ),
-  BotLevel.fromElo(
-    id: 'titan',
-    name: 'العملاق',
     elo: 3200,
     description: 'أعلى مستوى صعوبة',
-    asset: 'assets/bots/bot_8.webp',
+    asset: 'assets/bots/bot_7.webp',
   ),
 ];
 
@@ -613,7 +604,6 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
         id: 'custom',
         name: 'مستوى مخصص',
         elo: _customElo.round(),
-        asset: 'assets/bots/infinity.png',
       );
 
   void _onCustomSlide(double v) {
@@ -627,7 +617,7 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
   void _onCustomTyped(String s) {
     final v = int.tryParse(s);
 
-    if (v == null || v < 100 || v > 3200) return;
+    if (v == null || v < kBotCustomMin || v > kBotCustomMax) return;
 
     setState(() {
       _customElo = v.toDouble();
@@ -636,7 +626,9 @@ class _BotPlayScreenState extends State<BotPlayScreen> {
   }
 
   void _playCustom() {
-    final v = (int.tryParse(_eloCtrl.text) ?? _customElo.round()).clamp(100, 3200).toInt();
+    final v = (int.tryParse(_eloCtrl.text) ?? _customElo.round())
+        .clamp(kBotCustomMin, kBotCustomMax)
+        .toInt();
 
     _customElo = v.toDouble();
     _eloCtrl.text = '$v';
@@ -1273,18 +1265,6 @@ class _CustomLevelCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Image.asset(
-                  'assets/bots/infinity.png',
-                  width: 64,
-                  height: 40,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, _, _) => const Icon(
-                    Icons.all_inclusive_rounded,
-                    color: GoldColors.main,
-                    size: 40,
-                  ),
-                ),
-                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1298,9 +1278,15 @@ class _CustomLevelCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const TrText(
-                        'اختر تقييم ربوت من 100 إلى 3200',
-                        style: TextStyle(color: Colors.white54, fontSize: 12.5),
+                      Text(
+                        tr('اختر تقييم ربوت من {min} إلى {max}', {
+                          'min': kBotCustomMin,
+                          'max': kBotCustomMax,
+                        }),
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12.5,
+                        ),
                       ),
                     ],
                   ),
@@ -1318,10 +1304,12 @@ class _CustomLevelCard extends StatelessWidget {
                 tickMarkShape: SliderTickMarkShape.noTickMark,
               ),
               child: Slider(
-                min: 100,
-                max: 3200,
-                divisions: 62,
-                value: elo.clamp(100, 3200).toDouble(),
+                min: kBotCustomMin.toDouble(),
+                max: kBotCustomMax.toDouble(),
+                divisions: (kBotCustomMax - kBotCustomMin) ~/ 10,
+                value: elo
+                    .clamp(kBotCustomMin, kBotCustomMax)
+                    .toDouble(),
                 onChanged: onSlide,
               ),
             ),

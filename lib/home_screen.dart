@@ -124,7 +124,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: _homeBg,
-      appBar: const AppTopBar(),
+      appBar: const AppTopBar(home: true),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -144,16 +144,6 @@ class HomeScreen extends StatelessWidget {
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                       children: [
-                        Center(
-                          child: Text(
-                            tr('حلّل، تمرّن، والعب بذكاء'),
-                            style: const TextStyle(
-                              color: Colors.white60,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
                         card(hero),
                         section(tr('تحليل')),
                         pair(position, myPuzzles),
